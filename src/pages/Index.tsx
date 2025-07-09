@@ -1,12 +1,163 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { BookHeart, Library, Users, Heart, Star, Sparkles, BookOpen, Trophy, Calendar } from "lucide-react";
+import heroImage from "@/assets/hero-enchanted-library.jpg";
 
 const Index = () => {
+  const features = [
+    {
+      icon: <BookOpen className="w-8 h-8 text-primary" />,
+      title: "Controle de Leitura",
+      description: "Acompanhe seu progresso de forma personalizada e acolhedora"
+    },
+    {
+      icon: <Heart className="w-8 h-8 text-primary" />,
+      title: "Feed Social",
+      description: "Compartilhe emoções e conecte-se com outras leitoras apaixonadas"
+    },
+    {
+      icon: <Users className="w-8 h-8 text-primary" />,
+      title: "Clubes de Leitura",
+      description: "Participe de discussões literárias em grupos acolhedores"
+    },
+    {
+      icon: <Library className="w-8 h-8 text-primary" />,
+      title: "Estante Virtual",
+      description: "Organize seus livros com filtros mágicos e categorias encantadas"
+    },
+    {
+      icon: <Trophy className="w-8 h-8 text-primary" />,
+      title: "Gamificação",
+      description: "Conquiste selos, troféus e títulos como Rainha Literária"
+    },
+    {
+      icon: <Calendar className="w-8 h-8 text-primary" />,
+      title: "Metas e Cronograma",
+      description: "Defina objetivos e receba lembretes motivacionais diários"
+    }
+  ];
+
+  const stats = [
+    { number: "10k+", label: "Leitoras Ativas" },
+    { number: "50k+", label: "Livros Registrados" },
+    { number: "200+", label: "Clubes de Leitura" },
+    { number: "1M+", label: "Páginas Lidas" }
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-enchanted opacity-30" />
+        
+        <div className="relative container mx-auto px-4 py-20 text-center">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-5xl md:text-6xl font-enchanted text-enchanted mb-6 leading-tight">
+              Bem-vinda à
+              <br />
+              <span className="text-6xl md:text-7xl">Estante Encantada</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
+              Uma rede social acolhedora onde leitoras apaixonadas 
+              <br className="hidden md:block" />
+              compartilham emoções, criam laços afetivos e mergulham em suas memórias literárias
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+              <Button size="lg" className="btn-enchanted text-lg px-8 py-4">
+                <BookHeart className="w-5 h-5 mr-2" />
+                Começar Minha Jornada
+              </Button>
+              <Button size="lg" variant="outline" className="text-lg px-8 py-4 hover-glow">
+                <Sparkles className="w-5 h-5 mr-2" />
+                Descobrir Comunidade
+              </Button>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
+              {stats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-2xl md:text-3xl font-bold text-primary mb-1">
+                    {stat.number}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-card/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-enchanted text-enchanted mb-4">
+              Funcionalidades Encantadas
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Descubra ferramentas mágicas que transformarão sua experiência de leitura
+              em uma jornada inesquecível e cheia de conexões
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {features.map((feature, index) => (
+              <Card key={index} className="card-enchanted hover-float text-center">
+                <CardContent className="p-8">
+                  <div className="flex justify-center mb-4">
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 text-foreground">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-dreamy">
+        <div className="container mx-auto px-4 text-center">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-4xl font-enchanted text-white mb-6">
+              Pronta para sua Aventura Literária?
+            </h2>
+            <p className="text-xl text-white/90 mb-8 leading-relaxed">
+              Junte-se a milhares de leitoras que já transformaram 
+              sua paixão pelos livros em conexões verdadeiras e momentos mágicos
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/estante">
+                <Button size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-4">
+                  <Library className="w-5 h-5 mr-2" />
+                  Explorar Minha Estante
+                </Button>
+              </Link>
+              <Link to="/feed">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg px-8 py-4">
+                  <Heart className="w-5 h-5 mr-2" />
+                  Ver Feed da Comunidade
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

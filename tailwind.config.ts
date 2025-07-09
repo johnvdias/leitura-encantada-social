@@ -63,6 +63,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			backgroundImage: {
+				'gradient-enchanted': 'linear-gradient(135deg, hsl(340, 65%, 75%), hsl(280, 40%, 88%), hsl(200, 45%, 85%))',
+				'gradient-soft': 'linear-gradient(180deg, hsl(340, 45%, 96%), hsl(35, 25%, 98%))',
+				'gradient-dreamy': 'linear-gradient(45deg, hsl(280, 40%, 88%), hsl(200, 45%, 85%))'
+			},
+			fontFamily: {
+				'enchanted': ['Georgia', 'serif'],
+				'dreamy': ['Inter', 'sans-serif']
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',

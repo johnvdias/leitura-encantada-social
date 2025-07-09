@@ -2,41 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Estante Encantada Design System - Cores suaves e acolhedoras para leitoras apaixonadas */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Cores base - tons neutros suaves */
+    --background: 35 25% 98%;
+    --foreground: 330 15% 25%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Cards e elementos */
+    --card: 340 45% 96%;
+    --card-foreground: 330 15% 25%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 340 45% 96%;
+    --popover-foreground: 330 15% 25%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Cores principais - rosa suave como base */
+    --primary: 340 65% 75%;
+    --primary-foreground: 340 15% 15%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Cores secundárias - lilás delicado */
+    --secondary: 280 40% 88%;
+    --secondary-foreground: 280 25% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Tons suavizados */
+    --muted: 320 25% 92%;
+    --muted-foreground: 320 15% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - azul bebê */
+    --accent: 200 45% 85%;
+    --accent-foreground: 200 25% 25%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destrutivo suavizado */
+    --destructive: 0 65% 65%;
+    --destructive-foreground: 0 15% 95%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Bordas e inputs delicados */
+    --border: 320 20% 88%;
+    --input: 320 15% 90%;
+    --ring: 340 65% 75%;
 
-    --radius: 0.5rem;
+    /* Gradientes encantados */
+    --gradient-enchanted: linear-gradient(135deg, hsl(340, 65%, 75%), hsl(280, 40%, 88%), hsl(200, 45%, 85%));
+    --gradient-soft: linear-gradient(180deg, hsl(340, 45%, 96%), hsl(35, 25%, 98%));
+    --gradient-dreamy: linear-gradient(45deg, hsl(280, 40%, 88%), hsl(200, 45%, 85%));
+    
+    /* Sombras delicadas */
+    --shadow-soft: 0 4px 20px -2px hsl(340, 65%, 75%, 0.15);
+    --shadow-dreamy: 0 8px 30px -5px hsl(280, 40%, 88%, 0.2);
+    --shadow-glow: 0 0 25px hsl(340, 65%, 75%, 0.3);
+
+    /* Animações suaves */
+    --transition-gentle: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +120,54 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-light;
+  }
+}
+
+@layer components {
+  /* Botões encantados */
+  .btn-enchanted {
+    @apply bg-gradient-to-r from-primary to-secondary text-primary-foreground font-medium px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_hsl(340,65%,75%,0.3)] transform;
+  }
+  
+  .btn-dreamy {
+    @apply bg-gradient-to-r from-secondary to-accent text-secondary-foreground font-medium px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_30px_-5px_hsl(280,40%,88%,0.2)];
+  }
+
+  .btn-soft {
+    @apply bg-muted/50 text-muted-foreground border border-border font-medium px-6 py-3 rounded-full transition-all duration-300 hover:bg-muted hover:scale-105;
+  }
+
+  /* Cards encantados */
+  .card-enchanted {
+    @apply bg-card border border-border rounded-2xl p-6 shadow-[0_4px_20px_-2px_hsl(340,65%,75%,0.15)] transition-all duration-300 hover:shadow-[0_8px_30px_-5px_hsl(280,40%,88%,0.2)] hover:-translate-y-1;
+  }
+
+  .card-dreamy {
+    @apply bg-gradient-to-br from-card to-muted border border-border rounded-2xl p-6 shadow-[0_8px_30px_-5px_hsl(280,40%,88%,0.2)] transition-all duration-300 hover:scale-105;
+  }
+
+  /* Elementos de progresso */
+  .progress-ring {
+    @apply w-16 h-16 rounded-full border-4 border-muted relative overflow-hidden;
+    background: conic-gradient(hsl(var(--primary)) var(--progress, 0%), hsl(var(--muted)) 0%);
+  }
+
+  /* Textos decorativos */
+  .text-enchanted {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent font-semibold;
+  }
+  
+  .text-dreamy {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-secondary to-accent font-medium;
+  }
+
+  /* Animações de hover suaves */
+  .hover-float {
+    @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_-5px_hsl(280,40%,88%,0.2)];
+  }
+
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-[0_0_25px_hsl(340,65%,75%,0.3)];
   }
 }
