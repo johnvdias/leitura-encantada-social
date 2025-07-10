@@ -1,11 +1,25 @@
 import { Link, useLocation } from "react-router-dom";
-import { BookHeart, User, Home, Library, Users, Heart, Sparkles } from "lucide-react";
+import { BookHeart, User, Home, Library, Users, Heart, Sparkles, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const location = useLocation();
+  const { user, profile, signOut } = useAuth();
   
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
   
   return (
     <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
@@ -62,16 +76,63 @@ const Header = () => {
           
           {/* User Actions */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="hidden md:flex btn-soft">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Adicionar Livro
-            </Button>
+            {user && (
+              <>
+                <Button variant="ghost" size="sm" className="hidden md:flex btn-soft">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Adicionar Livro
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={profile?.avatar_url} alt={profile?.display_name} />
+                        <AvatarFallback className="bg-primary/20 text-primary">
+                          {profile?.display_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end">
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1 leading-none">
+                        <p className="font-medium">{profile?.display_name || 'Leitora'}</p>
+                        <p className="w-[200px] truncate text-sm text-muted-foreground">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/perfil" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Meu Perfil</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/configuracoes" className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Configurações</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sair</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
             
-            <Link to="/perfil">
-              <Button variant="ghost" size="sm" className="rounded-full p-2">
-                <User className="w-5 h-5" />
-              </Button>
-            </Link>
+            {!user && (
+              <Link to="/auth">
+                <Button variant="default" size="sm">
+                  Entrar
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
