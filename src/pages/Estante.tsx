@@ -1,45 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Plus, Library, BookOpen, CheckCircle } from "lucide-react";
+import { Search, Filter, Library, BookOpen, CheckCircle } from "lucide-react";
 import BookCard from "@/components/BookCard/BookCard";
+import { AddBookDialog } from "@/components/AddBookDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+  cover_url: string | null;
+  pages: number | null;
+  genre: string;
+  reading_status: 'reading' | 'completed' | 'want_to_read';
+  reading_progress: number;
+  description: string;
+}
 
 const Estante = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  // Mock data for books
-  const mockBooks = [
-    {
-      title: "Orgulho e Preconceito",
-      author: "Jane Austen",
-      progress: 75,
-      status: "reading" as const,
-      genre: "Romance",
-      currentPage: 180,
-      totalPages: 240,
-      lastRead: "hoje"
-    },
-    {
-      title: "O Pequeno Príncipe",
-      author: "Antoine de Saint-Exupéry",
-      progress: 100,
-      status: "completed" as const,
-      genre: "Fábula",
-      rating: 5
-    },
-    {
-      title: "Dom Casmurro",
-      author: "Machado de Assis",
-      progress: 0,
-      status: "want-to-read" as const,
-      genre: "Ficção"
+  const fetchBooks = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setBooks(data as Book[] || []);
+    } catch (error) {
+      console.error('Error fetching books:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const readingBooks = mockBooks.filter(book => book.status === "reading");
-  const completedBooks = mockBooks.filter(book => book.status === "completed");
-  const wantToReadBooks = mockBooks.filter(book => book.status === "want-to-read");
+  useEffect(() => {
+    fetchBooks();
+  }, [user]);
+
+  const filteredBooks = books.filter(book =>
+    book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    book.author.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const readingBooks = filteredBooks.filter(book => book.reading_status === "reading");
+  const completedBooks = filteredBooks.filter(book => book.reading_status === "completed");
+  const wantToReadBooks = filteredBooks.filter(book => book.reading_status === "want_to_read");
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -68,10 +85,7 @@ const Estante = () => {
           <Filter className="w-4 h-4 mr-2" />
           Filtrar
         </Button>
-        <Button className="btn-enchanted">
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Livro
-        </Button>
+        <AddBookDialog onBookAdded={fetchBooks} />
       </div>
 
       {/* Tabs for different book categories */}
@@ -93,25 +107,37 @@ const Estante = () => {
 
         <TabsContent value="lendo" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {readingBooks.map((book, index) => (
-              <BookCard key={index} {...book} />
+            {readingBooks.map((book) => (
+              <BookCard 
+                key={book.id} 
+                title={book.title}
+                author={book.author}
+                progress={book.reading_progress}
+                status={book.reading_status as any}
+                genre={book.genre}
+              />
             ))}
           </div>
           {readingBooks.length === 0 && (
             <div className="text-center py-12">
               <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">Nenhum livro sendo lido no momento</p>
-              <Button className="btn-enchanted mt-4">
-                Começar uma Nova Leitura
-              </Button>
+              <AddBookDialog onBookAdded={fetchBooks} />
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="lidos" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {completedBooks.map((book, index) => (
-              <BookCard key={index} {...book} />
+            {completedBooks.map((book) => (
+              <BookCard 
+                key={book.id} 
+                title={book.title}
+                author={book.author}
+                progress={book.reading_progress}
+                status={book.reading_status as any}
+                genre={book.genre}
+              />
             ))}
           </div>
           {completedBooks.length === 0 && (
@@ -124,17 +150,22 @@ const Estante = () => {
 
         <TabsContent value="quero-ler" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {wantToReadBooks.map((book, index) => (
-              <BookCard key={index} {...book} />
+            {wantToReadBooks.map((book) => (
+              <BookCard 
+                key={book.id} 
+                title={book.title}
+                author={book.author}
+                progress={book.reading_progress}
+                status={book.reading_status as any}
+                genre={book.genre}
+              />
             ))}
           </div>
           {wantToReadBooks.length === 0 && (
             <div className="text-center py-12">
               <Library className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">Sua lista de desejos está vazia</p>
-              <Button className="btn-enchanted mt-4">
-                Descobrir Novos Livros
-              </Button>
+              <AddBookDialog onBookAdded={fetchBooks} />
             </div>
           )}
         </TabsContent>
