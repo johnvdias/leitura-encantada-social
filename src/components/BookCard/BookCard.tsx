@@ -2,8 +2,12 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Share, BookOpen, Star, Clock } from "lucide-react";
+import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
+import { ReadingStats } from "@/components/ReadingStats";
+import { useState } from "react";
 
 interface BookCardProps {
+  id: string;
   title: string;
   author: string;
   cover?: string;
@@ -14,9 +18,11 @@ interface BookCardProps {
   currentPage?: number;
   totalPages?: number;
   lastRead?: string;
+  onUpdate?: () => void;
 }
 
 const BookCard = ({ 
+  id,
   title, 
   author, 
   cover, 
@@ -24,10 +30,12 @@ const BookCard = ({
   status, 
   genre, 
   rating, 
-  currentPage, 
-  totalPages,
-  lastRead 
+  currentPage = 0, 
+  totalPages = 0,
+  lastRead,
+  onUpdate 
 }: BookCardProps) => {
+  const [showStats, setShowStats] = useState(false);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'reading': return 'bg-primary/20 text-primary';
@@ -133,11 +141,37 @@ const BookCard = ({
         </div>
         
         {status === 'reading' && (
-          <Button size="sm" className="btn-enchanted text-xs px-3 py-1">
-            Atualizar Progresso
-          </Button>
+          <div className="flex flex-col gap-2">
+            <UpdateProgressDialog
+              bookId={id}
+              title={title}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              currentProgress={progress}
+              onProgressUpdate={onUpdate || (() => {})}
+            >
+              <Button size="sm" className="btn-enchanted text-xs px-3 py-1">
+                Atualizar Progresso
+              </Button>
+            </UpdateProgressDialog>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs px-3 py-1" 
+              onClick={() => setShowStats(!showStats)}
+            >
+              {showStats ? "Ocultar" : "Ver"} Stats
+            </Button>
+          </div>
         )}
       </div>
+      
+      {showStats && status === 'reading' && (
+        <div className="mt-4">
+          <ReadingStats bookId={id} />
+        </div>
+      )}
     </div>
   );
 };

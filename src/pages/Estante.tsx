@@ -18,6 +18,8 @@ interface Book {
   reading_status: 'reading' | 'completed' | 'want_to_read';
   reading_progress: number;
   description: string;
+  current_page?: number;
+  last_read_at?: string;
 }
 
 const Estante = () => {
@@ -109,12 +111,18 @@ const Estante = () => {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {readingBooks.map((book) => (
               <BookCard 
-                key={book.id} 
+                key={book.id}
+                id={book.id}
                 title={book.title}
                 author={book.author}
+                cover={book.cover_url || undefined}
                 progress={book.reading_progress}
                 status={book.reading_status as any}
                 genre={book.genre}
+                currentPage={book.current_page || 0}
+                totalPages={book.pages || 0}
+                lastRead={book.last_read_at ? new Date(book.last_read_at).toLocaleDateString('pt-BR') : undefined}
+                onUpdate={fetchBooks}
               />
             ))}
           </div>
@@ -131,12 +139,16 @@ const Estante = () => {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {completedBooks.map((book) => (
               <BookCard 
-                key={book.id} 
+                key={book.id}
+                id={book.id}
                 title={book.title}
                 author={book.author}
+                cover={book.cover_url || undefined}
                 progress={book.reading_progress}
                 status={book.reading_status as any}
                 genre={book.genre}
+                rating={4}
+                onUpdate={fetchBooks}
               />
             ))}
           </div>
@@ -152,12 +164,15 @@ const Estante = () => {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {wantToReadBooks.map((book) => (
               <BookCard 
-                key={book.id} 
+                key={book.id}
+                id={book.id}
                 title={book.title}
                 author={book.author}
+                cover={book.cover_url || undefined}
                 progress={book.reading_progress}
                 status={book.reading_status as any}
                 genre={book.genre}
+                onUpdate={fetchBooks}
               />
             ))}
           </div>

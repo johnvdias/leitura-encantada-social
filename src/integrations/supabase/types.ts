@@ -19,9 +19,11 @@ export type Database = {
           author: string | null
           cover_url: string | null
           created_at: string
+          current_page: number | null
           description: string | null
           genre: string | null
           id: string
+          last_read_at: string | null
           pages: number | null
           reading_progress: number
           reading_status: string
@@ -33,9 +35,11 @@ export type Database = {
           author?: string | null
           cover_url?: string | null
           created_at?: string
+          current_page?: number | null
           description?: string | null
           genre?: string | null
           id?: string
+          last_read_at?: string | null
           pages?: number | null
           reading_progress?: number
           reading_status?: string
@@ -47,9 +51,11 @@ export type Database = {
           author?: string | null
           cover_url?: string | null
           created_at?: string
+          current_page?: number | null
           description?: string | null
           genre?: string | null
           id?: string
+          last_read_at?: string | null
           pages?: number | null
           reading_progress?: number
           reading_status?: string
@@ -91,6 +97,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      reading_history: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          new_progress: number
+          notes: string | null
+          pages_read: number | null
+          previous_progress: number
+          reading_session_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          new_progress?: number
+          notes?: string | null
+          pages_read?: number | null
+          previous_progress?: number
+          reading_session_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          new_progress?: number
+          notes?: string | null
+          pages_read?: number | null
+          previous_progress?: number
+          reading_session_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_history_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
