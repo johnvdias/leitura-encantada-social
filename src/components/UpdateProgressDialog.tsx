@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,8 @@ import { BookOpen, Clock } from "lucide-react";
 interface UpdateProgressDialogProps {
   bookId: string;
   title: string;
-  currentPage: number;
-  totalPages: number;
+  currentPage: number | null;
+  totalPages: number | null;
   currentProgress: number;
   onProgressUpdate: () => void;
   children: React.ReactNode;
@@ -28,21 +28,38 @@ export function UpdateProgressDialog({
   onProgressUpdate,
   children,
 }: UpdateProgressDialogProps) {
-  const [newPage, setNewPage] = useState(currentPage);
+  const safeCurrentPage = currentPage || 0;
+  const safeTotalPages = totalPages || 0;
+  
+  const [newPage, setNewPage] = useState(safeCurrentPage);
   const [readingMinutes, setReadingMinutes] = useState<number>(0);
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  const newProgress = totalPages > 0 ? Math.round((newPage / totalPages) * 100) : 0;
-  const pagesRead = newPage - currentPage;
+  // Reset newPage when dialog opens or when currentPage changes
+  useEffect(() => {
+    setNewPage(safeCurrentPage);
+  }, [safeCurrentPage, open]);
+
+  const newProgress = safeTotalPages > 0 ? Math.round((newPage / safeTotalPages) * 100) : 0;
+  const pagesRead = newPage - safeCurrentPage;
 
   const handleUpdateProgress = async () => {
-    if (newPage < currentPage) {
+    if (safeTotalPages > 0 && newPage > safeTotalPages) {
       toast({
         title: "Erro",
-        description: "A nova página não pode ser menor que a página atual.",
+        description: "A página não pode ser maior que o total de páginas do livro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPage < 0) {
+      toast({
+        title: "Erro",
+        description: "A página deve ser um número positivo.",
         variant: "destructive",
       });
       return;
@@ -131,13 +148,16 @@ export function UpdateProgressDialog({
               <Input
                 id="page"
                 type="number"
-                min={currentPage}
-                max={totalPages}
+                min={0}
+                max={safeTotalPages > 0 ? safeTotalPages : undefined}
                 value={newPage}
-                onChange={(e) => setNewPage(Number(e.target.value))}
+                onChange={(e) => setNewPage(Number(e.target.value) || 0)}
                 className="flex-1"
+                placeholder="0"
               />
-              <span className="text-sm text-muted-foreground">/ {totalPages}</span>
+              <span className="text-sm text-muted-foreground">
+                / {safeTotalPages > 0 ? safeTotalPages : '---'}
+              </span>
             </div>
           </div>
 
@@ -188,7 +208,7 @@ export function UpdateProgressDialog({
             </Button>
             <Button
               onClick={handleUpdateProgress}
-              disabled={isLoading || newPage < currentPage}
+              disabled={isLoading || newPage < 0 || (safeTotalPages > 0 && newPage > safeTotalPages)}
               className="flex-1"
             >
               {isLoading ? "Salvando..." : "Salvar Progresso"}

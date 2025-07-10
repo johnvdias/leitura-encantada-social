@@ -36,6 +36,15 @@ export function ReadingStats({ bookId }: ReadingStatsProps) {
   }, [bookId]);
 
   const fetchReadingHistory = async () => {
+    // Validate bookId before making the query
+    if (!bookId || bookId === 'undefined' || bookId === 'null') {
+      console.error("Invalid bookId:", bookId);
+      setHistory([]);
+      setStats(null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("reading_history")
@@ -50,6 +59,8 @@ export function ReadingStats({ bookId }: ReadingStatsProps) {
       calculateStats(data || []);
     } catch (error) {
       console.error("Error fetching reading history:", error);
+      setHistory([]);
+      setStats(null);
     } finally {
       setIsLoading(false);
     }
