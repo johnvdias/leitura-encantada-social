@@ -14,7 +14,7 @@ interface BookCardProps {
   author: string;
   cover?: string;
   progress: number;
-  status: 'reading' | 'completed' | 'want-to-read';
+  status: 'reading' | 'completed' | 'want_to_read';
   genre: string;
   rating?: number;
   currentPage?: number;
@@ -45,7 +45,7 @@ const BookCard = ({
     switch (status) {
       case 'reading': return 'bg-primary/20 text-primary';
       case 'completed': return 'bg-green-500/20 text-green-700 dark:text-green-300';
-      case 'want-to-read': return 'bg-secondary/20 text-secondary-foreground';
+      case 'want_to_read': return 'bg-secondary/20 text-secondary-foreground';
       default: return 'bg-muted/20 text-muted-foreground';
     }
   };
@@ -54,7 +54,7 @@ const BookCard = ({
     switch (status) {
       case 'reading': return 'Lendo';
       case 'completed': return 'Lido';
-      case 'want-to-read': return 'Quero Ler';
+      case 'want_to_read': return 'Quero Ler';
       default: return status;
     }
   };
