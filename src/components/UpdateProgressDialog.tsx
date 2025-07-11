@@ -45,6 +45,7 @@ export function UpdateProgressDialog({
 
   const newProgress = safeTotalPages > 0 ? Math.round((newPage / safeTotalPages) * 100) : 0;
   const pagesRead = newPage - safeCurrentPage;
+  const isCompleting = newProgress >= 100 && currentProgress < 100;
 
   const handleUpdateProgress = async () => {
     if (safeTotalPages > 0 && newPage > safeTotalPages) {
@@ -70,6 +71,14 @@ export function UpdateProgressDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      // Determine new status based on progress
+      let newStatus = "reading";
+      if (newProgress >= 100) {
+        newStatus = "completed";
+      } else if (newProgress === 0) {
+        newStatus = "want_to_read";
+      }
+
       // Update book progress
       const { error: bookError } = await supabase
         .from("books")
@@ -77,7 +86,7 @@ export function UpdateProgressDialog({
           current_page: newPage,
           reading_progress: newProgress,
           last_read_at: new Date().toISOString(),
-          reading_status: newProgress >= 100 ? "completed" : "reading",
+          reading_status: newStatus,
         })
         .eq("id", bookId);
 
@@ -98,11 +107,22 @@ export function UpdateProgressDialog({
 
       if (historyError) throw historyError;
 
+      // Show appropriate success message
+      let successMessage = `Você leu ${pagesRead} páginas. Continue assim! 📚`;
+      
+      if (isCompleting) {
+        successMessage = `Parabéns! Você concluiu "${title}"! 🎉✨`;
+      } else if (newProgress >= 75 && currentProgress < 75) {
+        successMessage = `Quase lá! Você está a ${100 - newProgress}% de terminar! 🚀`;
+      } else if (newProgress >= 50 && currentProgress < 50) {
+        successMessage = `Metade do caminho percorrido! Continue forte! 💪`;
+      } else if (newProgress >= 25 && currentProgress < 25) {
+        successMessage = `Ótimo progresso! 25% completo! 📖`;
+      }
+
       toast({
-        title: "Progresso atualizado!",
-        description: newProgress >= 100 
-          ? `Parabéns! Você concluiu "${title}"! 🎉`
-          : `Você leu ${pagesRead} páginas. Continue assim! 📚`,
+        title: isCompleting ? "Livro Concluído!" : "Progresso atualizado!",
+        description: successMessage,
       });
 
       setOpen(false);
@@ -169,6 +189,11 @@ export function UpdateProgressDialog({
                 <span>{pagesRead > 0 ? `+${pagesRead} páginas` : "Nenhuma página nova"}</span>
                 <span>{newProgress}%</span>
               </div>
+              {isCompleting && (
+                <div className="text-center text-sm font-medium text-green-600 dark:text-green-400">
+                  🎉 Você está prestes a concluir este livro!
+                </div>
+              )}
             </div>
           </div>
 
@@ -211,7 +236,7 @@ export function UpdateProgressDialog({
               disabled={isLoading || newPage < 0 || (safeTotalPages > 0 && newPage > safeTotalPages)}
               className="flex-1"
             >
-              {isLoading ? "Salvando..." : "Salvar Progresso"}
+              {isLoading ? "Salvando..." : (isCompleting ? "Concluir Livro!" : "Salvar Progresso")}
             </Button>
           </div>
         </div>

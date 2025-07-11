@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, Library, BookOpen, CheckCircle } from "lucide-react";
 import BookCard from "@/components/BookCard/BookCard";
 import { AddBookDialog } from "@/components/AddBookDialog";
+import { ReadingGoals } from "@/components/ReadingGoals";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -60,6 +62,14 @@ const Estante = () => {
   const completedBooks = filteredBooks.filter(book => book.reading_status === "completed");
   const wantToReadBooks = filteredBooks.filter(book => book.reading_status === "want_to_read");
 
+  // Calculate reading statistics
+  const totalBooks = books.length;
+  const readingCount = readingBooks.length;
+  const completedCount = completedBooks.length;
+  const averageProgress = readingBooks.length > 0 
+    ? Math.round(readingBooks.reduce((sum, book) => sum + book.reading_progress, 0) / readingBooks.length)
+    : 0;
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -70,6 +80,33 @@ const Estante = () => {
         <p className="text-muted-foreground text-lg">
           Organize seus livros e acompanhe sua jornada literária
         </p>
+        
+        {/* Quick Stats */}
+        <div className="flex justify-center gap-6 mt-6 text-sm text-muted-foreground">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary">{totalBooks}</div>
+            <div>Total de livros</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary">{readingCount}</div>
+            <div>Lendo atualmente</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary">{completedCount}</div>
+            <div>Livros concluídos</div>
+          </div>
+          {readingCount > 0 && (
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">{averageProgress}%</div>
+              <div>Progresso médio</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Reading Goals */}
+      <div className="max-w-md mx-auto mb-8">
+        <ReadingGoals />
       </div>
 
       {/* Search and Filter */}
@@ -122,6 +159,7 @@ const Estante = () => {
                 currentPage={book.current_page || 0}
                 totalPages={book.pages || 0}
                 lastRead={book.last_read_at ? new Date(book.last_read_at).toLocaleDateString('pt-BR') : undefined}
+                description={book.description}
                 onUpdate={fetchBooks}
               />
             ))}
@@ -129,7 +167,10 @@ const Estante = () => {
           {readingBooks.length === 0 && (
             <div className="text-center py-12">
               <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum livro sendo lido no momento</p>
+              <p className="text-muted-foreground mb-4">Nenhum livro sendo lido no momento</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Comece sua jornada de leitura adicionando um livro!
+              </p>
               <AddBookDialog onBookAdded={fetchBooks} />
             </div>
           )}
@@ -148,6 +189,7 @@ const Estante = () => {
                 status={book.reading_status as any}
                 genre={book.genre}
                 rating={4}
+                description={book.description}
                 onUpdate={fetchBooks}
               />
             ))}
@@ -155,7 +197,10 @@ const Estante = () => {
           {completedBooks.length === 0 && (
             <div className="text-center py-12">
               <CheckCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum livro finalizado ainda</p>
+              <p className="text-muted-foreground mb-4">Nenhum livro finalizado ainda</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Complete um livro para vê-lo aqui e celebrar sua conquista!
+              </p>
             </div>
           )}
         </TabsContent>
@@ -172,6 +217,7 @@ const Estante = () => {
                 progress={book.reading_progress}
                 status={book.reading_status as any}
                 genre={book.genre}
+                description={book.description}
                 onUpdate={fetchBooks}
               />
             ))}
@@ -179,7 +225,10 @@ const Estante = () => {
           {wantToReadBooks.length === 0 && (
             <div className="text-center py-12">
               <Library className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Sua lista de desejos está vazia</p>
+              <p className="text-muted-foreground mb-4">Sua lista de desejos está vazia</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Adicione livros que você gostaria de ler no futuro!
+              </p>
               <AddBookDialog onBookAdded={fetchBooks} />
             </div>
           )}

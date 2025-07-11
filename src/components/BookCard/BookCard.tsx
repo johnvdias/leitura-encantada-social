@@ -1,8 +1,10 @@
+
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share, BookOpen, Star, Clock } from "lucide-react";
+import { Heart, MessageCircle, Share, BookOpen, Star, Clock, Edit3 } from "lucide-react";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
+import { EditBookDialog } from "@/components/EditBookDialog";
 import { ReadingStats } from "@/components/ReadingStats";
 import { useState } from "react";
 
@@ -18,6 +20,7 @@ interface BookCardProps {
   currentPage?: number;
   totalPages?: number;
   lastRead?: string;
+  description?: string;
   onUpdate?: () => void;
 }
 
@@ -33,13 +36,15 @@ const BookCard = ({
   currentPage = 0, 
   totalPages = 0,
   lastRead,
+  description,
   onUpdate 
 }: BookCardProps) => {
   const [showStats, setShowStats] = useState(false);
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'reading': return 'bg-primary/20 text-primary';
-      case 'completed': return 'bg-accent/20 text-accent-foreground';
+      case 'completed': return 'bg-green-500/20 text-green-700 dark:text-green-300';
       case 'want-to-read': return 'bg-secondary/20 text-secondary-foreground';
       default: return 'bg-muted/20 text-muted-foreground';
     }
@@ -53,6 +58,9 @@ const BookCard = ({
       default: return status;
     }
   };
+
+  const hasPages = totalPages && totalPages > 0;
+  const canUpdateProgress = status === 'reading';
 
   return (
     <div className="card-enchanted max-w-sm">
@@ -75,9 +83,25 @@ const BookCard = ({
               <h3 className="font-semibold text-foreground truncate mb-1">{title}</h3>
               <p className="text-sm text-muted-foreground truncate">por {author}</p>
             </div>
-            <Badge className={`ml-2 text-xs ${getStatusColor(status)}`}>
-              {getStatusText(status)}
-            </Badge>
+            <div className="flex items-center gap-2 ml-2">
+              <Badge className={`text-xs ${getStatusColor(status)}`}>
+                {getStatusText(status)}
+              </Badge>
+              <EditBookDialog
+                bookId={id}
+                title={title}
+                author={author}
+                pages={totalPages}
+                genre={genre}
+                description={description}
+                status={status}
+                onBookUpdated={onUpdate || (() => {})}
+              >
+                <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
+                  <Edit3 className="w-3 h-3" />
+                </Button>
+              </EditBookDialog>
+            </div>
           </div>
           
           <div className="space-y-3">
@@ -86,15 +110,22 @@ const BookCard = ({
               {genre}
             </Badge>
             
+            {/* Pages Info */}
+            {!hasPages && canUpdateProgress && (
+              <div className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded">
+                ⚠️ Adicione o total de páginas para acompanhar o progresso
+              </div>
+            )}
+            
             {/* Progress Bar */}
-            {status === 'reading' && (
+            {canUpdateProgress && (
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Progresso</span>
                   <span>{progress}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
-                {currentPage && totalPages && (
+                {hasPages && (
                   <p className="text-xs text-muted-foreground">
                     Página {currentPage} de {totalPages}
                   </p>
@@ -116,7 +147,7 @@ const BookCard = ({
             )}
             
             {/* Last Read */}
-            {lastRead && status === 'reading' && (
+            {lastRead && canUpdateProgress && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />
                 <span>Última leitura: {lastRead}</span>
@@ -140,7 +171,7 @@ const BookCard = ({
           </Button>
         </div>
         
-        {status === 'reading' && (
+        {canUpdateProgress && (
           <div className="flex flex-col gap-2">
             <UpdateProgressDialog
               bookId={id}
@@ -150,8 +181,12 @@ const BookCard = ({
               currentProgress={progress}
               onProgressUpdate={onUpdate || (() => {})}
             >
-              <Button size="sm" className="btn-enchanted text-xs px-3 py-1">
-                Atualizar Progresso
+              <Button 
+                size="sm" 
+                className="btn-enchanted text-xs px-3 py-1"
+                disabled={!hasPages}
+              >
+                {hasPages ? "Atualizar Progresso" : "Definir Páginas"}
               </Button>
             </UpdateProgressDialog>
             
@@ -167,7 +202,7 @@ const BookCard = ({
         )}
       </div>
       
-      {showStats && status === 'reading' && (
+      {showStats && canUpdateProgress && (
         <div className="mt-4">
           <ReadingStats bookId={id} />
         </div>
