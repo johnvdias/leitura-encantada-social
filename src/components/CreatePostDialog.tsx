@@ -1,0 +1,168 @@
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Sparkles, BookOpen, Heart, Lightbulb } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+
+interface CreatePostDialogProps {
+  onPostCreated?: () => void;
+  bookId?: string;
+}
+
+export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProps) => {
+  const [open, setOpen] = useState(false);
+  const [content, setContent] = useState("");
+  const [postType, setPostType] = useState<'general' | 'progress' | 'review' | 'recommendation'>('general');
+  const [visibility, setVisibility] = useState<'public' | 'friends' | 'private'>('public');
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleSubmit = async () => {
+    if (!user || !content.trim()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .insert({
+          user_id: user.id,
+          book_id: bookId || null,
+          content: content.trim(),
+          post_type: postType,
+          visibility
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Post compartilhado! ✨",
+        description: "Sua experiência foi compartilhada com a comunidade",
+      });
+
+      setContent("");
+      setPostType('general');
+      setVisibility('public');
+      setOpen(false);
+      onPostCreated?.();
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o post",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPostTypeIcon = (type: string) => {
+    switch (type) {
+      case 'progress': return BookOpen;
+      case 'review': return Heart;
+      case 'recommendation': return Lightbulb;
+      default: return Sparkles;
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="btn-enchanted flex-1">
+          <Sparkles className="w-4 h-4 mr-2" />
+          Compartilhar uma experiência de leitura
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            Compartilhar Experiência
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="post-type">Tipo de Post</Label>
+            <Select value={postType} onValueChange={(value: any) => setPostType(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Geral
+                  </div>
+                </SelectItem>
+                <SelectItem value="progress">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Progresso de Leitura
+                  </div>
+                </SelectItem>
+                <SelectItem value="review">
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4" />
+                    Resenha
+                  </div>
+                </SelectItem>
+                <SelectItem value="recommendation">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4" />
+                    Recomendação
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="visibility">Privacidade</Label>
+            <Select value={visibility} onValueChange={(value: any) => setVisibility(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Quem pode ver?" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">🌍 Público</SelectItem>
+                <SelectItem value="friends">👥 Apenas Amigas</SelectItem>
+                <SelectItem value="private">🔒 Privado (só eu)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="content">Compartilhe sua experiência</Label>
+            <Textarea
+              id="content"
+              placeholder="O que você está sentindo sobre este livro? Compartilhe suas emoções, descobertas ou reflexões..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={4}
+              className="resize-none"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSubmit}
+              disabled={loading || !content.trim()}
+              className="btn-enchanted flex-1"
+            >
+              {loading ? "Compartilhando..." : "Compartilhar"}
+            </Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

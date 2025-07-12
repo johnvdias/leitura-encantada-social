@@ -22,6 +22,9 @@ interface Book {
   description: string;
   current_page?: number;
   last_read_at?: string;
+  rating?: number;
+  personal_notes?: string;
+  tags?: string[];
 }
 
 const Estante = () => {
@@ -154,12 +157,15 @@ const Estante = () => {
                 author={book.author}
                 cover={book.cover_url || undefined}
                 progress={book.reading_progress}
-                status={book.reading_status as any}
+                status={book.reading_status}
                 genre={book.genre}
                 currentPage={book.current_page || 0}
                 totalPages={book.pages || 0}
                 lastRead={book.last_read_at ? new Date(book.last_read_at).toLocaleDateString('pt-BR') : undefined}
                 description={book.description}
+                rating={book.rating}
+                personalNotes={book.personal_notes}
+                tags={book.tags}
                 onUpdate={fetchBooks}
               />
             ))}
@@ -186,10 +192,12 @@ const Estante = () => {
                 author={book.author}
                 cover={book.cover_url || undefined}
                 progress={book.reading_progress}
-                status={book.reading_status as any}
+                status={book.reading_status}
                 genre={book.genre}
-                rating={4}
+                rating={book.rating}
                 description={book.description}
+                personalNotes={book.personal_notes}
+                tags={book.tags}
                 onUpdate={fetchBooks}
               />
             ))}
@@ -215,9 +223,12 @@ const Estante = () => {
                 author={book.author}
                 cover={book.cover_url || undefined}
                 progress={book.reading_progress}
-                status={book.reading_status as any}
+                status={book.reading_status}
                 genre={book.genre}
                 description={book.description}
+                rating={book.rating}
+                personalNotes={book.personal_notes}
+                tags={book.tags}
                 onUpdate={fetchBooks}
               />
             ))}

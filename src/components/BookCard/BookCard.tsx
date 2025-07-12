@@ -1,12 +1,18 @@
 
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share, BookOpen, Star, Clock, Edit3 } from "lucide-react";
-import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
-import { EditBookDialog } from "@/components/EditBookDialog";
-import { ReadingStats } from "@/components/ReadingStats";
 import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { BookOpen, Calendar, Pencil, Save, X, MessageSquare, Share2 } from "lucide-react";
+import { StarRating } from "@/components/StarRating";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { EditBookDialog } from "@/components/EditBookDialog";
+import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface BookCardProps {
   id: string;
@@ -20,27 +26,23 @@ interface BookCardProps {
   currentPage?: number;
   totalPages?: number;
   lastRead?: string;
-  description?: string;
+  description: string;
+  personalNotes?: string;
+  tags?: string[];
   onUpdate?: () => void;
 }
 
-const BookCard = ({ 
-  id,
-  title, 
-  author, 
-  cover, 
-  progress, 
-  status, 
-  genre, 
-  rating, 
-  currentPage = 0, 
-  totalPages = 0,
-  lastRead,
-  description,
-  onUpdate 
+const BookCard = ({
+  id, title, author, cover, progress, status, genre, rating,
+  currentPage, totalPages, lastRead, description, personalNotes, tags, onUpdate
 }: BookCardProps) => {
-  const [showStats, setShowStats] = useState(false);
-  
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notes, setNotes] = useState(personalNotes || "");
+  const [bookRating, setBookRating] = useState(rating || 0);
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'reading': return 'bg-primary/20 text-primary';
@@ -50,7 +52,7 @@ const BookCard = ({
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusLabel = (status: string) => {
     switch (status) {
       case 'reading': return 'Lendo';
       case 'completed': return 'Lido';
@@ -59,155 +61,194 @@ const BookCard = ({
     }
   };
 
-  const hasPages = totalPages && totalPages > 0;
-  const canUpdateProgress = status === 'reading';
+  const handleSaveNotes = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('books')
+        .update({ 
+          personal_notes: notes.trim() || null,
+          rating: bookRating || null
+        })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Notas salvas! 📝",
+        description: "Suas anotações pessoais foram atualizadas",
+      });
+
+      setIsEditingNotes(false);
+      onUpdate?.();
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as notas",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelEditNotes = () => {
+    setNotes(personalNotes || "");
+    setBookRating(rating || 0);
+    setIsEditingNotes(false);
+  };
 
   return (
-    <div className="card-enchanted max-w-sm">
-      <div className="flex gap-4">
-        {/* Book Cover */}
-        <div className="flex-shrink-0">
-          <div className="w-20 h-28 bg-gradient-enchanted rounded-lg shadow-md flex items-center justify-center overflow-hidden">
+    <Card className="card-enchanted hover-float">
+      <CardContent className="p-6">
+        <div className="flex gap-4">
+          <div className="w-16 h-24 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
             {cover ? (
               <img src={cover} alt={title} className="w-full h-full object-cover" />
             ) : (
-              <BookOpen className="w-8 h-8 text-white/80" />
-            )}
-          </div>
-        </div>
-        
-        {/* Book Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-2">
-            <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-foreground truncate mb-1">{title}</h3>
-              <p className="text-sm text-muted-foreground truncate">por {author}</p>
-            </div>
-            <div className="flex items-center gap-2 ml-2">
-              <Badge className={`text-xs ${getStatusColor(status)}`}>
-                {getStatusText(status)}
-              </Badge>
-              <EditBookDialog
-                bookId={id}
-                title={title}
-                author={author}
-                pages={totalPages}
-                genre={genre}
-                description={description}
-                status={status}
-                onBookUpdated={onUpdate || (() => {})}
-              >
-                <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
-                  <Edit3 className="w-3 h-3" />
-                </Button>
-              </EditBookDialog>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            {/* Genre */}
-            <Badge variant="outline" className="text-xs">
-              {genre}
-            </Badge>
-            
-            {/* Pages Info */}
-            {!hasPages && canUpdateProgress && (
-              <div className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded">
-                ⚠️ Adicione o total de páginas para acompanhar o progresso
+              <div className="w-full h-full flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-muted-foreground" />
               </div>
             )}
-            
-            {/* Progress Bar */}
-            {canUpdateProgress && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Progresso</span>
-                  <span>{progress}%</span>
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-lg leading-tight truncate" title={title}>
+                  {title}
+                </h3>
+                <p className="text-muted-foreground text-sm mb-2">por {author}</p>
+              </div>
+              <Badge className={getStatusColor(status)}>
+                {getStatusLabel(status)}
+              </Badge>
+            </div>
+
+            {/* Rating */}
+            <div className="flex items-center gap-2 mb-3">
+              <StarRating 
+                rating={bookRating} 
+                onRatingChange={setBookRating}
+                readonly={!isEditingNotes}
+                size="sm"
+              />
+              {bookRating > 0 && (
+                <span className="text-sm text-muted-foreground">({bookRating}/5)</span>
+              )}
+            </div>
+
+            {/* Progress */}
+            {status === 'reading' && (
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Progresso</span>
+                  <span className="text-sm text-muted-foreground">{progress}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
-                {hasPages && (
-                  <p className="text-xs text-muted-foreground">
+                {currentPage && totalPages && (
+                  <p className="text-xs text-muted-foreground mt-1">
                     Página {currentPage} de {totalPages}
                   </p>
                 )}
+                {lastRead && (
+                  <div className="flex items-center gap-1 mt-2">
+                    <Calendar className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      Última leitura: {lastRead}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
-            
-            {/* Rating */}
-            {rating && status === 'completed' && (
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    className={`w-3 h-3 ${i < rating ? 'text-yellow-400 fill-current' : 'text-muted-foreground'}`} 
-                  />
+
+            {/* Tags */}
+            {tags && tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {tags.map((tag, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {tag}
+                  </Badge>
                 ))}
-                <span className="text-xs text-muted-foreground ml-1">{rating}/5</span>
               </div>
             )}
-            
-            {/* Last Read */}
-            {lastRead && canUpdateProgress && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" />
-                <span>Última leitura: {lastRead}</span>
+
+            {/* Personal Notes */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium flex items-center gap-1">
+                  <MessageSquare className="w-4 h-4" />
+                  Minhas Notas
+                </span>
+                {!isEditingNotes ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditingNotes(true)}
+                  >
+                    <Pencil className="w-3 h-3 mr-1" />
+                    Editar
+                  </Button>
+                ) : (
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSaveNotes}
+                      disabled={loading}
+                    >
+                      <Save className="w-3 h-3 mr-1" />
+                      Salvar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={cancelEditNotes}
+                      disabled={loading}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
+              
+              {isEditingNotes ? (
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Suas reflexões, citações favoritas ou anotações sobre este livro..."
+                  className="text-sm resize-none"
+                  rows={3}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground bg-muted/30 rounded p-2 min-h-[60px]">
+                  {personalNotes || "Clique em 'Editar' para adicionar suas anotações pessoais sobre este livro."}
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              {status === 'reading' && (
+                <UpdateProgressDialog 
+                  bookId={id}
+                  currentProgress={progress}
+                  currentPage={currentPage || 0}
+                  totalPages={totalPages || 0}
+                  onUpdate={onUpdate}
+                />
+              )}
+              <EditBookDialog bookId={id} onUpdate={onUpdate} />
+              <CreatePostDialog bookId={id} />
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Actions */}
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="p-2 hover-glow">
-            <Heart className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="p-2 hover-glow">
-            <MessageCircle className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="p-2 hover-glow">
-            <Share className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        {canUpdateProgress && (
-          <div className="flex flex-col gap-2">
-            <UpdateProgressDialog
-              bookId={id}
-              title={title}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              currentProgress={progress}
-              onProgressUpdate={onUpdate || (() => {})}
-            >
-              <Button 
-                size="sm" 
-                className="btn-enchanted text-xs px-3 py-1"
-                disabled={!hasPages}
-              >
-                {hasPages ? "Atualizar Progresso" : "Definir Páginas"}
-              </Button>
-            </UpdateProgressDialog>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-xs px-3 py-1" 
-              onClick={() => setShowStats(!showStats)}
-            >
-              {showStats ? "Ocultar" : "Ver"} Stats
-            </Button>
-          </div>
-        )}
-      </div>
-      
-      {showStats && canUpdateProgress && (
-        <div className="mt-4">
-          <ReadingStats bookId={id} />
-        </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

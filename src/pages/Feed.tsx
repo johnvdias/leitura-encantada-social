@@ -1,116 +1,28 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, MessageCircle, Share, BookOpen, Star, Users, Sparkles } from "lucide-react";
+import { Heart, Users, BookOpen, Loader2 } from "lucide-react";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { PostCard } from "@/components/PostCard";
+import { useFeed } from "@/hooks/useFeed";
 
 const Feed = () => {
   const [activeTab, setActiveTab] = useState("todas");
+  const { posts, loading, refetch } = useFeed();
 
-  // Mock data for feed posts
-  const mockPosts = [
-    {
-      id: 1,
-      author: "Marina Silva",
-      avatar: "",
-      timestamp: "2 horas atrás",
-      book: "Circe",
-      bookAuthor: "Madeline Miller",
-      content: "Acabei de terminar esse livro e estou completamente apaixonada! A forma como a autora retrata a mitologia grega é simplesmente mágica. Circe é uma personagem tão complexa e fascinante. 🌙✨",
-      likes: 15,
-      comments: 5,
-      emotion: "❤️",
-      genre: "Fantasia"
-    },
-    {
-      id: 2,
-      author: "Ana Beatriz",
-      avatar: "",
-      timestamp: "5 horas atrás",
-      book: "Orgulho e Preconceito",
-      bookAuthor: "Jane Austen",
-      content: "Relendo pela terceira vez e continuo descobrindo detalhes novos. O Sr. Darcy sempre me surpreende! Alguém mais aqui é team Darcy? 💕",
-      likes: 23,
-      comments: 8,
-      emotion: "😍",
-      genre: "Romance",
-      isReread: true
-    },
-    {
-      id: 3,
-      author: "Luiza Costa",
-      avatar: "",
-      timestamp: "1 dia atrás",
-      book: "A Garota no Trem",
-      bookAuthor: "Paula Hawkins",
-      content: "Gente, que reviravolta! Não consegui parar de ler. Terminei em uma sentada só. Alguém tem alguma recomendação parecida? 📚",
-      likes: 12,
-      comments: 7,
-      emotion: "😱",
-      genre: "Suspense"
-    }
-  ];
-
-  const PostCard = ({ post }: { post: any }) => (
-    <Card className="card-enchanted mb-6">
-      <CardContent className="p-6">
-        {/* Author Info */}
-        <div className="flex items-center gap-3 mb-4">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={post.avatar} />
-            <AvatarFallback className="bg-primary/20 text-primary">
-              {post.author.split(' ').map((n: string) => n[0]).join('')}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <p className="font-medium">{post.author}</p>
-              {post.isReread && (
-                <span className="text-xs bg-accent/20 text-accent-foreground px-2 py-1 rounded-full">
-                  Releitura
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">{post.timestamp}</p>
-          </div>
-          <div className="text-2xl">{post.emotion}</div>
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p>Carregando feed...</p>
         </div>
-
-        {/* Book Info */}
-        <div className="bg-muted/30 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <span className="font-medium text-primary">{post.book}</span>
-            <span className="text-sm text-muted-foreground">por {post.bookAuthor}</span>
-          </div>
-          <span className="text-xs bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-full">
-            {post.genre}
-          </span>
-        </div>
-
-        {/* Content */}
-        <p className="mb-4 leading-relaxed">{post.content}</p>
-
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-border">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-red-500">
-              <Heart className="w-4 h-4 mr-1" />
-              {post.likes}
-            </Button>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-              <MessageCircle className="w-4 h-4 mr-1" />
-              {post.comments}
-            </Button>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-              <Share className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -134,10 +46,7 @@ const Feed = () => {
                   EU
                 </AvatarFallback>
               </Avatar>
-              <Button className="btn-enchanted flex-1">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Compartilhar uma experiência de leitura
-              </Button>
+              <CreatePostDialog onPostCreated={refetch} />
             </div>
           </CardContent>
         </Card>
@@ -162,9 +71,25 @@ const Feed = () => {
 
         <TabsContent value="todas">
           <div className="space-y-6">
-            {mockPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
+            {posts.length > 0 ? (
+              posts.map((post) => (
+                <PostCard 
+                  key={post.id} 
+                  post={post}
+                  author={post.profiles}
+                  book={post.books}
+                  onUpdate={refetch}
+                />
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  Nenhum post ainda. Seja a primeira a compartilhar!
+                </p>
+                <CreatePostDialog onPostCreated={refetch} />
+              </div>
+            )}
           </div>
         </TabsContent>
 
