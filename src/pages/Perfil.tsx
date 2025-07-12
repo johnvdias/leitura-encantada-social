@@ -1,391 +1,284 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  BookOpen, 
-  Calendar, 
-  Heart, 
-  Star, 
-  Trophy, 
-  Target, 
-  Clock,
-  Users,
-  Sparkles,
-  Crown,
-  Award,
-  Edit,
-  Save,
-  X
-} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BookOpen, Target, Trophy, Users, Calendar, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAchievements } from "@/hooks/useAchievements";
+import { FriendsSection } from "@/components/FriendsSection";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const Perfil = () => {
-  const { user, profile, updateProfile } = useAuth();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("estatisticas");
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState({
-    display_name: '',
-    bio: '',
-    reading_goal: 12
+  const { user, profile } = useAuth();
+  const { achievements, checkAndUnlockAchievements } = useAchievements();
+  const [stats, setStats] = useState({
+    totalBooks: 0,
+    completedBooks: 0,
+    currentlyReading: 0,
+    readingGoal: 12,
+    readingProgress: 0
   });
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile) {
-      setEditedProfile({
-        display_name: profile.display_name || '',
-        bio: profile.bio || '',
-        reading_goal: profile.reading_goal || 12
-      });
+    if (user) {
+      fetchUserStats();
+      fetchRecentActivity();
+      checkAndUnlockAchievements();
     }
-  }, [profile]);
+  }, [user]);
 
-  const handleSave = async () => {
-    const { error } = await updateProfile(editedProfile);
-    
-    if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o perfil",
-        variant: "destructive",
+  const fetchUserStats = async () => {
+    if (!user) return;
+
+    try {
+      const { data: books, error } = await supabase
+        .from('books')
+        .select('reading_status')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const totalBooks = books?.length || 0;
+      const completedBooks = books?.filter(b => b.reading_status === 'completed').length || 0;
+      const currentlyReading = books?.filter(b => b.reading_status === 'reading').length || 0;
+      const readingGoal = profile?.reading_goal || 12;
+      const readingProgress = Math.round((completedBooks / readingGoal) * 100);
+
+      setStats({
+        totalBooks,
+        completedBooks,
+        currentlyReading,
+        readingGoal,
+        readingProgress: Math.min(readingProgress, 100)
       });
-    } else {
-      toast({
-        title: "Perfil atualizado! ✨",
-        description: "Suas informações foram salvas com sucesso",
-      });
-      setIsEditing(false);
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
     }
   };
 
-  const handleCancel = () => {
-    if (profile) {
-      setEditedProfile({
-        display_name: profile.display_name || '',
-        bio: profile.bio || '',
-        reading_goal: profile.reading_goal || 12
-      });
+  const fetchRecentActivity = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('reading_history')
+        .select(`
+          *,
+          books (title, author)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setRecentActivity(data || []);
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+    } finally {
+      setLoading(false);
     }
-    setIsEditing(false);
   };
 
-  // Mock user data
-  const userData = {
-    name: profile?.display_name || user?.email?.split('@')[0] || "Leitora",
-    username: `@${profile?.display_name?.toLowerCase().replace(/\s+/g, '_') || 'leitora'}`,
-    bio: profile?.bio || "Apaixonada por livros! Sempre descobrindo novas histórias. 📚✨",
-    avatar: profile?.avatar_url || "",
-    joinDate: "Janeiro 2024",
-    stats: {
-      booksRead: 47,
-      currentlyReading: 3,
-      wantToRead: 23,
-      totalPages: 12450,
-      avgRating: 4.2,
-      streak: 15,
-      yearGoal: 50,
-      followers: 156,
-      following: 89
-    },
-    badges: [
-      { name: "Rainha Literária", icon: "👑", color: "bg-yellow-100 text-yellow-800" },
-      { name: "Fada Leitora", icon: "🧚‍♀️", color: "bg-purple-100 text-purple-800" },
-      { name: "Maratona de Leitura", icon: "🏃‍♀️", color: "bg-green-100 text-green-800" },
-      { name: "Crítica Literária", icon: "⭐", color: "bg-blue-100 text-blue-800" }
-    ],
-    favoriteGenres: [
-      { name: "Romance", count: 18, percentage: 38 },
-      { name: "Fantasia", count: 12, percentage: 26 },
-      { name: "Ficção", count: 8, percentage: 17 },
-      { name: "Suspense", count: 6, percentage: 13 },
-      { name: "Outros", count: 3, percentage: 6 }
-    ],
-    recentActivity: [
-      { action: "Finalizou", book: "Circe", date: "Hoje" },
-      { action: "Iniciou", book: "A Canção de Aquiles", date: "Ontem" },
-      { action: "Avaliou", book: "Orgulho e Preconceito", date: "2 dias atrás" }
-    ]
-  };
-
-  const StatCard = ({ title, value, icon, subtitle }: any) => (
-    <Card className="card-enchanted text-center">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-center mb-2">
-          {icon}
-        </div>
-        <div className="text-2xl font-bold text-primary mb-1">{value}</div>
-        <div className="text-sm font-medium text-foreground">{title}</div>
-        {subtitle && (
-          <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>
-        )}
-      </CardContent>
-    </Card>
-  );
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Carregando perfil...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Profile Header */}
-      <div className="text-center mb-8">
-        <Avatar className="h-24 w-24 mx-auto mb-4 ring-4 ring-primary/20">
-          <AvatarImage src={userData.avatar} />
-          <AvatarFallback className="bg-gradient-enchanted text-white text-2xl">
-            {userData.name.split(' ').map(n => n[0]).join('')}
-          </AvatarFallback>
-        </Avatar>
-        
-        <h1 className="text-3xl font-enchanted text-enchanted mb-2">
-          {userData.name}
-        </h1>
-        <p className="text-muted-foreground mb-2">{userData.username}</p>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
-          {userData.bio}
-        </p>
-        
-        <div className="flex items-center justify-center gap-6 mb-6">
-          <div className="text-center">
-            <div className="font-bold text-lg">{userData.stats.followers}</div>
-            <div className="text-sm text-muted-foreground">Seguidores</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold text-lg">{userData.stats.following}</div>
-            <div className="text-sm text-muted-foreground">Seguindo</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold text-lg">{userData.stats.booksRead}</div>
-            <div className="text-sm text-muted-foreground">Livros Lidos</div>
-          </div>
-        </div>
-
-        {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)} className="btn-enchanted">
-            <Edit className="w-4 h-4 mr-2" />
-            Editar Perfil
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button onClick={handleSave} className="btn-enchanted">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar
-            </Button>
-            <Button onClick={handleCancel} variant="outline">
-              <X className="w-4 h-4 mr-2" />
-              Cancelar
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Edit Profile Modal */}
-      {isEditing && (
-        <Card className="card-enchanted mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Edit className="w-5 h-5 text-primary" />
-              Editar Perfil
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="display_name">Nome de Leitora</Label>
-                <Input
-                  id="display_name"
-                  value={editedProfile.display_name}
-                  onChange={(e) => setEditedProfile({...editedProfile, display_name: e.target.value})}
-                  placeholder="Como as outras leitoras te conhecerão"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reading_goal">Meta Anual de Livros</Label>
-                <Input
-                  id="reading_goal"
-                  type="number"
-                  value={editedProfile.reading_goal}
-                  onChange={(e) => setEditedProfile({...editedProfile, reading_goal: parseInt(e.target.value) || 12})}
-                  placeholder="12"
-                />
+      <Card className="card-enchanted mb-8">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-6">
+            <Avatar className="w-24 h-24">
+              <AvatarImage src={profile?.avatar_url} />
+              <AvatarFallback className="text-2xl">
+                {profile?.display_name?.[0] || user?.email?.[0] || '?'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold">
+                {profile?.display_name || 'Leitor Anônimo'}
+              </h1>
+              <p className="text-muted-foreground mb-4">
+                {profile?.bio || 'Apaixonado por livros e aventuras literárias'}
+              </p>
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-1">
+                  <BookOpen className="h-4 w-4" />
+                  <span>{stats.completedBooks} livros lidos</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Trophy className="h-4 w-4" />
+                  <span>{achievements.length} conquistas</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Target className="h-4 w-4" />
+                  <span>Meta: {stats.readingGoal} livros/ano</span>
+                </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={editedProfile.bio}
-                onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})}
-                placeholder="Conte um pouco sobre você e seus gostos literários..."
-                rows={3}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardContent>
+      </Card>
 
-      {!isEditing && (
-        <>
-          {/* Badges */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4 text-center">
-              Conquistas e Selos
-            </h3>
-            <div className="flex flex-wrap justify-center gap-3">
-              {userData.badges.map((badge, index) => (
-                <Badge key={index} className={`${badge.color} px-3 py-2 text-sm`}>
-                  <span className="mr-2">{badge.icon}</span>
-                  {badge.name}
-                </Badge>
+      <Tabs defaultValue="estatisticas" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
+          <TabsTrigger value="conquistas">Conquistas</TabsTrigger>
+          <TabsTrigger value="amigos">Amigos</TabsTrigger>
+          <TabsTrigger value="atividade">Atividade</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="estatisticas" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="card-enchanted">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Livros</CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalBooks}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.currentlyReading} lendo atualmente
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-enchanted">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Livros Concluídos</CardTitle>
+                <Trophy className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.completedBooks}</div>
+                <p className="text-xs text-muted-foreground">
+                  Este ano
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-enchanted">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Meta Anual</CardTitle>
+                <Target className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.readingProgress}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.completedBooks} de {stats.readingGoal} livros
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-enchanted">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Conquistas</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{achievements.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Desbloqueadas
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="conquistas" className="space-y-6">
+          {achievements.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-lg font-semibold mb-2">Nenhuma conquista ainda</h3>
+                <p className="text-muted-foreground">
+                  Continue lendo para desbloquear suas primeiras conquistas!
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {achievements.map((achievement) => (
+                <Card key={achievement.id} className="card-enchanted">
+                  <CardContent className="pt-6">
+                    <div className="text-center space-y-2">
+                      <div className="text-4xl">🏆</div>
+                      <h3 className="font-semibold">{achievement.achievement_name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {achievement.description}
+                      </p>
+                      <Badge variant="secondary" className="text-xs">
+                        {formatDistanceToNow(new Date(achievement.earned_at), {
+                          addSuffix: true,
+                          locale: ptBR
+                        })}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </div>
+          )}
+        </TabsContent>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto mb-8">
-              <TabsTrigger value="estatisticas" className="flex items-center gap-2">
-                <Trophy className="w-4 h-4" />
-                Estatísticas
-              </TabsTrigger>
-              <TabsTrigger value="metas" className="flex items-center gap-2">
-                <Target className="w-4 h-4" />
-                Metas
-              </TabsTrigger>
-              <TabsTrigger value="atividade" className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Atividade
-              </TabsTrigger>
-            </TabsList>
+        <TabsContent value="amigos">
+          <FriendsSection />
+        </TabsContent>
 
-            <TabsContent value="estatisticas">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-                <StatCard
-                  title="Livros Lidos"
-                  value={userData.stats.booksRead}
-                  icon={<BookOpen className="w-6 h-6 text-primary" />}
-                  subtitle="Este ano"
-                />
-                <StatCard
-                  title="Páginas Lidas"
-                  value={userData.stats.totalPages.toLocaleString()}
-                  icon={<Star className="w-6 h-6 text-primary" />}
-                  subtitle="Total"
-                />
-                <StatCard
-                  title="Avaliação Média"
-                  value={userData.stats.avgRating}
-                  icon={<Heart className="w-6 h-6 text-primary" />}
-                  subtitle="De 5 estrelas"
-                />
-                <StatCard
-                  title="Sequência de Leitura"
-                  value={`${userData.stats.streak} dias`}
-                  icon={<Award className="w-6 h-6 text-primary" />}
-                  subtitle="Recorde atual"
-                />
-              </div>
-
-              {/* Favorite Genres */}
-              <Card className="card-enchanted">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-primary" />
-                    Gêneros Favoritos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {userData.favoriteGenres.map((genre, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">{genre.name}</span>
-                          <span className="text-sm text-muted-foreground">
-                            {genre.count} livros ({genre.percentage}%)
-                          </span>
-                        </div>
-                        <Progress value={genre.percentage} className="h-2" />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="metas">
-              <Card className="card-enchanted">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5 text-primary" />
-                    Meta Anual de Leitura
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center mb-6">
-                    <div className="text-4xl font-bold text-primary mb-2">
-                      {userData.stats.booksRead} / {editedProfile.reading_goal}
+        <TabsContent value="atividade" className="space-y-6">
+          {recentActivity.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <Calendar className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-lg font-semibold mb-2">Nenhuma atividade recente</h3>
+                <p className="text-muted-foreground">
+                  Comece a ler e atualize seu progresso para ver suas atividades aqui!
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Atividade Recente</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-center gap-4 p-3 border rounded-lg">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <BookOpen className="h-5 w-5 text-primary" />
                     </div>
-                    <p className="text-muted-foreground">
-                      Livros lidos em 2024
-                    </p>
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        Leu {activity.pages_read} páginas de "{activity.books?.title}"
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Progresso: {activity.previous_progress}% → {activity.new_progress}%
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(activity.created_at), {
+                          addSuffix: true,
+                          locale: ptBR
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  
-                  <Progress 
-                    value={(userData.stats.booksRead / editedProfile.reading_goal) * 100} 
-                    className="h-4 mb-4" 
-                  />
-                  
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Você está a {editedProfile.reading_goal - userData.stats.booksRead} livros 
-                      da sua meta! Continue assim! 🌟
-                    </p>
-                    <Button onClick={() => setIsEditing(true)} className="btn-enchanted mt-4">
-                      Ajustar Meta
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="atividade">
-              <Card className="card-enchanted">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-primary" />
-                    Atividade Recente
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {userData.recentActivity.map((activity, index) => (
-                      <div key={index} className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
-                        <div className="flex-1">
-                          <p className="font-medium">
-                            {activity.action} "{activity.book}"
-                          </p>
-                          <p className="text-sm text-muted-foreground">{activity.date}</p>
-                        </div>
-                        <BookOpen className="w-5 h-5 text-primary" />
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="text-center mt-6">
-                    <Button variant="outline" className="w-full">
-                      Ver Histórico Completo
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </>
-      )}
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

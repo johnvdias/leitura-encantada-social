@@ -1,0 +1,105 @@
+
+import { useState } from "react";
+import { Bell, Check, CheckCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/useNotifications";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+export function NotificationDropdown() {
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
+  const [open, setOpen] = useState(false);
+
+  const handleMarkAsRead = async (notificationId: string) => {
+    await markAsRead(notificationId);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+  };
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuLabel className="flex items-center justify-between">
+          <span>Notificações</span>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleMarkAllAsRead}
+              className="h-auto p-1"
+            >
+              <CheckCheck className="h-4 w-4" />
+            </Button>
+          )}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        
+        {loading ? (
+          <div className="p-4 text-center text-muted-foreground">
+            Carregando...
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="p-4 text-center text-muted-foreground">
+            Nenhuma notificação
+          </div>
+        ) : (
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.map((notification) => (
+              <DropdownMenuItem
+                key={notification.id}
+                className={`flex items-start gap-2 p-3 cursor-pointer ${
+                  !notification.is_read ? 'bg-primary/5' : ''
+                }`}
+                onClick={() => handleMarkAsRead(notification.id)}
+              >
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{notification.title}</span>
+                    {!notification.is_read && (
+                      <div className="w-2 h-2 bg-primary rounded-full" />
+                    )}
+                  </div>
+                  {notification.content && (
+                    <p className="text-sm text-muted-foreground">
+                      {notification.content}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(notification.created_at), {
+                      addSuffix: true,
+                      locale: ptBR
+                    })}
+                  </p>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

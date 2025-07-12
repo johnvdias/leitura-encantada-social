@@ -1,201 +1,184 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, BookOpen, Plus, Star, Calendar, MessageCircle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, BookOpen, Crown, Calendar } from "lucide-react";
+import { CreateClubDialog } from "@/components/CreateClubDialog";
 import { useClubs } from "@/hooks/useClubs";
-import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const Clubes = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const { clubs, myClubs, loading, joinClub } = useClubs();
-  const { toast } = useToast();
-
-  const handleJoinClub = async (clubId: string) => {
-    try {
-      await joinClub(clubId);
-      toast({
-        title: "Bem-vinda ao clube! 🎉",
-        description: "Você agora faz parte desta comunidade de leitura",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível participar do clube",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const filteredClubs = clubs.filter(club =>
-    club.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    club.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const availableClubs = filteredClubs.filter(club => !club.isJoined);
-
-  const ClubCard = ({ club }: { club: any }) => (
-    <Card className="card-enchanted hover-float">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg mb-2 flex items-center gap-2">
-              {club.name}
-              {club.is_private && <span className="text-xs">🔒</span>}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mb-3">
-              {club.description || "Descrição não disponível"}
-            </p>
-          </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        {/* Current Book */}
-        {club.books && (
-          <div className="bg-muted/30 rounded-lg p-4 mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <BookOpen className="w-4 h-4 text-primary" />
-              <span className="font-medium text-primary">{club.books.title}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">por {club.books.author}</p>
-          </div>
-        )}
-
-        {/* Club Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm">{club.memberCount} membros</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm">Criado recentemente</span>
-          </div>
-        </div>
-
-        {/* Moderator */}
-        <div className="flex items-center gap-2 mb-4">
-          <Avatar className="h-6 w-6">
-            <AvatarFallback className="bg-secondary/20 text-secondary-foreground text-xs">
-              {club.moderator.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-sm text-muted-foreground">
-            Moderado por {club.moderator}
-          </span>
-        </div>
-
-        {/* Action Button */}
-        {club.isJoined ? (
-          <Button className="w-full btn-enchanted">
-            Acessar Clube
-          </Button>
-        ) : (
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={() => handleJoinClub(club.id)}
-          >
-            Participar
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
+  const { clubs, myClubs, loading, joinClub, refetch } = useClubs();
 
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p>Carregando clubes...</p>
-        </div>
+        <div className="text-center">Carregando clubes...</div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-enchanted text-enchanted mb-4">
-          Clubes de Leitura
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Conecte-se com leitoras que compartilham seus gostos literários
-        </p>
-      </div>
-
-      {/* Search and Create */}
-      <div className="flex gap-4 mb-8 max-w-2xl mx-auto">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Pesquisar clubes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Clubes de Leitura
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Conecte-se com outros leitores e compartilhe experiências literárias
+          </p>
         </div>
-        <Button className="btn-enchanted">
-          <Plus className="w-4 h-4 mr-2" />
-          Criar Clube
-        </Button>
+        <CreateClubDialog onClubCreated={refetch} />
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="meus-clubes" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-8">
-          <TabsTrigger value="meus-clubes" className="flex items-center gap-2">
-            <Star className="w-4 h-4" />
-            Meus Clubes ({myClubs.length})
-          </TabsTrigger>
-          <TabsTrigger value="explorar" className="flex items-center gap-2">
-            <Search className="w-4 h-4" />
-            Explorar
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="meus-clubes">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* My Clubs */}
+      {myClubs.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Crown className="h-5 w-5 text-primary" />
+            Meus Clubes
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {myClubs.map((club) => (
-              <ClubCard key={club.id} club={club} />
-            ))}
-          </div>
-          {myClubs.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">
-                Você ainda não participa de nenhum clube
-              </p>
-              <Button className="btn-enchanted">
-                Explorar Clubes
-              </Button>
-            </div>
-          )}
-        </TabsContent>
+              <Card key={club.id} className="card-enchanted hover-float">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="truncate">{club.name}</span>
+                    {club.is_private && (
+                      <Badge variant="outline">Privado</Badge>
+                    )}
+                  </CardTitle>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      {club.memberCount} membros
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {formatDistanceToNow(new Date(club.created_at), {
+                        addSuffix: true,
+                        locale: ptBR
+                      })}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {club.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {club.description}
+                    </p>
+                  )}
+                  
+                  {club.books && (
+                    <div className="flex items-center gap-2 p-2 bg-muted/30 rounded">
+                      <BookOpen className="h-4 w-4 text-primary" />
+                      <div className="text-sm">
+                        <span className="font-medium">{club.books.title}</span>
+                        <span className="text-muted-foreground"> por {club.books.author}</span>
+                      </div>
+                    </div>
+                  )}
 
-        <TabsContent value="explorar">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {availableClubs.map((club) => (
-              <ClubCard key={club.id} club={club} />
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-sm text-muted-foreground">
+                      Moderador: {club.moderator}
+                    </span>
+                    <Badge className="bg-green-500/20 text-green-700 dark:text-green-300">
+                      Membro
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-          {availableClubs.length === 0 && (
-            <div className="text-center py-12">
-              <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+        </div>
+      )}
+
+      {/* All Clubs */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" />
+          Todos os Clubes
+        </h2>
+        {clubs.length === 0 ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+              <h3 className="text-lg font-semibold mb-2">Nenhum clube encontrado</h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm ? "Nenhum clube encontrado" : "Todos os clubes disponíveis já foram explorados"}
+                Seja o primeiro a criar um clube de leitura!
               </p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+              <CreateClubDialog onClubCreated={refetch} />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {clubs.map((club) => (
+              <Card key={club.id} className="card-enchanted hover-float">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="truncate">{club.name}</span>
+                    {club.is_private && (
+                      <Badge variant="outline">Privado</Badge>
+                    )}
+                  </CardTitle>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      {club.memberCount} membros
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {formatDistanceToNow(new Date(club.created_at), {
+                        addSuffix: true,
+                        locale: ptBR
+                      })}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {club.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {club.description}
+                    </p>
+                  )}
+                  
+                  {club.books && (
+                    <div className="flex items-center gap-2 p-2 bg-muted/30 rounded">
+                      <BookOpen className="h-4 w-4 text-primary" />
+                      <div className="text-sm">
+                        <span className="font-medium">{club.books.title}</span>
+                        <span className="text-muted-foreground"> por {club.books.author}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-sm text-muted-foreground">
+                      Moderador: {club.moderator}
+                    </span>
+                    {club.isJoined ? (
+                      <Badge className="bg-green-500/20 text-green-700 dark:text-green-300">
+                        Membro
+                      </Badge>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => joinClub(club.id)}
+                        disabled={club.is_private}
+                      >
+                        {club.is_private ? "Apenas por convite" : "Entrar"}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
