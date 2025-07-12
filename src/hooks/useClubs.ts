@@ -15,14 +15,11 @@ export const useClubs = () => {
     try {
       setLoading(true);
       
-      // Fetch all clubs
+      // Fetch all clubs with current book info and member count
       const { data: clubsData, error: clubsError } = await supabase
         .from('clubs')
         .select(`
           *,
-          profiles!clubs_creator_id_fkey (
-            display_name
-          ),
           books (
             title,
             author
@@ -43,13 +40,28 @@ export const useClubs = () => {
 
       if (membershipsError) throw membershipsError;
 
+      // Fetch creator profiles separately
+      const creatorIds = clubsData?.map(club => club.creator_id) || [];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', creatorIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Continue without profile data if profiles table doesn't exist
+      }
+
       const memberClubIds = new Set(membershipsData?.map(m => m.club_id) || []);
+      const profilesMap = new Map(
+        profilesData?.map(p => [p.user_id, p.display_name]) || []
+      );
       
       const processedClubs = (clubsData || []).map(club => ({
         ...club,
         memberCount: club.club_members?.length || 0,
         isJoined: memberClubIds.has(club.id),
-        moderator: club.profiles?.display_name || "Moderador"
+        moderator: profilesMap.get(club.creator_id) || "Moderador"
       }));
 
       setClubs(processedClubs);

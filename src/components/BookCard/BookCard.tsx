@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -236,13 +235,27 @@ const BookCard = ({
               {status === 'reading' && (
                 <UpdateProgressDialog 
                   bookId={id}
-                  currentProgress={progress}
+                  title={title}
                   currentPage={currentPage || 0}
                   totalPages={totalPages || 0}
-                  onUpdate={onUpdate}
-                />
+                  currentProgress={progress}
+                  onProgressUpdate={onUpdate || (() => {})}
+                >
+                  <Button variant="outline" size="sm">
+                    📖 Atualizar Progresso
+                  </Button>
+                </UpdateProgressDialog>
               )}
-              <EditBookDialog bookId={id} onUpdate={onUpdate} />
+              <EditBookDialog 
+                bookId={id}
+                title={title}
+                author={author}
+                pages={totalPages}
+                genre={genre}
+                description={description}
+                status={status}
+                onBookUpdated={onUpdate || (() => {})}
+              />
               <CreatePostDialog bookId={id} />
             </div>
           </div>
