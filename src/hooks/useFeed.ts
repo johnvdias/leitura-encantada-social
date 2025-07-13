@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +17,7 @@ export const useFeed = () => {
         .from('posts')
         .select(`
           *,
-          profiles!posts_user_id_fkey(
+          profiles!inner(
             display_name,
             avatar_url
           ),
@@ -28,6 +26,7 @@ export const useFeed = () => {
             author
           )
         `)
+        .eq('profiles.user_id', supabase.rpc('auth.uid'))
         .order('created_at', { ascending: false })
         .limit(20);
 
