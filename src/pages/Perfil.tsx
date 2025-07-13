@@ -24,6 +24,7 @@ import { ptBR } from "date-fns/locale";
 const Perfil = () => {
   const { user, profile } = useAuth();
   const { achievements, checkAndUnlockAchievements } = useAchievements();
+  const location = useLocation();
   const [stats, setStats] = useState({
     totalBooks: 0,
     completedBooks: 0,
@@ -33,6 +34,12 @@ const Perfil = () => {
   });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Definir aba ativa baseada no state da navegação
+  const [defaultTab] = useState(() => {
+    const state = location.state as { activeTab?: string } | null;
+    return state?.activeTab || "estatisticas";
+  });
 
   useEffect(() => {
     if (user) {
