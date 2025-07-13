@@ -22,8 +22,8 @@ export const useFriendships = () => {
         .from('friendships')
         .select(`
           *,
-          requester:profiles!friendships_requester_id_fkey (display_name, avatar_url, user_id),
-          addressee:profiles!friendships_addressee_id_fkey (display_name, avatar_url, user_id)
+          requester:profiles!inner (display_name, avatar_url, user_id),
+          addressee:profiles!inner (display_name, avatar_url, user_id)
         `)
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
         .eq('status', 'accepted');
@@ -35,7 +35,7 @@ export const useFriendships = () => {
         .from('friendships')
         .select(`
           *,
-          requester:profiles!friendships_requester_id_fkey (display_name, avatar_url, user_id)
+          requester:profiles!inner (display_name, avatar_url, user_id)
         `)
         .eq('addressee_id', user.id)
         .eq('status', 'pending');
@@ -47,7 +47,7 @@ export const useFriendships = () => {
         .from('friendships')
         .select(`
           *,
-          addressee:profiles!friendships_addressee_id_fkey (display_name, avatar_url, user_id)
+          addressee:profiles!inner (display_name, avatar_url, user_id)
         `)
         .eq('requester_id', user.id)
         .eq('status', 'pending');
@@ -68,11 +68,41 @@ export const useFriendships = () => {
     if (!user) return;
 
     try {
+      // Verificar se já existe uma amizade ou solicitação pendente
+      const { data: existing, error: checkError } = await supabase
+        .from('friendships')
+        .select('id, status')
+        .or(`and(requester_id.eq.${user.id},addressee_id.eq.${addresseeId}),and(requester_id.eq.${addresseeId},addressee_id.eq.${user.id})`)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      if (existing) {
+        if (existing.status === 'pending') {
+          toast({
+            title: "Solicitação já enviada",
+            description: "Você já enviou uma solicitação para esta pessoa",
+            variant: "destructive"
+          });
+          return;
+        } else if (existing.status === 'accepted') {
+          toast({
+            title: "Já são amigos",
+            description: "Vocês já são amigos!",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('friendships')
         .insert({
           requester_id: user.id,
-          addressee_id: addresseeId
+          addressee_id: addresseeId,
+          status: 'pending'
         });
 
       if (error) throw error;

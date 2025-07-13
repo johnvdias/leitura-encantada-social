@@ -15,7 +15,7 @@ export function FriendsSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const { friends, friendRequests, sendFriendRequest, acceptFriendRequest, rejectFriendRequest } = useFriendships();
+  const { friends, friendRequests, sentRequests, sendFriendRequest, acceptFriendRequest, rejectFriendRequest } = useFriendships();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -37,10 +37,13 @@ export function FriendsSection() {
       const friendIds = new Set(friends.map(f => 
         f.requester_id === user.id ? f.addressee_id : f.requester_id
       ));
-      const pendingIds = new Set(friendRequests.map(r => r.requester_id));
+      const pendingIncomingIds = new Set(friendRequests.map(r => r.requester_id));
+      const pendingOutgoingIds = new Set(sentRequests.map(r => r.addressee_id));
 
       const filteredResults = data?.filter(profile => 
-        !friendIds.has(profile.user_id) && !pendingIds.has(profile.user_id)
+        !friendIds.has(profile.user_id) && 
+        !pendingIncomingIds.has(profile.user_id) &&
+        !pendingOutgoingIds.has(profile.user_id)
       ) || [];
 
       setSearchResults(filteredResults);
@@ -150,6 +153,39 @@ export function FriendsSection() {
                     Recusar
                   </Button>
                 </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sent Requests */}
+      {sentRequests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Solicitações Enviadas</span>
+              <Badge variant="outline">{sentRequests.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {sentRequests.map((request) => (
+              <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={request.addressee?.avatar_url} />
+                    <AvatarFallback>
+                      {request.addressee?.display_name?.[0] || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <span className="font-medium">{request.addressee?.display_name}</span>
+                    <p className="text-sm text-muted-foreground">Aguardando resposta</p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  Pendente
+                </Badge>
               </div>
             ))}
           </CardContent>
