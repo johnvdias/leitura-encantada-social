@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Users, BookOpen, Loader2 } from "lucide-react";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import PostCard from "@/components/PostCard";
+import { RecommendationsSection } from "@/components/RecommendationsSection";
 import { useFeed } from "@/hooks/useFeed";
 
 const Feed = () => {
@@ -32,7 +32,8 @@ const Feed = () => {
           Feed da Comunidade
         </h1>
         <p className="text-muted-foreground text-lg">
-          Compartilhe suas experiências literárias e conecte-se com outras leitoras
+          Compartilhe suas experiências literárias e conecte-se com outras
+          leitoras
         </p>
       </div>
 
@@ -53,7 +54,11 @@ const Feed = () => {
       </div>
 
       {/* Feed Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-2xl mx-auto">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="max-w-2xl mx-auto"
+      >
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="todas">
             <Users className="w-4 h-4 mr-2" />
@@ -73,8 +78,8 @@ const Feed = () => {
           <div className="space-y-6">
             {posts.length > 0 ? (
               posts.map((post) => (
-                <PostCard 
-                  key={post.id} 
+                <PostCard
+                  key={post.id}
                   id={post.id}
                   content={post.content}
                   user={post.user}
@@ -101,9 +106,7 @@ const Feed = () => {
             <p className="text-muted-foreground mb-4">
               Conecte-se com outras leitoras para ver suas atualizações aqui
             </p>
-            <Button className="btn-enchanted">
-              Encontrar Amigas
-            </Button>
+            <Button className="btn-enchanted">Encontrar Amigas</Button>
           </div>
         </TabsContent>
 
@@ -113,9 +116,7 @@ const Feed = () => {
             <p className="text-muted-foreground mb-4">
               Participe de clubes de leitura para ver as discussões aqui
             </p>
-            <Button className="btn-enchanted">
-              Explorar Clubes
-            </Button>
+            <Button className="btn-enchanted">Explorar Clubes</Button>
           </div>
         </TabsContent>
       </Tabs>
