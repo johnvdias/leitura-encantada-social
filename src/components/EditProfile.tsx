@@ -65,19 +65,33 @@ export function EditProfile() {
       // Criar nome único para o arquivo
       const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const filePath = `${user.id}/${fileName}`;
 
       // Upload do arquivo
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
       if (uploadError) {
+        console.error("Upload error:", uploadError);
+        // Se o bucket não existir, mostrar mensagem mais específica
+        if (uploadError.message.includes("bucket")) {
+          throw new Error(
+            "Bucket de avatars não configurado. Entre em contato com o administrador.",
+          );
+        }
         throw uploadError;
       }
 
       // Obter URL pública
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+      if (!data.publicUrl) {
+        throw new Error("Não foi possível obter URL da imagem");
+      }
 
       // Atualizar estado local
       setFormData((prev) => ({ ...prev, avatar_url: data.publicUrl }));
@@ -88,9 +102,13 @@ export function EditProfile() {
       });
     } catch (error) {
       console.error("Error uploading avatar:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro desconhecido";
       toast({
-        title: "Erro",
-        description: "Não foi possível fazer upload da imagem",
+        title: "Erro no Upload",
+        description: errorMessage.includes("bucket")
+          ? "Funcionalidade de upload em configuração"
+          : "Não foi possível fazer upload da imagem",
         variant: "destructive",
       });
     } finally {
