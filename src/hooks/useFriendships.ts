@@ -68,26 +68,70 @@ export const useFriendships = () => {
     if (!user) return;
 
     try {
-      // Verificar se já existe uma amizade ou solicitação pendente
-      const { data: existing, error: checkError } = await supabase
+      console.log('Enviando solicitação de amizade para:', addresseeId);
+      
+      // Verificar se já existe uma solicitação enviada pelo usuário atual
+      const { data: sentRequest, error: sentError } = await supabase
         .from('friendships')
         .select('id, status')
-        .or(`and(requester_id.eq.${user.id},addressee_id.eq.${addresseeId}),and(requester_id.eq.${addresseeId},addressee_id.eq.${user.id})`)
-        .single();
+        .eq('requester_id', user.id)
+        .eq('addressee_id', addresseeId)
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
+      if (sentError) {
+        console.error('Erro ao verificar solicitação enviada:', sentError);
+        throw sentError;
       }
 
-      if (existing) {
-        if (existing.status === 'pending') {
+      if (sentRequest) {
+        console.log('Solicitação existente encontrada:', sentRequest);
+        if (sentRequest.status === 'pending') {
           toast({
             title: "Solicitação já enviada",
             description: "Você já enviou uma solicitação para esta pessoa",
             variant: "destructive"
           });
           return;
-        } else if (existing.status === 'accepted') {
+        } else if (sentRequest.status === 'accepted') {
+          toast({
+            title: "Já são amigos",
+            description: "Vocês já são amigos!",
+            variant: "destructive"
+          });
+          return;
+        } else if (sentRequest.status === 'rejected') {
+          // Se foi rejeitada, deletar a solicitação antiga para permitir nova
+          console.log('Deletando solicitação rejeitada para permitir nova');
+          await supabase
+            .from('friendships')
+            .delete()
+            .eq('id', sentRequest.id);
+        }
+      }
+
+      // Verificar se já existe uma solicitação recebida do destinatário
+      const { data: receivedRequest, error: receivedError } = await supabase
+        .from('friendships')
+        .select('id, status')
+        .eq('requester_id', addresseeId)
+        .eq('addressee_id', user.id)
+        .maybeSingle();
+
+      if (receivedError) {
+        console.error('Erro ao verificar solicitação recebida:', receivedError);
+        throw receivedError;
+      }
+
+      if (receivedRequest) {
+        console.log('Solicitação recebida encontrada:', receivedRequest);
+        if (receivedRequest.status === 'pending') {
+          toast({
+            title: "Solicitação pendente",
+            description: "Esta pessoa já enviou uma solicitação para você. Verifique suas solicitações recebidas.",
+            variant: "destructive"
+          });
+          return;
+        } else if (receivedRequest.status === 'accepted') {
           toast({
             title: "Já são amigos",
             description: "Vocês já são amigos!",
