@@ -51,25 +51,35 @@ export const useRecommendations = () => {
       if (favoriteGenres.length > 0) {
         const { data: popularBooks, error: popularBooksError } = await supabase
           .from("books")
-          .select(
-            `
-            *,
-            profiles!inner(display_name, avatar_url, user_id)
-          `,
-          )
+          .select("*")
           .in("genre", favoriteGenres)
           .neq("user_id", user.id)
+          .not("rating", "is", null)
           .gte("rating", 4)
           .order("rating", { ascending: false })
           .limit(5);
 
         if (!popularBooksError && popularBooks) {
+          // Buscar perfis separadamente para melhor performance
+          const userIds = [
+            ...new Set(popularBooks.map((book) => book.user_id)),
+          ];
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("user_id, display_name, avatar_url")
+            .in("user_id", userIds);
+
+          const profilesMap = new Map();
+          profiles?.forEach((profile) => {
+            profilesMap.set(profile.user_id, profile);
+          });
+
           popularBooks.forEach((book) => {
             recommendationsData.push({
               book: book as Book,
               reason: `Baseado no seu gosto por ${book.genre}`,
               score: book.rating || 0,
-              recommendedBy: book.profiles as Profile,
+              recommendedBy: profilesMap.get(book.user_id) as Profile,
             });
           });
         }
