@@ -76,6 +76,10 @@ const Feed = () => {
 
         <TabsContent value="todas">
           <div className="space-y-6">
+            {/* Recomendações */}
+            <RecommendationsSection />
+
+            {/* Posts */}
             {posts.length > 0 ? (
               posts.map((post) => (
                 <PostCard
