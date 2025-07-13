@@ -62,13 +62,41 @@ export function EditProfile() {
 
     setUploading(true);
     try {
+      // Verificar se o bucket existe primeiro
+      const { data: buckets, error: bucketsError } =
+        await supabase.storage.listBuckets();
+
+      if (bucketsError) {
+        console.error(
+          "Error checking buckets:",
+          JSON.stringify(bucketsError, null, 2),
+        );
+        throw new Error(
+          `Erro ao verificar storage: ${bucketsError.message || "Erro desconhecido"}`,
+        );
+      }
+
+      const avatarsBucket = buckets?.find((bucket) => bucket.id === "avatars");
+      if (!avatarsBucket) {
+        throw new Error(
+          "Bucket de avatars não está configurado. Use o campo URL como alternativa.",
+        );
+      }
+
       // Criar nome único para o arquivo
       const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
+      console.log("Uploading file:", {
+        fileName,
+        filePath,
+        fileSize: file.size,
+        fileType: file.type,
+      });
+
       // Upload do arquivo
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, {
           cacheControl: "3600",
@@ -76,22 +104,45 @@ export function EditProfile() {
         });
 
       if (uploadError) {
-        console.error("Upload error:", uploadError);
-        // Se o bucket não existir, mostrar mensagem mais específica
-        if (uploadError.message.includes("bucket")) {
+        console.error(
+          "Upload error details:",
+          JSON.stringify(uploadError, null, 2),
+        );
+
+        // Tratamento específico para diferentes tipos de erro
+        if (uploadError.message?.includes("duplicate")) {
+          // Tentar com upsert se arquivo já existe
+          const { data: retryData, error: retryError } = await supabase.storage
+            .from("avatars")
+            .upload(filePath, file, {
+              cacheControl: "3600",
+              upsert: true,
+            });
+
+          if (retryError) {
+            console.error(
+              "Retry upload error:",
+              JSON.stringify(retryError, null, 2),
+            );
+            throw new Error(
+              `Erro no upload: ${retryError.message || "Falha ao fazer upload"}`,
+            );
+          }
+        } else {
           throw new Error(
-            "Bucket de avatars não configurado. Entre em contato com o administrador.",
+            `Erro no upload: ${uploadError.message || "Falha ao fazer upload"}`,
           );
         }
-        throw uploadError;
       }
 
       // Obter URL pública
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
 
-      if (!data.publicUrl) {
+      if (!data?.publicUrl) {
         throw new Error("Não foi possível obter URL da imagem");
       }
+
+      console.log("Upload successful, URL:", data.publicUrl);
 
       // Atualizar estado local
       setFormData((prev) => ({ ...prev, avatar_url: data.publicUrl }));
@@ -101,14 +152,23 @@ export function EditProfile() {
         description: "Foto de perfil atualizada",
       });
     } catch (error) {
-      console.error("Error uploading avatar:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Erro desconhecido";
+      console.error("Error uploading avatar:", JSON.stringify(error, null, 2));
+      console.error("Error message:", error);
+
+      let errorMessage = "Erro desconhecido ao fazer upload";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "object" && error !== null) {
+        errorMessage =
+          error.message || error.error_description || JSON.stringify(error);
+      }
+
       toast({
         title: "Erro no Upload",
-        description: errorMessage.includes("bucket")
-          ? "Funcionalidade de upload em configuração"
-          : "Não foi possível fazer upload da imagem",
+        description: errorMessage.includes("configurado")
+          ? errorMessage
+          : `Não foi possível fazer upload: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
