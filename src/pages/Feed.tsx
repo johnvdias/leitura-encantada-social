@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 const Feed = () => {
   const [activeTab, setActiveTab] = useState("todas");
   const { posts, loading, refetch } = useFeed();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
