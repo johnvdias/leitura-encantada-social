@@ -197,7 +197,7 @@ export function EditProfile() {
               </Button>
             </div>
             <p className="text-sm text-muted-foreground text-center">
-              Clique no ícone da câmera para alterar sua foto
+              Clique no ícone da câmera para fazer upload ou use o campo abaixo
             </p>
             <input
               ref={fileInputRef}
@@ -206,6 +206,25 @@ export function EditProfile() {
               onChange={handleFileUpload}
               className="hidden"
             />
+
+            {/* URL Input Alternative */}
+            <div className="w-full space-y-2">
+              <Label htmlFor="avatar_url" className="text-sm">
+                URL da Imagem (alternativa)
+              </Label>
+              <Input
+                id="avatar_url"
+                value={formData.avatar_url}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    avatar_url: e.target.value,
+                  }))
+                }
+                placeholder="https://exemplo.com/imagem.jpg"
+                className="text-sm"
+              />
+            </div>
           </div>
 
           {/* Form Fields */}
