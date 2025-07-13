@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     await supabase.auth.signOut();
   };
 
-  const updateProfile = async (updates: any) => {
+  const updateProfile = async (updates: ProfileUpdateData) => {
     if (!user) return { error: new Error("No user logged in") };
 
     const { error } = await supabase
@@ -125,7 +125,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       .eq("user_id", user.id);
 
     if (!error) {
-      setProfile((prev: any) => ({ ...prev, ...updates }));
+      setProfile(
+        (prev: Profile | null) => ({ ...prev, ...updates }) as Profile,
+      );
     }
 
     return { error };
