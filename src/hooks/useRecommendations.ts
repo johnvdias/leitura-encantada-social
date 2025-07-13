@@ -100,29 +100,37 @@ export const useRecommendations = () => {
         if (friendIds.length > 0) {
           const { data: friendBooks, error: friendBooksError } = await supabase
             .from("books")
-            .select(
-              `
-              *,
-              profiles!inner(display_name, avatar_url, user_id)
-            `,
-            )
+            .select("*")
             .in("user_id", friendIds)
             .eq("reading_status", "completed")
+            .not("rating", "is", null)
             .gte("rating", 4)
             .order("rating", { ascending: false })
             .limit(3);
 
           if (!friendBooksError && friendBooks) {
+            // Buscar perfis dos amigos
+            const { data: friendProfiles } = await supabase
+              .from("profiles")
+              .select("user_id, display_name, avatar_url")
+              .in("user_id", friendIds);
+
+            const friendProfilesMap = new Map();
+            friendProfiles?.forEach((profile) => {
+              friendProfilesMap.set(profile.user_id, profile);
+            });
+
             friendBooks.forEach((book) => {
               // Evitar duplicatas
               if (
                 !recommendationsData.some((r) => r.book.title === book.title)
               ) {
+                const friendProfile = friendProfilesMap.get(book.user_id);
                 recommendationsData.push({
                   book: book as Book,
-                  reason: `Recomendado por ${book.profiles?.display_name || "um amigo"}`,
+                  reason: `Recomendado por ${friendProfile?.display_name || "um amigo"}`,
                   score: book.rating || 0,
-                  recommendedBy: book.profiles as Profile,
+                  recommendedBy: friendProfile as Profile,
                 });
               }
             });
