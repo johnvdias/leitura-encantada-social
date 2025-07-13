@@ -210,9 +210,7 @@ export function FriendsSection() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {friends.map((friendship) => {
-                const friend = friendship.requester_id === user?.id 
-                  ? friendship.addressee 
-                  : friendship.requester;
+                const friend = friendship.friend;
                 
                 return (
                   <div key={friendship.id} className="flex items-center gap-3 p-3 border rounded-lg">
