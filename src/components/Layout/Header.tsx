@@ -1,9 +1,9 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Users, Home, User, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 const Header = () => {
   const location = useLocation();
@@ -23,8 +23,8 @@ const Header = () => {
 
         <nav className="hidden md:flex items-center space-x-4">
           <Link to="/">
-            <Button 
-              variant={isActive("/") ? "default" : "ghost"} 
+            <Button
+              variant={isActive("/") ? "default" : "ghost"}
               size="sm"
               className="flex items-center gap-2"
             >
@@ -32,12 +32,12 @@ const Header = () => {
               Início
             </Button>
           </Link>
-          
+
           {user && (
             <>
               <Link to="/estante">
-                <Button 
-                  variant={isActive("/estante") ? "default" : "ghost"} 
+                <Button
+                  variant={isActive("/estante") ? "default" : "ghost"}
                   size="sm"
                   className="flex items-center gap-2"
                 >
@@ -47,8 +47,8 @@ const Header = () => {
               </Link>
 
               <Link to="/feed">
-                <Button 
-                  variant={isActive("/feed") ? "default" : "ghost"} 
+                <Button
+                  variant={isActive("/feed") ? "default" : "ghost"}
                   size="sm"
                   className="flex items-center gap-2"
                 >
@@ -58,8 +58,8 @@ const Header = () => {
               </Link>
 
               <Link to="/clubes">
-                <Button 
-                  variant={isActive("/clubes") ? "default" : "ghost"} 
+                <Button
+                  variant={isActive("/clubes") ? "default" : "ghost"}
                   size="sm"
                   className="flex items-center gap-2"
                 >
@@ -69,8 +69,8 @@ const Header = () => {
               </Link>
 
               <Link to="/perfil">
-                <Button 
-                  variant={isActive("/perfil") ? "default" : "ghost"} 
+                <Button
+                  variant={isActive("/perfil") ? "default" : "ghost"}
                   size="sm"
                   className="flex items-center gap-2"
                 >
