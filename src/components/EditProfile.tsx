@@ -182,9 +182,12 @@ export function EditProfile() {
 
     setLoading(true);
     try {
+      console.log("Updating profile with data:", formData);
+
       const { error } = await updateProfile(formData);
 
       if (error) {
+        console.error("Profile update error:", JSON.stringify(error, null, 2));
         throw error;
       }
 
@@ -194,10 +197,20 @@ export function EditProfile() {
       });
       setOpen(false);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error updating profile:", JSON.stringify(error, null, 2));
+
+      let errorMessage = "Não foi possível atualizar o perfil";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "object" && error !== null) {
+        errorMessage =
+          error.message || error.error_description || "Erro na atualização";
+      }
+
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o perfil",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
