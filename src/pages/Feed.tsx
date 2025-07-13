@@ -114,7 +114,9 @@ const Feed = () => {
             </p>
             <Button
               className="btn-enchanted"
-              onClick={() => navigate("/perfil")}
+              onClick={() =>
+                navigate("/perfil", { state: { activeTab: "amigos" } })
+              }
             >
               Encontrar Amigas
             </Button>
