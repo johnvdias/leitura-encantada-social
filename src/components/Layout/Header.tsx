@@ -1,9 +1,10 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, Home, User, MessageSquare } from "lucide-react";
+import { BookOpen, Users, Home, User, MessageSquare, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 const Header = () => {
   const location = useLocation();
@@ -83,14 +84,21 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center space-x-2">
-          {user ? (
+          {user && (
             <>
+              <div className="hidden md:block">
+                <GlobalSearch />
+              </div>
+              <div className="md:hidden">
+                <GlobalSearch />
+              </div>
               <NotificationDropdown />
               <Button onClick={signOut} variant="outline" size="sm">
                 Sair
               </Button>
             </>
-          ) : (
+          )}
+          {!user && (
             <Link to="/auth">
               <Button size="sm">Entrar</Button>
             </Link>

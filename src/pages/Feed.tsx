@@ -17,7 +17,7 @@ const Feed = () => {
     "amigas": "friends" as const,
     "clubes": "clubs" as const
   };
-  const { posts, loading, refetch } = useFeed(filterMap[activeTab as keyof typeof filterMap]);
+  const { posts, loading, hasMore, loadMore, refetch } = useFeed(filterMap[activeTab as keyof typeof filterMap]);
 
   if (loading) {
     return (
@@ -78,17 +78,32 @@ const Feed = () => {
         <TabsContent value="todas">
           <div className="space-y-6">
             {posts.length > 0 ? (
-              posts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  id={post.id}
-                  content={post.content}
-                  user={post.user}
-                  book={post.books}
-                  created_at={post.created_at}
-                  post_type={post.post_type}
-                />
-              ))
+              <>
+                {posts.map((post) => (
+                  <PostCard 
+                    key={post.id} 
+                    id={post.id}
+                    content={post.content}
+                    user={post.user}
+                    book={post.books}
+                    created_at={post.created_at}
+                    post_type={post.post_type}
+                    onPostDeleted={refetch}
+                  />
+                ))}
+                {hasMore && (
+                  <div className="text-center">
+                    <Button onClick={loadMore} variant="outline">
+                      Carregar mais posts
+                    </Button>
+                  </div>
+                )}
+                {!hasMore && (
+                  <div className="text-center text-muted-foreground">
+                    Você chegou ao fim do feed!
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-12">
                 <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -104,17 +119,32 @@ const Feed = () => {
         <TabsContent value="amigas">
           <div className="space-y-6">
             {posts.length > 0 ? (
-              posts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  id={post.id}
-                  content={post.content}
-                  user={post.user}
-                  book={post.books}
-                  created_at={post.created_at}
-                  post_type={post.post_type}
-                />
-              ))
+              <>
+                {posts.map((post) => (
+                  <PostCard 
+                    key={post.id} 
+                    id={post.id}
+                    content={post.content}
+                    user={post.user}
+                    book={post.books}
+                    created_at={post.created_at}
+                    post_type={post.post_type}
+                    onPostDeleted={refetch}
+                  />
+                ))}
+                {hasMore && (
+                  <div className="text-center">
+                    <Button onClick={loadMore} variant="outline">
+                      Carregar mais posts
+                    </Button>
+                  </div>
+                )}
+                {!hasMore && (
+                  <div className="text-center text-muted-foreground">
+                    Você chegou ao fim do feed!
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-12">
                 <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -134,17 +164,32 @@ const Feed = () => {
         <TabsContent value="clubes">
           <div className="space-y-6">
             {posts.length > 0 ? (
-              posts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  id={post.id}
-                  content={post.content}
-                  user={post.user}
-                  book={post.books}
-                  created_at={post.created_at}
-                  post_type={post.post_type}
-                />
-              ))
+              <>
+                {posts.map((post) => (
+                  <PostCard 
+                    key={post.id} 
+                    id={post.id}
+                    content={post.content}
+                    user={post.user}
+                    book={post.books}
+                    created_at={post.created_at}
+                    post_type={post.post_type}
+                    onPostDeleted={refetch}
+                  />
+                ))}
+                {hasMore && (
+                  <div className="text-center">
+                    <Button onClick={loadMore} variant="outline">
+                      Carregar mais posts
+                    </Button>
+                  </div>
+                )}
+                {!hasMore && (
+                  <div className="text-center text-muted-foreground">
+                    Você chegou ao fim do feed!
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-12">
                 <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />

@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAchievements } from "@/hooks/useAchievements";
 import { FriendsSection } from "@/components/FriendsSection";
+import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -127,6 +128,9 @@ const Perfil = () => {
                   <span>Meta: {stats.readingGoal} livros/ano</span>
                 </div>
               </div>
+            </div>
+            <div className="ml-auto">
+              <EditProfileDialog />
             </div>
           </div>
         </CardContent>

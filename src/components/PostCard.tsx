@@ -7,6 +7,8 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LikeButton } from "@/components/LikeButton";
 import { CommentSection } from "@/components/CommentSection";
+import { PostActions } from "@/components/PostActions";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PostCardProps {
   id: string;
@@ -14,6 +16,7 @@ interface PostCardProps {
   user: {
     display_name: string;
     avatar_url?: string;
+    user_id?: string;
   };
   book?: {
     title: string;
@@ -21,9 +24,12 @@ interface PostCardProps {
   };
   created_at: string;
   post_type: string;
+  onPostDeleted?: () => void;
 }
 
-const PostCard = ({ id, content, user, book, created_at, post_type }: PostCardProps) => {
+const PostCard = ({ id, content, user, book, created_at, post_type, onPostDeleted }: PostCardProps) => {
+  const { user: currentUser } = useAuth();
+  const isOwnPost = currentUser?.id === user.user_id;
   const getPostTypeLabel = (type: string) => {
     switch (type) {
       case 'review': return 'Resenha';
@@ -66,6 +72,12 @@ const PostCard = ({ id, content, user, book, created_at, post_type }: PostCardPr
               })}
             </p>
           </div>
+          {isOwnPost && (
+            <PostActions 
+              postId={id} 
+              onPostDeleted={onPostDeleted}
+            />
+          )}
         </div>
       </CardHeader>
 

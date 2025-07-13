@@ -6,9 +6,11 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
   const { user } = useAuth();
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (loadMore = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -49,9 +51,10 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
         query = query.eq('visibility', 'public');
       }
 
+      const currentPage = loadMore ? page : 0;
       const { data, error } = await query
         .order('created_at', { ascending: false })
-        .limit(20);
+        .range(currentPage * 10, (currentPage + 1) * 10 - 1);
 
       if (error) {
         console.error("Supabase error:", error);
@@ -65,12 +68,21 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
         ...post,
         user: {
           display_name: post.profiles?.display_name || 'Usuário Anônimo',
-          avatar_url: post.profiles?.avatar_url
+          avatar_url: post.profiles?.avatar_url,
+          user_id: post.user_id
         }
       })) || [];
 
       console.log("Transformed posts:", transformedPosts);
-      setPosts(transformedPosts);
+      
+      if (loadMore) {
+        setPosts(prev => [...prev, ...transformedPosts]);
+      } else {
+        setPosts(transformedPosts);
+        setPage(0);
+      }
+      
+      setHasMore(transformedPosts.length === 10);
     } catch (error) {
       console.error("Error fetching posts:", error);
       setError("Não foi possível carregar o feed. Tente novamente mais tarde.");
@@ -132,11 +144,18 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
     };
   }, []);
 
+  const loadMore = () => {
+    setPage(prev => prev + 1);
+    fetchPosts(true);
+  };
+
   return {
     posts,
     loading,
     error,
+    hasMore,
     createPost,
+    loadMore,
     refetch: fetchPosts
   };
 };
