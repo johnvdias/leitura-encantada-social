@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,7 +27,7 @@ export const useFeed = () => {
             author
           )
         `)
-        .eq('profiles.user_id', supabase.from('posts').select('user_id'))
+        .eq('user_id', 'profiles.user_id')
         .order('created_at', { ascending: false })
         .limit(20);
 
