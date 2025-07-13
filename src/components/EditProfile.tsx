@@ -31,116 +31,27 @@ export function EditProfile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+    toast({
+      title: "Upload de Imagem",
+      description: "Use o campo URL abaixo para adicionar sua foto de perfil",
+      variant: "default",
+    });
   };
 
-    const handleFileUpload = async (
+  const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     // Por enquanto, desabilitado até que o bucket seja configurado
     toast({
       title: "Upload Temporariamente Indisponível",
-      description: "Use o campo URL de imagem abaixo para adicionar sua foto de perfil",
-      variant: "default"
+      description:
+        "Use o campo URL de imagem abaixo para adicionar sua foto de perfil",
+      variant: "default",
     });
 
     // Limpar o input
     if (event.target) {
-      event.target.value = '';
-    }
-
-    return;
-
-      // Criar nome único para o arquivo
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      console.log("Uploading file:", {
-        fileName,
-        filePath,
-        fileSize: file.size,
-        fileType: file.type,
-      });
-
-      // Upload do arquivo
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (uploadError) {
-        console.error(
-          "Upload error details:",
-          JSON.stringify(uploadError, null, 2),
-        );
-
-        // Tratamento específico para diferentes tipos de erro
-        if (uploadError.message?.includes("duplicate")) {
-          // Tentar com upsert se arquivo já existe
-          const { data: retryData, error: retryError } = await supabase.storage
-            .from("avatars")
-            .upload(filePath, file, {
-              cacheControl: "3600",
-              upsert: true,
-            });
-
-          if (retryError) {
-            console.error(
-              "Retry upload error:",
-              JSON.stringify(retryError, null, 2),
-            );
-            throw new Error(
-              `Erro no upload: ${retryError.message || "Falha ao fazer upload"}`,
-            );
-          }
-        } else {
-          throw new Error(
-            `Erro no upload: ${uploadError.message || "Falha ao fazer upload"}`,
-          );
-        }
-      }
-
-      // Obter URL pública
-      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
-
-      if (!data?.publicUrl) {
-        throw new Error("Não foi possível obter URL da imagem");
-      }
-
-      console.log("Upload successful, URL:", data.publicUrl);
-
-      // Atualizar estado local
-      setFormData((prev) => ({ ...prev, avatar_url: data.publicUrl }));
-
-      toast({
-        title: "Sucesso! 📸",
-        description: "Foto de perfil atualizada",
-      });
-    } catch (error) {
-      console.error("Error uploading avatar:", JSON.stringify(error, null, 2));
-      console.error("Error message:", error);
-
-      let errorMessage = "Erro desconhecido ao fazer upload";
-
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "object" && error !== null) {
-        errorMessage =
-          error.message || error.error_description || JSON.stringify(error);
-      }
-
-      toast({
-        title: "Erro no Upload",
-        description: errorMessage.includes("configurado")
-          ? errorMessage
-          : `Não foi possível fazer upload: ${errorMessage}`,
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
+      event.target.value = "";
     }
   };
 
@@ -213,7 +124,7 @@ export function EditProfile() {
           <DialogTitle>Editar Perfil</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Avatar Upload */}
+          {/* Avatar Preview */}
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
               <Avatar className="w-24 h-24">
@@ -230,28 +141,17 @@ export function EditProfile() {
                 onClick={handleAvatarClick}
                 disabled={uploading}
               >
-                {uploading ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Camera className="h-3 w-3" />
-                )}
+                <Camera className="h-3 w-3" />
               </Button>
             </div>
             <p className="text-sm text-muted-foreground text-center">
-              Clique no ícone da câmera para fazer upload ou use o campo abaixo
+              Use o campo URL abaixo para adicionar sua foto
             </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
 
-            {/* URL Input Alternative */}
+            {/* URL Input */}
             <div className="w-full space-y-2">
               <Label htmlFor="avatar_url" className="text-sm">
-                URL da Imagem (alternativa)
+                URL da Imagem
               </Label>
               <Input
                 id="avatar_url"
@@ -262,9 +162,13 @@ export function EditProfile() {
                     avatar_url: e.target.value,
                   }))
                 }
-                placeholder="https://exemplo.com/imagem.jpg"
+                placeholder="https://exemplo.com/sua-foto.jpg"
                 className="text-sm"
               />
+              <p className="text-xs text-muted-foreground">
+                Cole o link de uma imagem da internet (ex: do Google Photos,
+                Imgur, etc.)
+              </p>
             </div>
           </div>
 
