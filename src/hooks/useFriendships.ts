@@ -17,20 +17,49 @@ export const useFriendships = () => {
 
     setLoading(true);
     try {
-      // Fetch all friendships where user is involved
+      // Primeiro, buscar todas as amizades do usuário
       const { data: allFriendships, error: friendshipsError } = await supabase
         .from('friendships')
-        .select(`
-          *,
-          requester:profiles!requester_id (display_name, avatar_url, user_id),
-          addressee:profiles!addressee_id (display_name, avatar_url, user_id)
-        `)
+        .select('*')
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
       if (friendshipsError) throw friendshipsError;
 
       console.log('Todas as amizades encontradas:', allFriendships);
+
+      if (!allFriendships || allFriendships.length === 0) {
+        setFriends([]);
+        setFriendRequests([]);
+        setSentRequests([]);
+        return;
+      }
+
+      // Coletar todos os IDs únicos de usuários envolvidos
+      const userIds = new Set<string>();
+      allFriendships.forEach(friendship => {
+        userIds.add(friendship.requester_id);
+        userIds.add(friendship.addressee_id);
+      });
+      
+      // Remover o próprio usuário da lista
+      userIds.delete(user.id);
+
+      // Buscar perfis de todos os usuários envolvidos
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', Array.from(userIds));
+
+      if (profilesError) throw profilesError;
+
+      console.log('Perfis encontrados:', profiles);
+
+      // Criar um mapa de perfis para acesso rápido
+      const profilesMap = new Map();
+      profiles?.forEach(profile => {
+        profilesMap.set(profile.user_id, profile);
+      });
 
       // Group friendships by the other user's ID to handle bidirectional relationships
       const friendshipsByUser = new Map<string, any[]>();
@@ -53,15 +82,21 @@ export const useFriendships = () => {
       const sentRequests: any[] = [];
 
       friendshipsByUser.forEach((userFriendships, otherUserId) => {
+        const otherUserProfile = profilesMap.get(otherUserId);
+        
+        if (!otherUserProfile) {
+          console.warn(`Perfil não encontrado para usuário ${otherUserId}`);
+          return;
+        }
+
         // Check if there's any accepted friendship
         const acceptedFriendship = userFriendships.find(f => f.status === 'accepted');
         
         if (acceptedFriendship) {
           // Transform to show the friend profile
-          const isRequester = acceptedFriendship.requester_id === user.id;
           friends.push({
             ...acceptedFriendship,
-            friend: isRequester ? acceptedFriendship.addressee : acceptedFriendship.requester
+            friend: otherUserProfile
           });
         } else {
           // Check for pending requests
@@ -69,11 +104,17 @@ export const useFriendships = () => {
           
           pendingRequests.forEach(friendship => {
             if (friendship.addressee_id === user.id) {
-              // Request received
-              friendRequests.push(friendship);
+              // Request received - adicionar perfil do requester
+              friendRequests.push({
+                ...friendship,
+                requester: profilesMap.get(friendship.requester_id)
+              });
             } else if (friendship.requester_id === user.id) {
-              // Request sent
-              sentRequests.push(friendship);
+              // Request sent - adicionar perfil do addressee
+              sentRequests.push({
+                ...friendship,
+                addressee: profilesMap.get(friendship.addressee_id)
+              });
             }
           });
         }
