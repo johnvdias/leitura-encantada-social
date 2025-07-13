@@ -22,8 +22,8 @@ export const useFriendships = () => {
         .from('friendships')
         .select(`
           *,
-          requester:profiles!friendships_requester_id_fkey (display_name, avatar_url, user_id),
-          addressee:profiles!friendships_addressee_id_fkey (display_name, avatar_url, user_id)
+          requester:profiles!requester_id (display_name, avatar_url, user_id),
+          addressee:profiles!addressee_id (display_name, avatar_url, user_id)
         `)
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
