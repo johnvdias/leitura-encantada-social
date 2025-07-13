@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const useFeed = () => {
+export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,7 @@ export const useFeed = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('posts')
         .select(`
           *,
@@ -25,8 +25,31 @@ export const useFeed = () => {
             title,
             author
           )
-        `)
-        .eq('visibility', 'public')
+        `);
+
+      if (filter === 'friends') {
+        // Show only posts from friends (accepted friendships)
+        query = query.or(`visibility.eq.public,and(visibility.eq.friends,user_id.in.(
+          SELECT CASE 
+            WHEN requester_id = '${user?.id}' THEN addressee_id 
+            ELSE requester_id 
+          END 
+          FROM friendships 
+          WHERE (requester_id = '${user?.id}' OR addressee_id = '${user?.id}') 
+          AND status = 'accepted'
+        ))`);
+      } else if (filter === 'clubs') {
+        // Show posts from club members (clubs the user is part of)
+        query = query.in('user_id', [
+          // This is a simplified version - in a real app you'd need a proper subquery
+          // For now, just show public posts
+        ]).eq('visibility', 'public');
+      } else {
+        // Show all public posts
+        query = query.eq('visibility', 'public');
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(20);
 

@@ -12,7 +12,12 @@ import { useFeed } from "@/hooks/useFeed";
 
 const Feed = () => {
   const [activeTab, setActiveTab] = useState("todas");
-  const { posts, loading, refetch } = useFeed();
+  const filterMap = {
+    "todas": "all" as const,
+    "amigas": "friends" as const,
+    "clubes": "clubs" as const
+  };
+  const { posts, loading, refetch } = useFeed(filterMap[activeTab as keyof typeof filterMap]);
 
   if (loading) {
     return (
@@ -97,30 +102,62 @@ const Feed = () => {
         </TabsContent>
 
         <TabsContent value="amigas">
-          <div className="text-center py-12">
-            <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
-              Conecte-se com outras leitoras para ver suas atualizações aqui
-            </p>
-            <Link to="/perfil">
-              <Button className="btn-enchanted">
-                Gerenciar Amigas
-              </Button>
-            </Link>
+          <div className="space-y-6">
+            {posts.length > 0 ? (
+              posts.map((post) => (
+                <PostCard 
+                  key={post.id} 
+                  id={post.id}
+                  content={post.content}
+                  user={post.user}
+                  book={post.books}
+                  created_at={post.created_at}
+                  post_type={post.post_type}
+                />
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  Conecte-se com outras leitoras para ver suas atualizações aqui
+                </p>
+                <Link to="/perfil">
+                  <Button className="btn-enchanted">
+                    Gerenciar Amigas
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="clubes">
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
-              Participe de clubes de leitura para ver as discussões aqui
-            </p>
-            <Link to="/clubes">
-              <Button className="btn-enchanted">
-                Explorar Clubes
-              </Button>
-            </Link>
+          <div className="space-y-6">
+            {posts.length > 0 ? (
+              posts.map((post) => (
+                <PostCard 
+                  key={post.id} 
+                  id={post.id}
+                  content={post.content}
+                  user={post.user}
+                  book={post.books}
+                  created_at={post.created_at}
+                  post_type={post.post_type}
+                />
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  Participe de clubes de leitura para ver as discussões aqui
+                </p>
+                <Link to="/clubes">
+                  <Button className="btn-enchanted">
+                    Explorar Clubes
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>

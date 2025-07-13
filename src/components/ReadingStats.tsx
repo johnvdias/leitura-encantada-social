@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Clock, TrendingUp, Target } from "lucide-react";
+import { useStreak } from "@/hooks/useStreak";
 
 interface ReadingStatsProps {
   bookId: string;
@@ -30,6 +31,7 @@ export function ReadingStats({ bookId }: ReadingStatsProps) {
   const [history, setHistory] = useState<ReadingHistory[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { streak: globalStreak } = useStreak();
 
   useEffect(() => {
     fetchReadingHistory();
@@ -185,7 +187,7 @@ export function ReadingStats({ bookId }: ReadingStatsProps) {
               <Calendar className="h-4 w-4" />
               Sequência atual
             </span>
-            <Badge variant="secondary">{stats.streak} dias</Badge>
+            <Badge variant="secondary">{globalStreak} dias</Badge>
           </div>
           
           {stats.averagePagesPerSession > 0 && (

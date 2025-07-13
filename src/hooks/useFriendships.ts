@@ -310,6 +310,56 @@ export const useFriendships = () => {
     fetchFriendships();
   }, [user]);
 
+  const removeFriendship = async (friendshipId: string) => {
+    try {
+      const { error } = await supabase
+        .from('friendships')
+        .delete()
+        .eq('id', friendshipId);
+
+      if (error) throw error;
+
+      await fetchFriendships();
+      
+      toast({
+        title: "Amizade removida",
+        description: "A amizade foi removida com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error removing friendship:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover a amizade.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const cancelFriendRequest = async (friendshipId: string) => {
+    try {
+      const { error } = await supabase
+        .from('friendships')
+        .delete()
+        .eq('id', friendshipId);
+
+      if (error) throw error;
+
+      await fetchFriendships();
+      
+      toast({
+        title: "Solicitação cancelada",
+        description: "A solicitação de amizade foi cancelada.",
+      });
+    } catch (error) {
+      console.error("Error canceling friend request:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível cancelar a solicitação.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return {
     friends,
     friendRequests,
@@ -318,6 +368,8 @@ export const useFriendships = () => {
     sendFriendRequest,
     acceptFriendRequest,
     rejectFriendRequest,
+    removeFriendship,
+    cancelFriendRequest,
     refetch: fetchFriendships
   };
 };

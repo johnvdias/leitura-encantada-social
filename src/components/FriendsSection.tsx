@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, UserPlus, Check, X } from "lucide-react";
 import { useFriendships } from "@/hooks/useFriendships";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +16,7 @@ export function FriendsSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const { friends, friendRequests, sentRequests, sendFriendRequest, acceptFriendRequest, rejectFriendRequest } = useFriendships();
+  const { friends, friendRequests, sentRequests, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, cancelFriendRequest } = useFriendships();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -183,9 +184,29 @@ export function FriendsSection() {
                     <p className="text-sm text-muted-foreground">Aguardando resposta</p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-xs">
-                  Pendente
-                </Badge>
+                <div className="text-right">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Cancelar
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Cancelar solicitação</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja cancelar esta solicitação de amizade?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => cancelFriendRequest(request.id)}>
+                          Confirmar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             ))}
           </CardContent>
@@ -220,7 +241,42 @@ export function FriendsSection() {
                         {friend?.display_name?.[0] || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{friend?.display_name}</span>
+                    <div className="flex-1">
+                      <p className="font-medium">{friend?.display_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Amigos desde {new Date(friendship.created_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        Ver Perfil
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                            Remover
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover amizade</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja remover {friend?.display_name} da sua lista de amigos?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => removeFriendship(friendship.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/80"
+                            >
+                              Remover
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 );
               })}
