@@ -123,27 +123,34 @@ export const useRecommendations = () => {
       // Buscar livros trending (mais adicionados recentemente)
       const { data: trendingBooks, error: trendingError } = await supabase
         .from("books")
-        .select(
-          `
-          title,
-          author,
-          genre,
-          cover_url,
-          description,
-          COUNT(*) as popularity
-        `,
-        )
+        .select("*")
         .neq("user_id", user.id)
         .gte(
           "created_at",
           new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         ) // Últimos 30 dias
-        .group("title, author, genre, cover_url, description")
-        .order("popularity", { ascending: false })
-        .limit(2);
+        .order("created_at", { ascending: false })
+        .limit(10);
 
       if (!trendingError && trendingBooks) {
+        // Agrupar por título manualmente e contar popularidade
+        const bookGroups: Record<string, { book: any; count: number }> = {};
+
         trendingBooks.forEach((book: any) => {
+          const key = `${book.title}-${book.author}`;
+          if (bookGroups[key]) {
+            bookGroups[key].count++;
+          } else {
+            bookGroups[key] = { book, count: 1 };
+          }
+        });
+
+        // Obter os 2 mais populares
+        const popularBooks = Object.values(bookGroups)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 2);
+
+        popularBooks.forEach(({ book, count }) => {
           if (!recommendationsData.some((r) => r.book.title === book.title)) {
             recommendationsData.push({
               book: {
@@ -155,13 +162,13 @@ export const useRecommendations = () => {
                 description: book.description,
                 reading_status: "want_to_read",
                 reading_progress: 0,
-                pages: null,
+                pages: book.pages,
                 user_id: "",
                 created_at: "",
                 updated_at: "",
               } as Book,
-              reason: `Trending - ${book.popularity} pessoas adicionaram recentemente`,
-              score: book.popularity,
+              reason: `Trending - ${count} ${count === 1 ? "pessoa adicionou" : "pessoas adicionaram"} recentemente`,
+              score: count,
             });
           }
         });
