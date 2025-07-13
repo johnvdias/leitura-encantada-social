@@ -12,6 +12,8 @@ import Estante from "./pages/Estante";
 import Feed from "./pages/Feed";
 import Clubes from "./pages/Clubes";
 import Perfil from "./pages/Perfil";
+import ClubePage from "./pages/ClubePage";
+import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +48,16 @@ const App = () => (
               <Route path="/perfil" element={
                 <ProtectedRoute>
                   <Perfil />
+                </ProtectedRoute>
+              } />
+              <Route path="/perfil/:userId" element={
+                <ProtectedRoute>
+                  <UserProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/clubes/:clubId" element={
+                <ProtectedRoute>
+                  <ClubePage />
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
