@@ -34,54 +34,22 @@ export function EditProfile() {
     fileInputRef.current?.click();
   };
 
-  const handleFileUpload = async (
+    const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
+    // Por enquanto, desabilitado até que o bucket seja configurado
+    toast({
+      title: "Upload Temporariamente Indisponível",
+      description: "Use o campo URL de imagem abaixo para adicionar sua foto de perfil",
+      variant: "default"
+    });
 
-    // Verificar se é uma imagem
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Erro",
-        description: "Por favor, selecione apenas arquivos de imagem",
-        variant: "destructive",
-      });
-      return;
+    // Limpar o input
+    if (event.target) {
+      event.target.value = '';
     }
 
-    // Verificar tamanho (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Erro",
-        description: "A imagem deve ter no máximo 5MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploading(true);
-    try {
-      // Verificar se o bucket existe primeiro
-      const { data: buckets, error: bucketsError } =
-        await supabase.storage.listBuckets();
-
-      if (bucketsError) {
-        console.error(
-          "Error checking buckets:",
-          JSON.stringify(bucketsError, null, 2),
-        );
-        throw new Error(
-          `Erro ao verificar storage: ${bucketsError.message || "Erro desconhecido"}`,
-        );
-      }
-
-      const avatarsBucket = buckets?.find((bucket) => bucket.id === "avatars");
-      if (!avatarsBucket) {
-        throw new Error(
-          "Bucket de avatars não está configurado. Use o campo URL como alternativa.",
-        );
-      }
+    return;
 
       // Criar nome único para o arquivo
       const fileExt = file.name.split(".").pop();
