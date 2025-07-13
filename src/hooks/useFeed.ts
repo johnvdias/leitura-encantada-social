@@ -18,7 +18,7 @@ export const useFeed = () => {
         .from('posts')
         .select(`
           *,
-          profiles!posts_user_id_fkey (
+          profiles!inner(
             display_name,
             avatar_url
           ),
@@ -27,6 +27,7 @@ export const useFeed = () => {
             author
           )
         `)
+        .eq('profiles.user_id', 'posts.user_id')
         .order('created_at', { ascending: false })
         .limit(20);
 
