@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +17,7 @@ export const useFeed = () => {
         .from('posts')
         .select(`
           *,
-          profiles:user_id(
+          profiles!fk_posts_user_id(
             display_name,
             avatar_url
           ),
@@ -119,4 +117,3 @@ export const useFeed = () => {
     refetch: fetchPosts
   };
 };
-
