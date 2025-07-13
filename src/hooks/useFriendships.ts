@@ -17,46 +17,75 @@ export const useFriendships = () => {
 
     setLoading(true);
     try {
-      // Fetch accepted friendships
-      const { data: friendsData, error: friendsError } = await supabase
+      // Fetch all friendships where user is involved
+      const { data: allFriendships, error: friendshipsError } = await supabase
         .from('friendships')
         .select(`
           *,
-          requester:profiles!inner (display_name, avatar_url, user_id),
-          addressee:profiles!inner (display_name, avatar_url, user_id)
+          requester:profiles!friendships_requester_id_fkey (display_name, avatar_url, user_id),
+          addressee:profiles!friendships_addressee_id_fkey (display_name, avatar_url, user_id)
         `)
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-        .eq('status', 'accepted');
+        .order('created_at', { ascending: false });
 
-      if (friendsError) throw friendsError;
+      if (friendshipsError) throw friendshipsError;
 
-      // Fetch pending requests received
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('friendships')
-        .select(`
-          *,
-          requester:profiles!inner (display_name, avatar_url, user_id)
-        `)
-        .eq('addressee_id', user.id)
-        .eq('status', 'pending');
+      console.log('Todas as amizades encontradas:', allFriendships);
 
-      if (requestsError) throw requestsError;
+      // Group friendships by the other user's ID to handle bidirectional relationships
+      const friendshipsByUser = new Map<string, any[]>();
+      
+      allFriendships?.forEach(friendship => {
+        const otherUserId = friendship.requester_id === user.id 
+          ? friendship.addressee_id 
+          : friendship.requester_id;
+        
+        if (!friendshipsByUser.has(otherUserId)) {
+          friendshipsByUser.set(otherUserId, []);
+        }
+        friendshipsByUser.get(otherUserId)!.push(friendship);
+      });
 
-      // Fetch pending requests sent
-      const { data: sentData, error: sentError } = await supabase
-        .from('friendships')
-        .select(`
-          *,
-          addressee:profiles!inner (display_name, avatar_url, user_id)
-        `)
-        .eq('requester_id', user.id)
-        .eq('status', 'pending');
+      console.log('Amizades agrupadas por usuário:', friendshipsByUser);
 
-      if (sentError) throw sentError;
+      const friends: any[] = [];
+      const friendRequests: any[] = [];
+      const sentRequests: any[] = [];
 
-      setFriends(friendsData || []);
-      setFriendRequests(requestsData || []);
-      setSentRequests(sentData || []);
+      friendshipsByUser.forEach((userFriendships, otherUserId) => {
+        // Check if there's any accepted friendship
+        const acceptedFriendship = userFriendships.find(f => f.status === 'accepted');
+        
+        if (acceptedFriendship) {
+          // Transform to show the friend profile
+          const isRequester = acceptedFriendship.requester_id === user.id;
+          friends.push({
+            ...acceptedFriendship,
+            friend: isRequester ? acceptedFriendship.addressee : acceptedFriendship.requester
+          });
+        } else {
+          // Check for pending requests
+          const pendingRequests = userFriendships.filter(f => f.status === 'pending');
+          
+          pendingRequests.forEach(friendship => {
+            if (friendship.addressee_id === user.id) {
+              // Request received
+              friendRequests.push(friendship);
+            } else if (friendship.requester_id === user.id) {
+              // Request sent
+              sentRequests.push(friendship);
+            }
+          });
+        }
+      });
+
+      console.log('Amigos finais:', friends);
+      console.log('Solicitações recebidas:', friendRequests);
+      console.log('Solicitações enviadas:', sentRequests);
+
+      setFriends(friends);
+      setFriendRequests(friendRequests);
+      setSentRequests(sentRequests);
     } catch (error) {
       console.error('Error fetching friendships:', error);
     } finally {
