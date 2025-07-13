@@ -12,7 +12,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Settings, Upload } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Settings, Upload, Check, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,29 +25,108 @@ export function EditProfileDialog() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     display_name: profile?.display_name || "",
+    username: profile?.username || "",
     bio: profile?.bio || "",
     reading_goal: profile?.reading_goal || 12,
   });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username || username === profile?.username) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    setCheckingUsername(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .single();
+
+      setUsernameAvailable(error?.code === 'PGRST116'); // No rows found = available
+    } catch (error) {
+      setUsernameAvailable(true);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const preview = URL.createObjectURL(file);
+      setAvatarPreview(preview);
+    }
+  };
+
+  const uploadAvatar = async () => {
+    if (!avatarFile || !user) return null;
+
+    const fileExt = avatarFile.name.split('.').pop();
+    const fileName = `${user.id}/avatar.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, avatarFile, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    return data.publicUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
+    if (formData.username && usernameAvailable === false) {
+      toast({
+        title: "Erro",
+        description: "Este nome de usuário já está em uso.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
+      let avatar_url = profile?.avatar_url;
+
+      if (avatarFile) {
+        avatar_url = await uploadAvatar();
+      }
+
+      const updateData: any = {
+        display_name: formData.display_name,
+        bio: formData.bio,
+        reading_goal: formData.reading_goal,
+      };
+
+      if (formData.username) {
+        updateData.username = formData.username;
+      }
+
+      if (avatar_url) {
+        updateData.avatar_url = avatar_url;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          display_name: formData.display_name,
-          bio: formData.bio,
-          reading_goal: formData.reading_goal,
-        })
+        .update(updateData)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
       setOpen(false);
-      // Recarregar a página para atualizar os dados
       window.location.reload();
       toast({
         title: "Perfil atualizado",
@@ -82,6 +162,35 @@ export function EditProfileDialog() {
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
+              <Label>Foto de Perfil</Label>
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={avatarPreview || profile?.avatar_url} />
+                  <AvatarFallback>
+                    {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                    id="avatar-upload"
+                  />
+                  <Label htmlFor="avatar-upload" className="cursor-pointer">
+                    <Button type="button" variant="outline" asChild>
+                      <span>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Alterar Foto
+                      </span>
+                    </Button>
+                  </Label>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid gap-2">
               <Label htmlFor="display_name">Nome de Exibição</Label>
               <Input
                 id="display_name"
@@ -90,6 +199,30 @@ export function EditProfileDialog() {
                 placeholder="Seu nome"
               />
             </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="username">Nome de Usuário</Label>
+              <div className="relative">
+                <Input
+                  id="username"
+                  value={formData.username}
+                  onChange={(e) => {
+                    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                    setFormData({ ...formData, username: value });
+                    checkUsernameAvailability(value);
+                  }}
+                  placeholder="seu_username"
+                  className={usernameAvailable === false ? "border-destructive" : usernameAvailable === true ? "border-green-500" : ""}
+                />
+                {checkingUsername && <span className="absolute right-3 top-3 text-xs text-muted-foreground">Verificando...</span>}
+                {usernameAvailable === true && <Check className="absolute right-3 top-3 h-4 w-4 text-green-500" />}
+                {usernameAvailable === false && <X className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
+              </div>
+              {usernameAvailable === false && (
+                <p className="text-xs text-destructive">Este nome de usuário já está em uso</p>
+              )}
+            </div>
+            
             <div className="grid gap-2">
               <Label htmlFor="bio">Bio</Label>
               <Textarea
@@ -100,6 +233,7 @@ export function EditProfileDialog() {
                 rows={3}
               />
             </div>
+            
             <div className="grid gap-2">
               <Label htmlFor="reading_goal">Meta de Leitura (livros/ano)</Label>
               <Input

@@ -58,8 +58,9 @@ export const useAchievements = () => {
         achievementsToUnlock.push({
           user_id: user.id,
           achievement_type: 'first_book',
-          achievement_name: 'Primeiro Livro 📚',
-          description: 'Parabéns! Você leu seu primeiro livro'
+          achievement_name: 'Primeiro Livro',
+          description: 'Parabéns! Você leu seu primeiro livro',
+          emoji: '📚'
         });
       }
 
@@ -68,8 +69,9 @@ export const useAchievements = () => {
         achievementsToUnlock.push({
           user_id: user.id,
           achievement_type: 'five_books',
-          achievement_name: 'Leitor Dedicado 📖',
-          description: 'Incrível! Você já leu 5 livros'
+          achievement_name: 'Leitor Dedicado',
+          description: 'Incrível! Você já leu 5 livros',
+          emoji: '📖'
         });
       }
 
@@ -78,8 +80,38 @@ export const useAchievements = () => {
         achievementsToUnlock.push({
           user_id: user.id,
           achievement_type: 'ten_books',
-          achievement_name: 'Bibliófilo 📚✨',
-          description: 'Fantástico! Você já leu 10 livros'
+          achievement_name: 'Bibliófilo',
+          description: 'Fantástico! Você já leu 10 livros',
+          emoji: '📚✨'
+        });
+      }
+
+      // 25 books achievement
+      if (completedCount >= 25 && !existingTypes.has('bookworm')) {
+        achievementsToUnlock.push({
+          user_id: user.id,
+          achievement_type: 'bookworm',
+          achievement_name: 'Rato de Biblioteca',
+          description: 'Impressionante! 25 livros lidos',
+          emoji: '🐛'
+        });
+      }
+
+      // Reading streak achievement
+      const { data: streakData } = await supabase
+        .from('reading_history')
+        .select('created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(7);
+
+      if (streakData && streakData.length >= 7 && !existingTypes.has('reading_streak')) {
+        achievementsToUnlock.push({
+          user_id: user.id,
+          achievement_type: 'reading_streak',
+          achievement_name: 'Sequência de Fogo',
+          description: 'Leu por 7 dias consecutivos',
+          emoji: '🔥'
         });
       }
 

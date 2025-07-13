@@ -20,6 +20,7 @@ export type Database = {
           achievement_type: string
           description: string | null
           earned_at: string
+          emoji: string | null
           id: string
           metadata: Json | null
           user_id: string
@@ -29,6 +30,7 @@ export type Database = {
           achievement_type: string
           description?: string | null
           earned_at?: string
+          emoji?: string | null
           id?: string
           metadata?: Json | null
           user_id: string
@@ -38,6 +40,7 @@ export type Database = {
           achievement_type?: string
           description?: string | null
           earned_at?: string
+          emoji?: string | null
           id?: string
           metadata?: Json | null
           user_id?: string
@@ -403,6 +406,7 @@ export type Database = {
           reading_goal: number | null
           updated_at: string
           user_id: string
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -413,6 +417,7 @@ export type Database = {
           reading_goal?: number | null
           updated_at?: string
           user_id: string
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -423,6 +428,7 @@ export type Database = {
           reading_goal?: number | null
           updated_at?: string
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }

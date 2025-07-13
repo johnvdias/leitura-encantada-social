@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Heart, Sparkles } from 'lucide-react';
+import { BookOpen, Heart, Sparkles, Eye, EyeOff } from 'lucide-react';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +15,9 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isFirstLogin, setIsFirstLogin] = useState(false);
   const { signUp, signIn, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -58,8 +61,9 @@ const Auth = () => {
         variant: "destructive",
       });
     } else {
+      setIsFirstLogin(true);
       toast({
-        title: "Bem-vinda à Estante Encantada! ✨",
+        title: "Seja bem-vind(a) à Estante Encantada! ✨",
         description: "Verifique seu email para confirmar a conta.",
       });
     }
@@ -82,7 +86,7 @@ const Auth = () => {
       });
     } else {
       toast({
-        title: "Bem-vinda de volta! 💕",
+        title: "Seja bem-vind(a) de volta! 💕",
         description: "Que bom te ver novamente na nossa estante.",
       });
     }
@@ -135,14 +139,26 @@ const Auth = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Entrando..." : "Entrar na Estante"}
@@ -176,25 +192,49 @@ const Auth = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Criando conta..." : "Criar Conta Encantada"}
