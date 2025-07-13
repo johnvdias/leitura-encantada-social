@@ -118,12 +118,18 @@ const Perfil = () => {
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold">
-                {profile?.display_name || "Leitor Anônimo"}
-              </h1>
-              <p className="text-muted-foreground mb-4">
-                {profile?.bio || "Apaixonado por livros e aventuras literárias"}
-              </p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold">
+                    {profile?.display_name || "Leitor Anônimo"}
+                  </h1>
+                  <p className="text-muted-foreground mb-4">
+                    {profile?.bio ||
+                      "Apaixonado por livros e aventuras literárias"}
+                  </p>
+                </div>
+                <EditProfile />
+              </div>
               <div className="flex items-center gap-6 text-sm">
                 <div className="flex items-center gap-1">
                   <BookOpen className="h-4 w-4" />
