@@ -6,6 +6,7 @@ import heroImage from "@/assets/hero-enchanted-library.jpg";
 import { useAuth } from "@/contexts/AuthContext";
 import { createSamplePosts, createSampleBooks } from "@/utils/seedData";
 import { useToast } from "@/hooks/use-toast";
+import { RecommendationSystem } from "@/components/RecommendationSystem";
 
 const Index = () => {
   const { user } = useAuth();
@@ -192,6 +193,25 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Recommendations Section for logged in users */}
+      {user && (
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-enchanted text-enchanted mb-4">
+                Recomendações Personalizadas
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Descobrimos livros, pessoas e clubes especiais que podem encantar sua jornada literária
+              </p>
+            </div>
+            <div className="max-w-4xl mx-auto">
+              <RecommendationSystem />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-dreamy">

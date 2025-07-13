@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ClubDiscussions } from "@/components/ClubDiscussions";
+import { EditClubDialog } from "@/components/EditClubDialog";
+import { MemberManagement } from "@/components/MemberManagement";
 
 interface Club {
   id: string;
@@ -229,10 +231,13 @@ const ClubePage = () => {
 
             <div className="flex items-center gap-2">
               {isCreator && (
-                <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Criador
-                </Badge>
+                <>
+                  <EditClubDialog club={club} onUpdate={fetchClubData} />
+                  <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Criador
+                  </Badge>
+                </>
               )}
               {isMember && !isCreator && (
                 <Button
@@ -283,43 +288,52 @@ const ClubePage = () => {
                 <CardTitle>Membros do Clube</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {members.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-3 rounded border">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={member.profiles?.avatar_url} />
-                          <AvatarFallback>
-                            {member.profiles?.display_name?.charAt(0).toUpperCase() || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">
-                            {member.profiles?.display_name || 'Usuário'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Membro desde {formatDistanceToNow(new Date(member.joined_at), {
-                              addSuffix: true,
-                              locale: ptBR
-                            })}
-                          </p>
+                {isCreator ? (
+                  <MemberManagement 
+                    members={members} 
+                    creatorId={club.creator_id} 
+                    clubId={clubId!}
+                    onUpdate={fetchClubData}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {members.map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 rounded border">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarImage src={member.profiles?.avatar_url} />
+                            <AvatarFallback>
+                              {member.profiles?.display_name?.charAt(0).toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">
+                              {member.profiles?.display_name || 'Usuário'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Membro desde {formatDistanceToNow(new Date(member.joined_at), {
+                                addSuffix: true,
+                                locale: ptBR
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {member.profiles?.user_id === club.creator_id && (
+                            <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
+                              <Crown className="h-3 w-3 mr-1" />
+                              Criador
+                            </Badge>
+                          )}
+                          <Badge variant="outline">
+                            {member.role === 'member' ? 'Membro' : member.role}
+                          </Badge>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {member.profiles?.user_id === club.creator_id && (
-                          <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
-                            <Crown className="h-3 w-3 mr-1" />
-                            Criador
-                          </Badge>
-                        )}
-                        <Badge variant="outline">
-                          {member.role === 'member' ? 'Membro' : member.role}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

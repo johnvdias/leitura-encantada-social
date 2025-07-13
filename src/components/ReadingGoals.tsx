@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Target, Calendar, TrendingUp, Clock } from "lucide-react";
+import { useStreak } from "@/hooks/useStreak";
+import { Target, Calendar, TrendingUp, Clock, Flame } from "lucide-react";
 
 interface ReadingGoalsProps {
   className?: string;
@@ -31,6 +32,7 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const { streak, loading: streakLoading } = useStreak();
 
   useEffect(() => {
     if (user) {
@@ -80,7 +82,7 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
       setStats({
         pagesReadToday,
         timeReadToday,
-        streak: 0, // TODO: Calculate actual streak
+        streak: streak,
       });
     } catch (error) {
       console.error("Error fetching today's stats:", error);
@@ -180,7 +182,7 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
               <Progress value={dailyProgress} className="h-2" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-3 gap-4 pt-2">
               <div className="text-center p-3 bg-secondary/50 rounded-lg">
                 <div className="text-2xl font-bold text-primary">{stats.timeReadToday}</div>
                 <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
@@ -193,6 +195,13 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
                 <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
                   <TrendingUp className="w-3 h-3" />
                   Meta diária
+                </div>
+              </div>
+              <div className="text-center p-3 bg-secondary/50 rounded-lg">
+                <div className="text-2xl font-bold text-orange-500">{streak}</div>
+                <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  <Flame className="w-3 h-3" />
+                  Dias seguidos
                 </div>
               </div>
             </div>
