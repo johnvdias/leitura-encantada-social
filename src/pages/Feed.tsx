@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -101,9 +102,11 @@ const Feed = () => {
             <p className="text-muted-foreground mb-4">
               Conecte-se com outras leitoras para ver suas atualizações aqui
             </p>
-            <Button className="btn-enchanted">
-              Encontrar Amigas
-            </Button>
+            <Link to="/perfil">
+              <Button className="btn-enchanted">
+                Gerenciar Amigas
+              </Button>
+            </Link>
           </div>
         </TabsContent>
 
@@ -113,9 +116,11 @@ const Feed = () => {
             <p className="text-muted-foreground mb-4">
               Participe de clubes de leitura para ver as discussões aqui
             </p>
-            <Button className="btn-enchanted">
-              Explorar Clubes
-            </Button>
+            <Link to="/clubes">
+              <Button className="btn-enchanted">
+                Explorar Clubes
+              </Button>
+            </Link>
           </div>
         </TabsContent>
       </Tabs>

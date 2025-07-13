@@ -3,8 +3,41 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookHeart, Library, Users, Heart, Star, Sparkles, BookOpen, Trophy, Calendar } from "lucide-react";
 import heroImage from "@/assets/hero-enchanted-library.jpg";
+import { useAuth } from "@/contexts/AuthContext";
+import { createSamplePosts, createSampleBooks } from "@/utils/seedData";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleCreateSampleData = async () => {
+    if (!user) return;
+
+    try {
+      const { error: booksError } = await createSampleBooks(user.id);
+      const { error: postsError } = await createSamplePosts(user.id);
+
+      if (booksError || postsError) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar dados de exemplo",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Dados criados! ✨",
+          description: "Vá para sua estante e feed para ver os exemplos"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao criar dados",
+        variant: "destructive"
+      });
+    }
+  };
   const features = [
     {
       icon: <BookOpen className="w-8 h-8 text-primary" />,
@@ -69,14 +102,45 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Button size="lg" className="btn-enchanted text-lg px-8 py-4">
-                <BookHeart className="w-5 h-5 mr-2" />
-                Começar Minha Jornada
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-4 hover-glow">
-                <Sparkles className="w-5 h-5 mr-2" />
-                Descobrir Comunidade
-              </Button>
+              {user ? (
+                <>
+                  <Link to="/estante">
+                    <Button size="lg" className="btn-enchanted text-lg px-8 py-4">
+                      <Library className="w-5 h-5 mr-2" />
+                      Minha Estante
+                    </Button>
+                  </Link>
+                  <Link to="/feed">
+                    <Button size="lg" variant="outline" className="text-lg px-8 py-4 hover-glow">
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Ver Feed
+                    </Button>
+                  </Link>
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    onClick={handleCreateSampleData}
+                    className="text-sm px-4 py-2"
+                  >
+                    Criar Dados de Exemplo
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button size="lg" className="btn-enchanted text-lg px-8 py-4">
+                      <BookHeart className="w-5 h-5 mr-2" />
+                      Começar Minha Jornada
+                    </Button>
+                  </Link>
+                  <Link to="/feed">
+                    <Button size="lg" variant="outline" className="text-lg px-8 py-4 hover-glow">
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Descobrir Comunidade
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Stats */}
