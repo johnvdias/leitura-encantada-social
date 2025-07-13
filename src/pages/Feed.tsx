@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Users, BookOpen, Loader2 } from "lucide-react";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { PostCard } from "@/components/PostCard";
+import PostCard from "@/components/PostCard";
 import { useFeed } from "@/hooks/useFeed";
 
 const Feed = () => {
@@ -75,10 +75,12 @@ const Feed = () => {
               posts.map((post) => (
                 <PostCard 
                   key={post.id} 
-                  post={post}
-                  author={post.profiles}
+                  id={post.id}
+                  content={post.content}
+                  user={post.user}
                   book={post.books}
-                  onUpdate={refetch}
+                  created_at={post.created_at}
+                  post_type={post.post_type}
                 />
               ))
             ) : (
