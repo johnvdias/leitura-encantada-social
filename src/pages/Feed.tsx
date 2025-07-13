@@ -8,6 +8,7 @@ import { CreatePostDialog } from "@/components/CreatePostDialog";
 import PostCard from "@/components/PostCard";
 import { RecommendationsSection } from "@/components/RecommendationsSection";
 import { useFeed } from "@/hooks/useFeed";
+import { useNavigate } from "react-router-dom";
 
 const Feed = () => {
   const [activeTab, setActiveTab] = useState("todas");
