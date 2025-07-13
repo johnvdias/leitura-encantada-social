@@ -16,61 +16,70 @@ export const useFriendships = () => {
 
     setLoading(true);
     try {
-      // Fetch accepted friendships
-      const { data: friendsData, error: friendsError } = await supabase
+      // Fetch friendships first
+      const { data: friendshipsRaw, error: friendshipsError } = await supabase
         .from("friendships")
-        .select(
-          `
-          *,
-          requester:profiles!inner(display_name, avatar_url, user_id),
-          addressee:profiles!inner(display_name, avatar_url, user_id)
-        `,
-        )
-        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-        .eq("status", "accepted");
+        .select("*")
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
 
-      if (friendsError) {
-        console.error("Friends error:", friendsError);
-        throw friendsError;
+      if (friendshipsError) {
+        console.error("Friendships fetch error:", friendshipsError);
+        throw friendshipsError;
       }
 
-      // Fetch pending requests received
-      const { data: requestsData, error: requestsError } = await supabase
-        .from("friendships")
-        .select(
-          `
-          *,
-          requester:profiles!inner(display_name, avatar_url, user_id)
-        `,
-        )
-        .eq("addressee_id", user.id)
-        .eq("status", "pending");
+      // Get all unique user IDs to fetch profiles
+      const userIds = new Set<string>();
+      friendshipsRaw?.forEach((friendship) => {
+        userIds.add(friendship.requester_id);
+        userIds.add(friendship.addressee_id);
+      });
 
-      if (requestsError) {
-        console.error("Requests error:", requestsError);
-        throw requestsError;
+      // Remove current user ID
+      userIds.delete(user.id);
+
+      // Fetch profiles for all users
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", Array.from(userIds));
+
+      if (profilesError) {
+        console.error("Profiles fetch error:", profilesError);
+        throw profilesError;
       }
 
-      // Fetch pending requests sent
-      const { data: sentData, error: sentError } = await supabase
-        .from("friendships")
-        .select(
-          `
-          *,
-          addressee:profiles!inner(display_name, avatar_url, user_id)
-        `,
-        )
-        .eq("requester_id", user.id)
-        .eq("status", "pending");
+      // Create a map of profiles by user_id
+      const profilesMap = new Map();
+      profiles?.forEach((profile) => {
+        profilesMap.set(profile.user_id, profile);
+      });
 
-      if (sentError) {
-        console.error("Sent error:", sentError);
-        throw sentError;
-      }
+      // Combine friendships with profile data
+      const enrichedFriendships =
+        friendshipsRaw?.map((friendship) => ({
+          ...friendship,
+          requester: profilesMap.get(friendship.requester_id),
+          addressee: profilesMap.get(friendship.addressee_id),
+        })) || [];
 
-      setFriends(friendsData || []);
-      setFriendRequests(requestsData || []);
-      setSentRequests(sentData || []);
+      // Filter by status and user relationship
+      const acceptedFriends = enrichedFriendships.filter(
+        (f) =>
+          f.status === "accepted" &&
+          (f.requester_id === user.id || f.addressee_id === user.id),
+      );
+
+      const pendingRequests = enrichedFriendships.filter(
+        (f) => f.status === "pending" && f.addressee_id === user.id,
+      );
+
+      const sentRequests = enrichedFriendships.filter(
+        (f) => f.status === "pending" && f.requester_id === user.id,
+      );
+
+      setFriends(acceptedFriends);
+      setFriendRequests(pendingRequests);
+      setSentRequests(sentRequests);
     } catch (error) {
       console.error("Error fetching friendships:", error);
       const errorMessage =
