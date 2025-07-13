@@ -157,7 +157,7 @@ const Perfil = () => {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="estatisticas" className="space-y-6">
+      <Tabs defaultValue={defaultTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
           <TabsTrigger value="conquistas">Conquistas</TabsTrigger>
