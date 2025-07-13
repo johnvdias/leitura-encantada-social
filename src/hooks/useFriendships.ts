@@ -92,9 +92,13 @@ export const useFriendships = () => {
       const { error } = await supabase.from("friendships").insert({
         requester_id: user.id,
         addressee_id: addresseeId,
+        status: "pending",
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Insert friendship error:", error);
+        throw error;
+      }
 
       // Create notification
       await supabase.from("notifications").insert({
@@ -112,9 +116,11 @@ export const useFriendships = () => {
       });
     } catch (error) {
       console.error("Error sending friend request:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       toast({
         title: "Erro",
-        description: "Não foi possível enviar a solicitação",
+        description: `Erro ao enviar solicitação: ${errorMessage}`,
         variant: "destructive",
       });
     }
