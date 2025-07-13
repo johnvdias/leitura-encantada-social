@@ -112,7 +112,12 @@ const Feed = () => {
             <p className="text-muted-foreground mb-4">
               Conecte-se com outras leitoras para ver suas atualizações aqui
             </p>
-            <Button className="btn-enchanted">Encontrar Amigas</Button>
+            <Button
+              className="btn-enchanted"
+              onClick={() => navigate("/perfil")}
+            >
+              Encontrar Amigas
+            </Button>
           </div>
         </TabsContent>
 
@@ -122,7 +127,12 @@ const Feed = () => {
             <p className="text-muted-foreground mb-4">
               Participe de clubes de leitura para ver as discussões aqui
             </p>
-            <Button className="btn-enchanted">Explorar Clubes</Button>
+            <Button
+              className="btn-enchanted"
+              onClick={() => navigate("/clubes")}
+            >
+              Explorar Clubes
+            </Button>
           </div>
         </TabsContent>
       </Tabs>
