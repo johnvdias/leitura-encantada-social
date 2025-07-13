@@ -21,6 +21,11 @@ const Header = () => {
           </span>
         </Link>
 
+        {/* Busca Global */}
+        <div className="flex-1 max-w-md mx-4">
+          <GlobalSearch />
+        </div>
+
         <nav className="hidden md:flex items-center space-x-4">
           <Link to="/">
             <Button
