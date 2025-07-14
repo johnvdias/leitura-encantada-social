@@ -287,11 +287,15 @@ app.get("/api/amazon/search", async (req, res) => {
       }
     }
 
-    // Usar dados simulados como fallback
+    // Garantir que sempre temos dados para retornar
     if (books.length === 0) {
       books = getMockAmazonBooks(query);
+      source = "fallback";
       console.log(`📚 Using ${books.length} mock books for query "${query}"`);
     }
+
+    // Log final
+    console.log(`🎯 Returning ${books.length} books from source: ${source}`);
 
     res.json({
       success: true,
