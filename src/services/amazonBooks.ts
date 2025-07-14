@@ -182,6 +182,9 @@ class AmazonBooksService {
 export const amazonBooksService = new AmazonBooksService();
 export type { AmazonBookResult };
 
+export const amazonBooksService = new AmazonBooksService();
+export type { AmazonBookResult };
+
 // Instruções para implementação completa:
 /*
 IMPLEMENTAÇÃO BACKEND NECESSÁRIA:
@@ -225,7 +228,7 @@ app.get('/api/amazon/search', async (req, res) => {
   
   res.json(data);
 });
-```
+
 
 4. Atualizar frontend para chamar o backend em vez do mock
 */
