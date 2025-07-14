@@ -149,6 +149,102 @@ function mapAmazonResults(amazonResponse) {
   });
 }
 
+// Dados simulados para fallback quando a API da Amazon falha
+function getMockAmazonBooks(query) {
+  const mockBooks = [
+    {
+      id: "amazon-1",
+      title: "Dom Casmurro",
+      author: "Machado de Assis",
+      description:
+        "Um dos maiores clássicos da literatura brasileira, conta a história de Bentinho e Capitu.",
+      pages: 256,
+      genre: "Literatura Clássica",
+      cover_url:
+        "https://images-na.ssl-images-amazon.com/images/P/8525406627.01.L.jpg",
+      isbn: "978-8525406620",
+      price: "R$ 24,90",
+      amazon_url: "https://amazon.com.br/dp/8525406627",
+      rating: 4.5,
+      reviews_count: 1247,
+    },
+    {
+      id: "amazon-2",
+      title: "O Cortiço",
+      author: "Aluísio Azevedo",
+      description:
+        "Romance naturalista que retrata a vida em um cortiço carioca do século XIX.",
+      pages: 304,
+      genre: "Literatura Brasileira",
+      cover_url:
+        "https://images-na.ssl-images-amazon.com/images/P/8594318200.01.L.jpg",
+      isbn: "978-8594318206",
+      price: "R$ 19,90",
+      amazon_url: "https://amazon.com.br/dp/8594318200",
+      rating: 4.2,
+      reviews_count: 856,
+    },
+    {
+      id: "amazon-3",
+      title: "Quarto de Despejo",
+      author: "Carolina Maria de Jesus",
+      description:
+        "Diário de uma catadora de papel que vivia na favela do Canindé, em São Paulo.",
+      pages: 200,
+      genre: "Biografia",
+      cover_url:
+        "https://images-na.ssl-images-amazon.com/images/P/8508132040.01.L.jpg",
+      isbn: "978-8508132041",
+      price: "R$ 32,90",
+      amazon_url: "https://amazon.com.br/dp/8508132040",
+      rating: 4.8,
+      reviews_count: 2134,
+    },
+    {
+      id: "amazon-4",
+      title: "Pequeno Príncipe",
+      author: "Antoine de Saint-Exupéry",
+      description:
+        "Uma das obras mais traduzidas e vendidas do mundo, sobre amizade e humanidade.",
+      pages: 96,
+      genre: "Infantil",
+      cover_url:
+        "https://images-na.ssl-images-amazon.com/images/P/8595081512.01.L.jpg",
+      isbn: "978-8595081512",
+      price: "R$ 16,90",
+      amazon_url: "https://amazon.com.br/dp/8595081512",
+      rating: 4.9,
+      reviews_count: 3247,
+    },
+    {
+      id: "amazon-5",
+      title: "Memórias Póstumas de Brás Cubas",
+      author: "Machado de Assis",
+      description:
+        "Romance inovador narrado por um defunto autor, marco do Realismo brasileiro.",
+      pages: 224,
+      genre: "Literatura Clássica",
+      cover_url:
+        "https://images-na.ssl-images-amazon.com/images/P/8520925922.01.L.jpg",
+      isbn: "978-8520925928",
+      price: "R$ 27,90",
+      amazon_url: "https://amazon.com.br/dp/8520925928",
+      rating: 4.4,
+      reviews_count: 967,
+    },
+  ];
+
+  // Filtrar resultados baseados na query
+  const filteredBooks = mockBooks.filter(
+    (book) =>
+      book.title.toLowerCase().includes(query.toLowerCase()) ||
+      book.author.toLowerCase().includes(query.toLowerCase()) ||
+      book.genre.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  return filteredBooks.length > 0 ? filteredBooks : mockBooks.slice(0, 3);
+}
+
 // Endpoint para buscar livros
 app.get("/api/amazon/search", async (req, res) => {
   try {
