@@ -7,8 +7,19 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// Middleware com CORS mais permissivo
+app.use(
+  cors({
+    origin: [
+      "http://localhost:8080",
+      "http://localhost:3000",
+      "http://localhost:5173",
+      /\.fly\.dev$/,
+    ],
+    credentials: true,
+    optionsSuccessStatus: 200,
+  }),
+);
 app.use(express.json());
 
 // Configuração da Amazon PA-API para Brasil
