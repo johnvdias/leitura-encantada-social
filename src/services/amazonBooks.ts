@@ -148,25 +148,40 @@ class AmazonBooksService {
   private async callBackendAPI(query: string): Promise<AmazonBookResult[]> {
     const backendUrl =
       import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+    const url = `${backendUrl}/api/amazon/search?query=${encodeURIComponent(query)}`;
+
+    console.log(`🌐 Calling backend: ${url}`);
 
     try {
-      const response = await fetch(
-        `${backendUrl}/api/amazon/search?query=${encodeURIComponent(query)}`,
-      );
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log(`📡 Backend response status: ${response.status}`);
 
       if (!response.ok) {
-        throw new Error(`Backend API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`Backend error response:`, errorText);
+        throw new Error(`Backend API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log(`📦 Backend response data:`, data);
 
-      if (data.success && data.books) {
+      if (data.success && data.books && Array.isArray(data.books)) {
+        console.log(
+          `✅ Successfully got ${data.books.length} books from ${data.source || "unknown"} source`,
+        );
         return data.books;
       } else {
-        throw new Error(data.message || "No books found");
+        throw new Error(data.message || "Invalid response format from backend");
       }
     } catch (error) {
-      console.error("Backend API call failed:", error);
+      console.error("❌ Backend API call failed:", error);
       throw error;
     }
   }
