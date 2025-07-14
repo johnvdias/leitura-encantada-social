@@ -83,19 +83,28 @@ async function searchAmazonBooks(keywords) {
 
   try {
     const url = `https://${options.host}${options.path}`;
+
+    console.log(`Making request to Amazon API: ${url}`);
+    console.log(`Request headers:`, JSON.stringify(options.headers, null, 2));
+
     const response = await fetch(url, {
       method: options.method,
       headers: options.headers,
       body: options.body,
     });
 
+    console.log(`Amazon API response status: ${response.status}`);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Amazon API error response:`, errorText);
       throw new Error(
-        `Amazon API error: ${response.status} ${response.statusText}`,
+        `Amazon API error: ${response.status} ${response.statusText} - ${errorText}`,
       );
     }
 
     const data = await response.json();
+    console.log(`Amazon API response:`, JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
     console.error("Error calling Amazon API:", error);
