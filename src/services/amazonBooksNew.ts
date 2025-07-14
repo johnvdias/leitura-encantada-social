@@ -96,24 +96,49 @@ class AmazonBooksServiceNew {
     }
   }
 
-  // Health check do backend
+  // Health check do backend com diagnóstico detalhado
   async checkBackendHealth(): Promise<boolean> {
+    console.log(`🔍 Testing backend connectivity...`);
+    console.log(`🌐 Backend URL: ${this.backendUrl}`);
+
     try {
+      console.log(`📡 Attempting to connect to: ${this.backendUrl}/api/health`);
+
       const response = await fetch(`${this.backendUrl}/api/health`, {
         method: "GET",
         headers: { Accept: "application/json" },
+        mode: "cors",
       });
 
+      console.log(
+        `📊 Health check response: ${response.status} ${response.statusText}`,
+      );
+
       if (!response.ok) {
+        console.error(`❌ Backend returned error: ${response.status}`);
         return false;
       }
 
       const data = await response.json();
-      console.log(`💚 Backend health:`, data);
+      console.log(`💚 Backend health response:`, data);
 
       return data.status === "ok";
     } catch (error) {
-      console.error(`💀 Backend health check failed:`, error);
+      console.error(`💀 Backend connectivity failed:`, error);
+      console.error(`🔗 Tried to connect to: ${this.backendUrl}`);
+
+      // Sugestões de diagnóstico
+      if (
+        error instanceof TypeError &&
+        error.message.includes("Failed to fetch")
+      ) {
+        console.error(`🚨 CONNECTION PROBLEM DETECTED:`);
+        console.error(`   1. Check if backend server is running on port 3001`);
+        console.error(`   2. Open http://localhost:3001/api/health in browser`);
+        console.error(`   3. Check for firewall/antivirus blocking`);
+        console.error(`   4. Try restarting the backend server`);
+      }
+
       return false;
     }
   }
