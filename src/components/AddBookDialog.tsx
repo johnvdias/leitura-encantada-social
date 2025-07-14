@@ -44,7 +44,6 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<BookResult[]>([]);
-  const [amazonResults, setAmazonResults] = useState<AmazonBookResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const { user } = useAuth();
