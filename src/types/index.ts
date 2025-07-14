@@ -134,6 +134,7 @@ export interface SearchResult {
 
 // Form types
 export interface ProfileUpdateData {
+  username?: string;
   display_name: string;
   bio: string;
   avatar_url: string;
