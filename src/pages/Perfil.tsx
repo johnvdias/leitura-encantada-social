@@ -228,7 +228,7 @@ const Perfil = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="conquistas" className="space-y-6">
+                <TabsContent value="conquistas" className="space-y-6">
           {achievements.length === 0 ? (
             <Card className="text-center py-12">
               <CardContent>
@@ -242,12 +242,18 @@ const Perfil = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {achievements.map((achievement) => (
-                <Card key={achievement.id} className="card-enchanted">
-                  <CardContent className="pt-6">
-                    <div className="text-center space-y-2">
-                      <div className="text-4xl">🏆</div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Seus Selos de Conquista
+                  <Badge variant="secondary" className="ml-auto">
+                    {achievements.length} conquistados
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AchievementBadgeGrid achievements={achievements} />
                       <h3 className="font-semibold">
                         {achievement.achievement_name}
                       </h3>
