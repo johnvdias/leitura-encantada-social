@@ -46,7 +46,6 @@ async function searchAmazonBooks(keywords) {
     Keywords: keywords,
     Resources: [
       "Images.Primary.Large",
-      "Images.Primary.Medium",
       "ItemInfo.Title",
       "ItemInfo.ByLineInfo",
       "ItemInfo.ContentInfo",
@@ -55,9 +54,9 @@ async function searchAmazonBooks(keywords) {
       "Offers.Listings.Price",
     ],
     SearchIndex: "Books",
-    Marketplace: AMAZON_CONFIG.marketplace,
+    Marketplace: "www.amazon.com.br",
     PartnerTag: AMAZON_CONFIG.partnerTag,
-    PartnerType: AMAZON_CONFIG.partnerType,
+    PartnerType: "Associates",
     ItemCount: 10,
   };
 
