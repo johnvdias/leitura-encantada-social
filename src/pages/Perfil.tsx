@@ -230,6 +230,10 @@ const Perfil = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="avancadas" className="space-y-6">
+          <AdvancedStats />
+        </TabsContent>
+
         <TabsContent value="conquistas" className="space-y-6">
           {achievements.length === 0 ? (
             <Card className="text-center py-12">
