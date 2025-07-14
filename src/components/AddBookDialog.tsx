@@ -56,11 +56,6 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
 
     setIsSearching(true);
     try {
-      // Verificar se o backend está funcionando primeiro
-      console.log("🔍 Checking backend health...");
-      const backendHealthy = await amazonBooksService.checkBackendHealth();
-      console.log(`💚 Backend healthy: ${backendHealthy}`);
-
       // Buscar em paralelo no Google Books e Amazon
       const [googleResponse, amazonResults] = await Promise.allSettled([
         supabase.functions.invoke("search-books", {
