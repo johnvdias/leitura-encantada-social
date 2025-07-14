@@ -19,48 +19,37 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+    <ThemeProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
           <div className="min-h-screen bg-gradient-soft">
             <Header />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route
-                path="/estante"
-                element={
-                  <ProtectedRoute>
-                    <Estante />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/feed"
-                element={
-                  <ProtectedRoute>
-                    <Feed />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/clubes"
-                element={
-                  <ProtectedRoute>
-                    <Clubes />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/perfil"
-                element={
-                  <ProtectedRoute>
-                    <Perfil />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/estante" element={
+                <ProtectedRoute>
+                  <Estante />
+                </ProtectedRoute>
+              } />
+              <Route path="/feed" element={
+                <ProtectedRoute>
+                  <Feed />
+                </ProtectedRoute>
+              } />
+              <Route path="/clubes" element={
+                <ProtectedRoute>
+                  <Clubes />
+                </ProtectedRoute>
+              } />
+              <Route path="/perfil" element={
+                <ProtectedRoute>
+                  <Perfil />
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
