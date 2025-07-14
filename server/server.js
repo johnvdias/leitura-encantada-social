@@ -189,7 +189,7 @@ function getMockAmazonBooks(query) {
       title: "Quarto de Despejo",
       author: "Carolina Maria de Jesus",
       description:
-        "Diário de uma catadora de papel que vivia na favela do Canindé, em São Paulo.",
+        "Diário de uma catadora de papel que vivia na favela do Canindé, em S��o Paulo.",
       pages: 200,
       genre: "Biografia",
       cover_url:
@@ -256,29 +256,50 @@ app.get("/api/amazon/search", async (req, res) => {
       });
     }
 
-    // Verificar se as variáveis de ambiente estão configuradas
+    console.log(`=== Amazon Search Request ===`);
+    console.log(`Query: "${query}"`);
+    console.log(
+      `Credentials configured: ${!!(AMAZON_CONFIG.accessKeyId && AMAZON_CONFIG.secretAccessKey && AMAZON_CONFIG.partnerTag)}`,
+    );
+
+    let books = [];
+    let source = "fallback";
+
+    // Tentar usar a API real da Amazon primeiro
     if (
-      !AMAZON_CONFIG.accessKeyId ||
-      !AMAZON_CONFIG.secretAccessKey ||
-      !AMAZON_CONFIG.partnerTag
+      AMAZON_CONFIG.accessKeyId &&
+      AMAZON_CONFIG.secretAccessKey &&
+      AMAZON_CONFIG.partnerTag
     ) {
-      return res.status(500).json({
-        error: "Amazon API credentials not configured",
-        message:
-          "Please set AMAZON_ACCESS_KEY, AMAZON_SECRET_KEY, and AMAZON_PARTNER_TAG environment variables",
-      });
+      try {
+        console.log("Trying real Amazon API...");
+        const amazonResponse = await searchAmazonBooks(query);
+        const mappedResults = mapAmazonResults(amazonResponse);
+
+        if (mappedResults && mappedResults.length > 0) {
+          books = mappedResults;
+          source = "amazon_api";
+          console.log(`✅ Found ${books.length} books from Amazon API`);
+        }
+      } catch (apiError) {
+        console.log("⚠️ Amazon API failed, using fallback data");
+        console.error("API Error:", apiError.message);
+      }
     }
 
-    console.log(`Searching Amazon for: "${query}"`);
-
-    const amazonResponse = await searchAmazonBooks(query);
-    const mappedResults = mapAmazonResults(amazonResponse);
+    // Usar dados simulados como fallback
+    if (books.length === 0) {
+      books = getMockAmazonBooks(query);
+      console.log(`📚 Using ${books.length} mock books for query "${query}"`);
+    }
 
     res.json({
       success: true,
       query: query,
-      count: mappedResults.length,
-      books: mappedResults,
+      count: books.length,
+      books: books,
+      source: source,
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error("Error in /api/amazon/search:", error);
