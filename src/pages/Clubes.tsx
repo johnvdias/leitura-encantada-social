@@ -1,7 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, Crown, Calendar } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Users, BookOpen, Crown, Calendar, Trash2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { CreateClubDialog } from "@/components/CreateClubDialog";
 import { useClubs } from "@/hooks/useClubs";
 import { formatDistanceToNow } from "date-fns";
