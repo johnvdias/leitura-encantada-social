@@ -1,13 +1,30 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Search, Loader2, BookOpen, User, FileText, Hash } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Plus,
+  Search,
+  Loader2,
+  BookOpen,
+  User,
+  FileText,
+  Hash,
+  ShoppingCart,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { amazonBooksService, AmazonBookResult } from "@/services/amazonBooks";
 
 interface BookResult {
   id: string;
@@ -38,8 +55,8 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
 
     setIsSearching(true);
     try {
-      const response = await supabase.functions.invoke('search-books', {
-        body: { query }
+      const response = await supabase.functions.invoke("search-books", {
+        body: { query },
       });
 
       if (response.error) {
@@ -48,7 +65,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
 
       setSearchResults(response.data.books || []);
     } catch (error) {
-      console.error('Error searching books:', error);
+      console.error("Error searching books:", error);
       toast({
         title: "Erro na busca",
         description: "Não foi possível buscar livros. Tente novamente.",
@@ -59,24 +76,25 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
     }
   };
 
-  const addBook = async (book: BookResult, status: 'reading' | 'want_to_read' | 'completed') => {
+  const addBook = async (
+    book: BookResult,
+    status: "reading" | "want_to_read" | "completed",
+  ) => {
     if (!user) return;
 
     setIsAdding(true);
     try {
-      const { error } = await supabase
-        .from('books')
-        .insert({
-          user_id: user.id,
-          title: book.title,
-          author: book.author,
-          description: book.description,
-          pages: book.pages,
-          genre: book.genre,
-          cover_url: book.cover_url,
-          reading_status: status,
-          reading_progress: status === 'completed' ? 100 : 0,
-        });
+      const { error } = await supabase.from("books").insert({
+        user_id: user.id,
+        title: book.title,
+        author: book.author,
+        description: book.description,
+        pages: book.pages,
+        genre: book.genre,
+        cover_url: book.cover_url,
+        reading_status: status,
+        reading_progress: status === "completed" ? 100 : 0,
+      });
 
       if (error) throw error;
 
@@ -90,7 +108,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
       setSearchResults([]);
       onBookAdded();
     } catch (error) {
-      console.error('Error adding book:', error);
+      console.error("Error adding book:", error);
       toast({
         title: "Erro ao adicionar livro",
         description: "Não foi possível adicionar o livro. Tente novamente.",
@@ -123,10 +141,13 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
               placeholder="Digite o título do livro..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && searchBooks()}
+              onKeyDown={(e) => e.key === "Enter" && searchBooks()}
               className="flex-1"
             />
-            <Button onClick={searchBooks} disabled={isSearching || !query.trim()}>
+            <Button
+              onClick={searchBooks}
+              disabled={isSearching || !query.trim()}
+            >
               {isSearching ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -142,7 +163,10 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
               </h3>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {searchResults.map((book) => (
-                  <Card key={book.id} className="hover:shadow-md transition-shadow">
+                  <Card
+                    key={book.id}
+                    className="hover:shadow-md transition-shadow"
+                  >
                     <CardContent className="p-4">
                       <div className="flex gap-4">
                         {book.cover_url ? (
@@ -156,12 +180,12 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                             <BookOpen className="h-6 w-6 text-muted-foreground" />
                           </div>
                         )}
-                        
+
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-sm leading-tight mb-1 truncate">
                             {book.title}
                           </h4>
-                          
+
                           <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
                             <User className="h-3 w-3" />
                             <span className="truncate">{book.author}</span>
@@ -174,7 +198,10 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                                 <span>{book.pages} pág.</span>
                               </div>
                             )}
-                            <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs px-2 py-0.5"
+                            >
                               {book.genre}
                             </Badge>
                           </div>
@@ -189,7 +216,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                             <Button
                               size="sm"
                               variant="default"
-                              onClick={() => addBook(book, 'reading')}
+                              onClick={() => addBook(book, "reading")}
                               disabled={isAdding}
                               className="text-xs px-3 py-1 h-7"
                             >
@@ -198,7 +225,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => addBook(book, 'want_to_read')}
+                              onClick={() => addBook(book, "want_to_read")}
                               disabled={isAdding}
                               className="text-xs px-3 py-1 h-7"
                             >
@@ -207,7 +234,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                             <Button
                               size="sm"
                               variant="secondary"
-                              onClick={() => addBook(book, 'completed')}
+                              onClick={() => addBook(book, "completed")}
                               disabled={isAdding}
                               className="text-xs px-3 py-1 h-7"
                             >
