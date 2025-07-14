@@ -21,6 +21,7 @@ import { ptBR } from "date-fns/locale";
 
 const Clubes = () => {
   const { clubs, myClubs, loading, joinClub, deleteClub, refetch } = useClubs();
+  const { user } = useAuth();
 
   if (loading) {
     return (
