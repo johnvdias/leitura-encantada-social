@@ -141,30 +141,40 @@ class AmazonBooksService {
     return filteredBooks.length > 0 ? filteredBooks : mockBooks.slice(0, 3);
   }
 
-  // Função que seria usada em produção com um backend
+  // Função para chamar o backend que integra com a Amazon API
+  private async callBackendAPI(query: string): Promise<AmazonBookResult[]> {
+    const backendUrl =
+      import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+
+    try {
+      const response = await fetch(
+        `${backendUrl}/api/amazon/search?query=${encodeURIComponent(query)}`,
+      );
+
+      if (!response.ok) {
+        throw new Error(`Backend API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.books) {
+        return data.books;
+      } else {
+        throw new Error(data.message || "No books found");
+      }
+    } catch (error) {
+      console.error("Backend API call failed:", error);
+      throw error;
+    }
+  }
+
+  // Função legacy mantida para referência
   private async callAmazonAPI(query: string): Promise<AmazonBookResult[]> {
-    // Esta implementação seria feita no backend devido às limitações de CORS
-    // e necessidade de assinar requests com chaves secretas
-
-    const timestamp = new Date().toISOString();
-    const payload = {
-      Keywords: query,
-      Resources: [
-        "Images.Primary.Large",
-        "ItemInfo.Title",
-        "ItemInfo.ByLineInfo",
-        "ItemInfo.ContentInfo",
-        "ItemInfo.Features",
-        "Offers.Listings.Price",
-      ],
-      SearchIndex: "Books",
-      Marketplace: "www.amazon.com.br",
-    };
-
-    // Em produção, isso seria enviado para um endpoint do seu backend
-    // que faria a chamada autenticada para a Amazon API
-
-    throw new Error("Amazon API integration requires backend implementation");
+    // Esta implementação foi movida para o backend
+    // Use callBackendAPI() em vez desta função
+    throw new Error(
+      "Use callBackendAPI() - Amazon API is now handled by backend",
+    );
   }
 
   // Converter resultado da Amazon para formato interno
