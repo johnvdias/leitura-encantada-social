@@ -334,10 +334,6 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
             </TabsContent>
 
             <TabsContent value="amazon" className="mt-4">
-              <div className="mb-4">
-                <BackendConnectivityTest />
-              </div>
-
               {amazonResults.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="font-semibold text-sm text-muted-foreground">
