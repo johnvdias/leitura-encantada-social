@@ -27,19 +27,22 @@ class AmazonBooksService {
   async searchBooks(query: string): Promise<AmazonBookResult[]> {
     try {
       // Tentar usar a API real primeiro
+      console.log("🔍 Trying backend API for Amazon search...");
       const realResults = await this.callBackendAPI(query);
-      if (realResults.length > 0) {
+
+      if (realResults && realResults.length > 0) {
+        console.log(`✅ Backend returned ${realResults.length} results`);
         return realResults;
       }
 
-      // Fallback para dados mockados se a API real falhar
-      console.log("Fallback to mock data - API may not be configured");
+      // Se backend não retornou resultados, usar fallback local
+      console.log("⚠️ Backend returned no results, using local fallback");
       return this.getMockResults(query);
     } catch (error) {
-      console.error("Error searching Amazon books:", error);
+      console.error("❌ Backend API failed:", error);
 
       // Em caso de erro, usar dados mockados como fallback
-      console.log("Using mock data due to API error");
+      console.log("📚 Using local mock data due to backend error");
       return this.getMockResults(query);
     }
   }
