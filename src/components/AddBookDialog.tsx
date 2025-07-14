@@ -28,6 +28,7 @@ import {
   amazonBooksServiceNew as amazonBooksService,
   AmazonBookResult,
 } from "@/services/amazonBooksNew";
+import { BackendConnectivityTest } from "@/components/BackendConnectivityTest";
 
 interface BookResult {
   id: string;
@@ -62,7 +63,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
       // Verificar se o backend está funcionando primeiro
       console.log("🔍 Checking backend health...");
       const backendHealthy = await amazonBooksService.checkBackendHealth();
-      console.log(`���� Backend healthy: ${backendHealthy}`);
+      console.log(`💚 Backend healthy: ${backendHealthy}`);
 
       // Buscar em paralelo no Google Books e Amazon
       const [googleResponse, amazonResults] = await Promise.allSettled([
