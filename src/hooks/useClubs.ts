@@ -8,6 +8,7 @@ export const useClubs = () => {
   const [myClubs, setMyClubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const fetchClubs = async () => {
     if (!user) return;
