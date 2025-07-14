@@ -155,6 +155,7 @@ export const useClubs = () => {
     myClubs,
     loading,
     joinClub,
+    deleteClub,
     refetch: fetchClubs,
   };
 };
