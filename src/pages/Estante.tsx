@@ -87,6 +87,11 @@ const Estante = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Welcome Message */}
+      {shouldShow && (
+        <WelcomeMessage isFirstTime={isFirstTime} onDismiss={dismissWelcome} />
+      )}
+
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-enchanted text-enchanted mb-4">
