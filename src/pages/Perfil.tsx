@@ -228,7 +228,7 @@ const Perfil = () => {
           </div>
         </TabsContent>
 
-                <TabsContent value="conquistas" className="space-y-6">
+        <TabsContent value="conquistas" className="space-y-6">
           {achievements.length === 0 ? (
             <Card className="text-center py-12">
               <CardContent>
@@ -254,12 +254,28 @@ const Perfil = () => {
               </CardHeader>
               <CardContent>
                 <AchievementBadgeGrid achievements={achievements} />
-                      <h3 className="font-semibold">
-                        {achievement.achievement_name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {achievement.description}
-                      </p>
+
+                {/* Lista detalhada */}
+                <div className="mt-8 space-y-3">
+                  <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                    Conquistas Detalhadas
+                  </h4>
+                  {achievements.map((achievement) => (
+                    <div
+                      key={achievement.id}
+                      className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg"
+                    >
+                      <div className="text-2xl">
+                        {achievement.emoji || "🏆"}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold">
+                          {achievement.achievement_name}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {achievement.description}
+                        </p>
+                      </div>
                       <Badge variant="secondary" className="text-xs">
                         {formatDistanceToNow(new Date(achievement.earned_at), {
                           addSuffix: true,
@@ -267,10 +283,10 @@ const Perfil = () => {
                         })}
                       </Badge>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
