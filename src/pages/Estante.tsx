@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, Library, BookOpen, CheckCircle } from "lucide-react";
 import BookCard from "@/components/BookCard/BookCard";
 import { AddBookDialog } from "@/components/AddBookDialog";
+import { AddManualBookDialog } from "@/components/AddManualBookDialog";
 import { ReadingGoals } from "@/components/ReadingGoals";
 import { WelcomeMessage, useWelcomeMessage } from "@/components/WelcomeMessage";
 import { supabase } from "@/integrations/supabase/client";
