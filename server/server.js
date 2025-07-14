@@ -302,13 +302,34 @@ app.get("/api/amazon/search", async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Error in /api/amazon/search:", error);
+    console.error("Critical error in /api/amazon/search:", error);
 
-    res.status(500).json({
-      error: "Failed to search Amazon books",
-      message: error.message,
-      details: process.env.NODE_ENV === "development" ? error.stack : undefined,
-    });
+    // Mesmo com erro crítico, tentar retornar dados mock
+    try {
+      const fallbackBooks = getMockAmazonBooks(query);
+      console.log(
+        `💀 Critical error occurred, using ${fallbackBooks.length} fallback books`,
+      );
+
+      res.json({
+        success: true,
+        query: query,
+        count: fallbackBooks.length,
+        books: fallbackBooks,
+        source: "emergency_fallback",
+        error_occurred: true,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (fallbackError) {
+      console.error("Even fallback failed:", fallbackError);
+
+      res.status(500).json({
+        error: "Complete system failure",
+        message: "Both Amazon API and fallback data failed",
+        original_error: error.message,
+        fallback_error: fallbackError.message,
+      });
+    }
   }
 });
 
