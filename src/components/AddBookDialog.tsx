@@ -24,11 +24,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import {
-  amazonBooksServiceNew as amazonBooksService,
-  AmazonBookResult,
-} from "@/services/amazonBooksNew";
-import { BackendConnectivityTest } from "@/components/BackendConnectivityTest";
+import { amazonBooksService, AmazonBookResult } from "@/services/amazonBooks";
 
 interface BookResult {
   id: string;
