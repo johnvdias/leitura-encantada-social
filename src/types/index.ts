@@ -1,6 +1,7 @@
 // User and Profile types
 export interface Profile {
   user_id: string;
+  username: string | null;
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
