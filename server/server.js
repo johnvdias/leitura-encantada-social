@@ -23,6 +23,20 @@ const AMAZON_CONFIG = {
   marketplace: "www.amazon.com.br",
 };
 
+// Verificar se credenciais estão configuradas
+function validateCredentials() {
+  const missing = [];
+  if (!AMAZON_CONFIG.accessKeyId) missing.push("AMAZON_ACCESS_KEY");
+  if (!AMAZON_CONFIG.secretAccessKey) missing.push("AMAZON_SECRET_KEY");
+  if (!AMAZON_CONFIG.partnerTag) missing.push("AMAZON_PARTNER_TAG");
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missing.join(", ")}`,
+    );
+  }
+}
+
 // Função para buscar livros na Amazon
 async function searchAmazonBooks(keywords) {
   const timestamp = new Date().toISOString();
