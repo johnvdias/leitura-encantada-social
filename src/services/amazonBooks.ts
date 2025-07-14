@@ -163,22 +163,25 @@ class AmazonBooksService {
 
       console.log(`📡 Backend response status: ${response.status}`);
 
-      if (!response.ok) {
-        let errorMessage = `Backend API error: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage += ` - ${errorData.message || errorData.error || "Unknown error"}`;
-          console.error(`Backend error response:`, errorData);
-        } catch (parseError) {
-          const errorText = await response.text();
-          errorMessage += ` - ${errorText}`;
-          console.error(`Backend error response (text):`, errorText);
-        }
-        throw new Error(errorMessage);
+      // Sempre tenta ler como JSON primeiro
+      let data;
+      try {
+        data = await response.json();
+        console.log(`📦 Backend response data:`, data);
+      } catch (parseError) {
+        console.error(`Failed to parse response as JSON:`, parseError);
+        throw new Error(`Backend returned invalid JSON: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log(`📦 Backend response data:`, data);
+      // Verificar se a resposta indica erro
+      if (!response.ok) {
+        const errorMessage =
+          data?.message ||
+          data?.error ||
+          `Backend API error: ${response.status}`;
+        console.error(`Backend error response:`, data);
+        throw new Error(errorMessage);
+      }
 
       if (data.success && data.books && Array.isArray(data.books)) {
         console.log(
