@@ -121,47 +121,6 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
     }
   };
 
-  const addAmazonBook = async (
-    book: AmazonBookResult,
-    status: "reading" | "want_to_read" | "completed",
-  ) => {
-    if (!user) return;
-
-    setIsAdding(true);
-    try {
-      const { error } = await supabase.from("books").insert({
-        user_id: user.id,
-        title: book.title,
-        author: book.author,
-        description: book.description,
-        pages: book.pages,
-        genre: book.genre,
-        cover_url: book.cover_url,
-        isbn: book.isbn,
-        reading_status: status,
-        reading_progress: status === "completed" ? 100 : 0,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Livro adicionado!",
-        description: `"${book.title}" foi adicionado à sua estante`,
-      });
-      onBookAdded();
-      setOpen(false);
-    } catch (error) {
-      console.error("Error adding Amazon book:", error);
-      toast({
-        title: "Erro ao adicionar livro",
-        description: "Não foi possível adicionar o livro. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
