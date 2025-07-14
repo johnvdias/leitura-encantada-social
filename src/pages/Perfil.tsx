@@ -160,8 +160,9 @@ const Perfil = () => {
       </Card>
 
       <Tabs defaultValue={defaultTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
+          <TabsTrigger value="avancadas">Avançadas</TabsTrigger>
           <TabsTrigger value="conquistas">Conquistas</TabsTrigger>
           <TabsTrigger value="amigos">Amigos</TabsTrigger>
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
