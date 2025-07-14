@@ -100,9 +100,43 @@ const Clubes = () => {
                     <span className="text-sm text-muted-foreground">
                       Moderador: {club.moderator}
                     </span>
-                    <Badge className="bg-green-500/20 text-green-700 dark:text-green-300">
-                      Membro
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-500/20 text-green-700 dark:text-green-300">
+                        Membro
+                      </Badge>
+                      {user && club.creator_id === user.id && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Deletar Clube</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja deletar o clube "
+                                {club.name}"? Esta ação não pode ser desfeita e
+                                todos os membros serão removidos.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteClub(club.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Deletar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
