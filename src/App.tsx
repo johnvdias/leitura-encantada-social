@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Header from "@/components/Layout/Header";
 import Index from "./pages/Index";
@@ -28,26 +29,38 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/estante" element={
-                <ProtectedRoute>
-                  <Estante />
-                </ProtectedRoute>
-              } />
-              <Route path="/feed" element={
-                <ProtectedRoute>
-                  <Feed />
-                </ProtectedRoute>
-              } />
-              <Route path="/clubes" element={
-                <ProtectedRoute>
-                  <Clubes />
-                </ProtectedRoute>
-              } />
-              <Route path="/perfil" element={
-                <ProtectedRoute>
-                  <Perfil />
-                </ProtectedRoute>
-              } />
+              <Route
+                path="/estante"
+                element={
+                  <ProtectedRoute>
+                    <Estante />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/feed"
+                element={
+                  <ProtectedRoute>
+                    <Feed />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/clubes"
+                element={
+                  <ProtectedRoute>
+                    <Clubes />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/perfil"
+                element={
+                  <ProtectedRoute>
+                    <Perfil />
+                  </ProtectedRoute>
+                }
+              />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
