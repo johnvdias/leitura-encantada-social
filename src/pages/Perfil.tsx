@@ -18,6 +18,7 @@ import { useAchievements } from "@/hooks/useAchievements";
 import { FriendsSection } from "@/components/FriendsSection";
 import { EditProfile } from "@/components/EditProfile";
 import { AchievementBadgeGrid } from "@/components/AchievementBadge";
+import { AdvancedStats } from "@/components/AdvancedStats";
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "react-router-dom";
 import { ptBR } from "date-fns/locale";
