@@ -56,15 +56,32 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
 
     setIsSearching(true);
     try {
-      const response = await supabase.functions.invoke("search-books", {
-        body: { query },
-      });
+      // Buscar em paralelo no Google Books e Amazon
+      const [googleResponse, amazonResults] = await Promise.allSettled([
+        supabase.functions.invoke("search-books", {
+          body: { query },
+        }),
+        amazonBooksService.searchBooks(query),
+      ]);
 
-      if (response.error) {
-        throw response.error;
+      // Processar resultados do Google Books
+      if (
+        googleResponse.status === "fulfilled" &&
+        !googleResponse.value.error
+      ) {
+        setSearchResults(googleResponse.value.data?.books || []);
+      } else {
+        console.error("Error searching Google Books:", googleResponse);
+        setSearchResults([]);
       }
 
-      setSearchResults(response.data.books || []);
+      // Processar resultados da Amazon
+      if (amazonResults.status === "fulfilled") {
+        setAmazonResults(amazonResults.value);
+      } else {
+        console.error("Error searching Amazon:", amazonResults);
+        setAmazonResults([]);
+      }
     } catch (error) {
       console.error("Error searching books:", error);
       toast({
