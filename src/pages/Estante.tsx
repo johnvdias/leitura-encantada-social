@@ -152,6 +152,7 @@ const Estante = () => {
           Filtrar
         </Button>
         <AddBookDialog onBookAdded={fetchBooks} />
+        <AddManualBookDialog onBookAdded={fetchBooks} />
       </div>
 
       {/* Tabs for different book categories */}
