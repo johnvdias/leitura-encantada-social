@@ -95,6 +95,57 @@ export const useClubs = () => {
     }
   };
 
+  const deleteClub = async (clubId: string) => {
+    if (!user) return;
+
+    try {
+      // Verificar se o usuário é o criador do clube
+      const { data: club, error: fetchError } = await supabase
+        .from("clubs")
+        .select("creator_id")
+        .eq("id", clubId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      if (club.creator_id !== user.id) {
+        toast({
+          title: "Erro",
+          description: "Apenas o criador pode deletar o clube",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Deletar membros do clube primeiro (devido às foreign keys)
+      const { error: membersError } = await supabase
+        .from("club_members")
+        .delete()
+        .eq("club_id", clubId);
+
+      if (membersError) throw membersError;
+
+      // Deletar o clube
+      const { error } = await supabase.from("clubs").delete().eq("id", clubId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Clube deletado",
+        description: "O clube foi removido com sucesso",
+      });
+
+      await fetchClubs();
+    } catch (error) {
+      console.error("Error deleting club:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível deletar o clube",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchClubs();
   }, [user]);
