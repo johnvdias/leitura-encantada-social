@@ -39,7 +39,8 @@ function validateCredentials() {
 
 // Função para buscar livros na Amazon
 async function searchAmazonBooks(keywords) {
-  const timestamp = new Date().toISOString();
+  // Validar credenciais antes de fazer a requisição
+  validateCredentials();
 
   const requestBody = {
     Keywords: keywords,
@@ -52,8 +53,6 @@ async function searchAmazonBooks(keywords) {
       "ItemInfo.Features",
       "ItemInfo.ExternalIds",
       "Offers.Listings.Price",
-      "CustomerReviews.StarRating",
-      "CustomerReviews.Count",
     ],
     SearchIndex: "Books",
     Marketplace: AMAZON_CONFIG.marketplace,
