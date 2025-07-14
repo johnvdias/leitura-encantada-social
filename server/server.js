@@ -73,7 +73,7 @@ async function searchAmazonBooks(keywords) {
     body: JSON.stringify(requestBody),
   };
 
-  // Assinar a requisição com AWS4
+  // Assinar a requisiç��o com AWS4
   aws4.sign(options, {
     accessKeyId: AMAZON_CONFIG.accessKeyId,
     secretAccessKey: AMAZON_CONFIG.secretAccessKey,
