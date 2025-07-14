@@ -32,6 +32,7 @@ const Estante = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { shouldShow, isFirstTime, dismissWelcome } = useWelcomeMessage();
 
   const fetchBooks = async () => {
     if (!user) return;
