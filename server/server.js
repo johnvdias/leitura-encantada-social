@@ -11,11 +11,11 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Configuração da Amazon PA-API
+// Configuração da Amazon PA-API para marketplace brasileiro
 const AMAZON_CONFIG = {
   accessKeyId: process.env.AMAZON_ACCESS_KEY,
   secretAccessKey: process.env.AMAZON_SECRET_KEY,
-  region: "us-east-1",
+  region: "us-east-1", // Para PA-API, sempre use us-east-1
   service: "ProductAdvertisingAPI",
   host: "webservices.amazon.com",
   partnerTag: process.env.AMAZON_PARTNER_TAG,
