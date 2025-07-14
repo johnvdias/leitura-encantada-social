@@ -1,5 +1,5 @@
 // Serviço para integração com Amazon Product Advertising API
-// Nota: Para funcionar completamente, seria necessário um servidor backend
+// Nota: Para funcionar completamente, seria necess��rio um servidor backend
 // pois a API da Amazon não pode ser chamada diretamente do frontend por questões de CORS
 
 interface AmazonBookResult {
@@ -178,9 +178,6 @@ class AmazonBooksService {
     };
   }
 }
-
-export const amazonBooksService = new AmazonBooksService();
-export type { AmazonBookResult };
 
 export const amazonBooksService = new AmazonBooksService();
 export type { AmazonBookResult };
