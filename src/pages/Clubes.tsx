@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const Clubes = () => {
-  const { clubs, myClubs, loading, joinClub, refetch } = useClubs();
+  const { clubs, myClubs, loading, joinClub, deleteClub, refetch } = useClubs();
 
   if (loading) {
     return (
@@ -59,7 +58,7 @@ const Clubes = () => {
                       <Calendar className="h-4 w-4" />
                       {formatDistanceToNow(new Date(club.created_at), {
                         addSuffix: true,
-                        locale: ptBR
+                        locale: ptBR,
                       })}
                     </div>
                   </div>
@@ -70,13 +69,16 @@ const Clubes = () => {
                       {club.description}
                     </p>
                   )}
-                  
+
                   {club.books && (
                     <div className="flex items-center gap-2 p-2 bg-muted/30 rounded">
                       <BookOpen className="h-4 w-4 text-primary" />
                       <div className="text-sm">
                         <span className="font-medium">{club.books.title}</span>
-                        <span className="text-muted-foreground"> por {club.books.author}</span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          por {club.books.author}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -106,7 +108,9 @@ const Clubes = () => {
           <Card className="text-center py-12">
             <CardContent>
               <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum clube encontrado</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                Nenhum clube encontrado
+              </h3>
               <p className="text-muted-foreground mb-4">
                 Seja o primeiro a criar um clube de leitura!
               </p>
@@ -133,7 +137,7 @@ const Clubes = () => {
                       <Calendar className="h-4 w-4" />
                       {formatDistanceToNow(new Date(club.created_at), {
                         addSuffix: true,
-                        locale: ptBR
+                        locale: ptBR,
                       })}
                     </div>
                   </div>
@@ -144,13 +148,16 @@ const Clubes = () => {
                       {club.description}
                     </p>
                   )}
-                  
+
                   {club.books && (
                     <div className="flex items-center gap-2 p-2 bg-muted/30 rounded">
                       <BookOpen className="h-4 w-4 text-primary" />
                       <div className="text-sm">
                         <span className="font-medium">{club.books.title}</span>
-                        <span className="text-muted-foreground"> por {club.books.author}</span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          por {club.books.author}
+                        </span>
                       </div>
                     </div>
                   )}
