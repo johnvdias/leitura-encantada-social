@@ -352,6 +352,10 @@ const Perfil = () => {
             </Card>
           )}
         </TabsContent>
+
+        <TabsContent value="configuracoes" className="space-y-6">
+          <PrivacySettings />
+        </TabsContent>
       </Tabs>
     </div>
   );
