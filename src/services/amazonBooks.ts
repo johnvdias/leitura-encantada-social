@@ -164,9 +164,17 @@ class AmazonBooksService {
       console.log(`📡 Backend response status: ${response.status}`);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Backend error response:`, errorText);
-        throw new Error(`Backend API error: ${response.status} - ${errorText}`);
+        let errorMessage = `Backend API error: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage += ` - ${errorData.message || errorData.error || "Unknown error"}`;
+          console.error(`Backend error response:`, errorData);
+        } catch (parseError) {
+          const errorText = await response.text();
+          errorMessage += ` - ${errorText}`;
+          console.error(`Backend error response (text):`, errorText);
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
