@@ -63,12 +63,15 @@ async function searchAmazonBooks(keywords) {
 
   const options = {
     method: "POST",
-    host: AMAZON_CONFIG.host,
+    host: "webservices.amazon.com",
     path: "/paapi5/searchitems",
+    region: "us-east-1",
+    service: "ProductAdvertisingAPI",
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "X-Amz-Target":
         "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems",
+      "X-Amz-Content-Sha256": "UNSIGNED-PAYLOAD",
     },
     body: JSON.stringify(requestBody),
   };
