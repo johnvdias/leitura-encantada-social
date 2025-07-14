@@ -1,19 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Heart, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { PasswordInput } from "@/components/PasswordInput";
+import { UsernameSelector } from "@/components/UsernameSelector";
+import { BookOpen, Heart, Sparkles } from "lucide-react";
 
 const Auth = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signUp, signIn, user } = useAuth();
   const { toast } = useToast();
@@ -21,13 +29,13 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
   }, [user, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast({
         title: "Erro",
@@ -48,13 +56,14 @@ const Auth = () => {
 
     setIsLoading(true);
     const { error } = await signUp(email, password, displayName);
-    
+
     if (error) {
       toast({
         title: "Erro no cadastro",
-        description: error.message === "User already registered" 
-          ? "Esta leitora já possui conta! Tente fazer login." 
-          : "Erro ao criar conta. Tente novamente.",
+        description:
+          error.message === "User already registered"
+            ? "Esta leitora já possui conta! Tente fazer login."
+            : "Erro ao criar conta. Tente novamente.",
         variant: "destructive",
       });
     } else {
@@ -69,15 +78,16 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const { error } = await signIn(email, password);
-    
+
     if (error) {
       toast({
         title: "Erro no login",
-        description: error.message === "Invalid login credentials" 
-          ? "Email ou senha incorretos" 
-          : "Erro ao fazer login. Tente novamente.",
+        description:
+          error.message === "Invalid login credentials"
+            ? "Email ou senha incorretos"
+            : "Erro ao fazer login. Tente novamente.",
         variant: "destructive",
       });
     } else {
@@ -119,7 +129,7 @@ const Auth = () => {
                 <TabsTrigger value="login">Entrar</TabsTrigger>
                 <TabsTrigger value="signup">Cadastrar</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="login">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
@@ -149,7 +159,7 @@ const Auth = () => {
                   </Button>
                 </form>
               </TabsContent>
-              
+
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
