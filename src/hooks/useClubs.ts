@@ -1,15 +1,29 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Tables } from "@/integrations/supabase/types";
+
+type Club = Tables<'clubs'> & {
+  books: {
+    title: string | null;
+    author: string | null;
+  } | null;
+  club_members: {
+    user_id: string;
+  }[];
+  memberCount: number;
+  isJoined: boolean;
+  moderator: string;
+};
 
 export const useClubs = () => {
-  const [clubs, setClubs] = useState<any[]>([]);
-  const [myClubs, setMyClubs] = useState<any[]>([]);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [myClubs, setMyClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const fetchClubs = async () => {
+  const fetchClubs = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -72,7 +86,7 @@ export const useClubs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const joinClub = async (clubId: string) => {
     if (!user) return;
@@ -95,7 +109,7 @@ export const useClubs = () => {
 
   useEffect(() => {
     fetchClubs();
-  }, [user]);
+  }, [fetchClubs]);
 
   return {
     clubs,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,13 +70,33 @@ const UserProfile = () => {
 
   const isOwnProfile = user?.id === userId;
 
-  useEffect(() => {
-    if (userId) {
-      fetchUserData();
-    }
-  }, [userId, user]);
+  const checkFriendshipStatus = useCallback(async () => {
+    if (!user || !userId) return;
 
-  const fetchUserData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('friendships')
+        .select('*')
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+        .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setFriendshipStatus({
+          status: data.requester_id === user.id 
+            ? (data.status === 'accepted' ? 'accepted' : 'pending_sent')
+            : (data.status === 'accepted' ? 'accepted' : 'pending_received'),
+          friendshipId: data.id
+        });
+      }
+    } catch (error) {
+      console.error('Error checking friendship status:', error);
+    }
+  }, [user, userId]);
+
+  const fetchUserData = useCallback(async () => {
     if (!userId) return;
 
     try {
@@ -134,7 +154,7 @@ const UserProfile = () => {
       setRecentBooks(recentBooksData || []);
 
       // Check friendship status if not own profile
-      if (!isOwnProfile && user) {
+      if (!isOwnProfile) {
         await checkFriendshipStatus();
       }
 
@@ -148,33 +168,13 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, isOwnProfile, toast, checkFriendshipStatus]);
 
-  const checkFriendshipStatus = async () => {
-    if (!user || !userId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('friendships')
-        .select('*')
-        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-        .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-
-      if (data) {
-        setFriendshipStatus({
-          status: data.requester_id === user.id 
-            ? (data.status === 'accepted' ? 'accepted' : 'pending_sent')
-            : (data.status === 'accepted' ? 'accepted' : 'pending_received'),
-          friendshipId: data.id
-        });
-      }
-    } catch (error) {
-      console.error('Error checking friendship status:', error);
+  useEffect(() => {
+    if (userId) {
+      fetchUserData();
     }
-  };
+  }, [userId, fetchUserData]);
 
   const sendFriendRequest = async () => {
     if (!user || !userId) return;

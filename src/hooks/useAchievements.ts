@@ -1,16 +1,19 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Tables, TablesInsert } from "@/integrations/supabase/types";
+
+type Achievement = Tables<'achievements'>;
 
 export const useAchievements = () => {
-  const [achievements, setAchievements] = useState<any[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const fetchAchievements = async () => {
+  const fetchAchievements = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -28,7 +31,7 @@ export const useAchievements = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const checkAndUnlockAchievements = async () => {
     if (!user) return;
@@ -51,7 +54,7 @@ export const useAchievements = () => {
 
       const existingTypes = new Set(existingAchievements?.map(a => a.achievement_type) || []);
 
-      const achievementsToUnlock = [];
+      const achievementsToUnlock: TablesInsert<'achievements'>[] = [];
 
       // First book achievement
       if (completedCount >= 1 && !existingTypes.has('first_book')) {
@@ -149,7 +152,7 @@ export const useAchievements = () => {
 
   useEffect(() => {
     fetchAchievements();
-  }, [user]);
+  }, [fetchAchievements]);
 
   return {
     achievements,

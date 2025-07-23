@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -7,13 +7,14 @@ export const useStreak = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const calculateUserStreak = async () => {
+  const calculateUserStreak = useCallback(async () => {
     if (!user) {
       setStreak(0);
       setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
       // Get all reading history for the user, ordered by date
       const { data, error } = await supabase
@@ -26,7 +27,6 @@ export const useStreak = () => {
 
       if (!data || data.length === 0) {
         setStreak(0);
-        setLoading(false);
         return;
       }
 
@@ -35,7 +35,7 @@ export const useStreak = () => {
       today.setHours(0, 0, 0, 0);
       
       let currentStreak = 0;
-      let currentDate = new Date(today);
+      const currentDate = new Date(today);
       
       // Create a set of unique reading dates
       const readingDates = new Set(
@@ -62,7 +62,6 @@ export const useStreak = () => {
         } else {
           // No reading today or yesterday = streak broken
           setStreak(0);
-          setLoading(false);
           return;
         }
       }
@@ -80,11 +79,11 @@ export const useStreak = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     calculateUserStreak();
-  }, [user]);
+  }, [calculateUserStreak]);
 
   return {
     streak,

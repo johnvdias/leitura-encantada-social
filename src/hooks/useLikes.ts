@@ -1,17 +1,20 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Tables } from "@/integrations/supabase/types";
+
+type Like = Tables<'post_likes'>;
 
 export const useLikes = (postId: string) => {
-  const [likes, setLikes] = useState<any[]>([]);
+  const [likes, setLikes] = useState<Like[]>([]);
   const [isLiked, setIsLiked] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const fetchLikes = async () => {
+  const fetchLikes = useCallback(async () => {
     if (!postId) return;
 
     try {
@@ -27,7 +30,7 @@ export const useLikes = (postId: string) => {
     } catch (error) {
       console.error('Error fetching likes:', error);
     }
-  };
+  }, [postId, user]);
 
   const toggleLike = async () => {
     if (!user) {
@@ -96,7 +99,7 @@ export const useLikes = (postId: string) => {
 
   useEffect(() => {
     fetchLikes();
-  }, [postId, user]);
+  }, [fetchLikes]);
 
   return {
     likes,

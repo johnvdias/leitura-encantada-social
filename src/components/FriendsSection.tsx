@@ -12,9 +12,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
+type ProfileSearchResult = {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
 export function FriendsSection() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<ProfileSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const { friends, friendRequests, sentRequests, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriendship, cancelFriendRequest } = useFriendships();
   const { user } = useAuth();
@@ -89,7 +95,7 @@ export function FriendsSection() {
                 <div key={profile.user_id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
                     <Avatar className="w-10 h-10">
-                      <AvatarImage src={profile.avatar_url} />
+                      <AvatarImage src={profile.avatar_url ?? undefined} />
                       <AvatarFallback>
                         {profile.display_name?.[0] || '?'}
                       </AvatarFallback>
@@ -125,7 +131,7 @@ export function FriendsSection() {
               <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={request.requester?.avatar_url} />
+                    <AvatarImage src={request.requester?.avatar_url ?? undefined} />
                     <AvatarFallback>
                       {request.requester?.display_name?.[0] || '?'}
                     </AvatarFallback>
@@ -174,7 +180,7 @@ export function FriendsSection() {
               <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={request.addressee?.avatar_url} />
+                    <AvatarImage src={request.addressee?.avatar_url ?? undefined} />
                     <AvatarFallback>
                       {request.addressee?.display_name?.[0] || '?'}
                     </AvatarFallback>
@@ -236,7 +242,7 @@ export function FriendsSection() {
                 return (
                   <div key={friendship.id} className="flex items-center gap-3 p-3 border rounded-lg">
                     <Avatar className="w-10 h-10">
-                      <AvatarImage src={friend?.avatar_url} />
+                      <AvatarImage src={friend?.avatar_url ?? undefined} />
                       <AvatarFallback>
                         {friend?.display_name?.[0] || '?'}
                       </AvatarFallback>

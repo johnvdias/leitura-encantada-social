@@ -17,6 +17,7 @@ import { Settings, Upload, Check, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { TablesUpdate } from "@/integrations/supabase/types";
 
 export function EditProfileDialog() {
   const { user, profile } = useAuth();
@@ -105,7 +106,7 @@ export function EditProfileDialog() {
         avatar_url = await uploadAvatar();
       }
 
-      const updateData: any = {
+      const updateData: TablesUpdate<'profiles'> = {
         display_name: formData.display_name,
         bio: formData.bio,
         reading_goal: formData.reading_goal,

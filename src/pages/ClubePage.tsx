@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,15 +57,10 @@ const ClubePage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (clubId) {
-      fetchClubData();
-    }
-  }, [clubId, user]);
-
-  const fetchClubData = async () => {
+  const fetchClubData = useCallback(async () => {
     if (!clubId) return;
 
+    setLoading(true);
     try {
       // Fetch club data
       const { data: clubData, error: clubError } = await supabase
@@ -135,7 +130,13 @@ const ClubePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [clubId, user, toast]);
+
+  useEffect(() => {
+    if (clubId) {
+      fetchClubData();
+    }
+  }, [clubId, fetchClubData]);
 
   const leaveClub = async () => {
     if (!user || !clubId) return;

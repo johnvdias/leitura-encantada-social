@@ -1,14 +1,33 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Tables } from "@/integrations/supabase/types";
+
+type Friendship = Tables<'friendships'>;
+
+type ProfileData = {
+  display_name: string | null;
+  avatar_url: string | null;
+  user_id: string;
+} | null;
+
+type Friend = Friendship & {
+  requester: ProfileData;
+  addressee: ProfileData;
+  friend: ProfileData;
+};
+
+type FriendRequest = Friendship & {
+  requester: ProfileData;
+};
 
 export const useFriends = () => {
-  const [friends, setFriends] = useState<any[]>([]);
-  const [friendRequests, setFriendRequests] = useState<any[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const fetchFriends = async () => {
+  const fetchFriends = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -56,7 +75,7 @@ export const useFriends = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const sendFriendRequest = async (addresseeId: string) => {
     if (!user) return { error: new Error("No user logged in") };
@@ -104,7 +123,7 @@ export const useFriends = () => {
 
   useEffect(() => {
     fetchFriends();
-  }, [user]);
+  }, [fetchFriends]);
 
   return {
     friends,

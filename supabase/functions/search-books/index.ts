@@ -6,7 +6,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+interface Book {
+  id: string;
+  volumeInfo: {
+    title: string;
+    authors: string[];
+    description: string;
+    pageCount: number;
+    categories: string[];
+    imageLinks: {
+      thumbnail: string;
+    };
+    industryIdentifiers: {
+      type: string;
+      identifier: string;
+    }[];
+  };
+}
+
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -33,7 +51,7 @@ serve(async (req) => {
       });
     }
 
-    const books = data.items.map((item: any) => {
+    const books = data.items.map((item: Book) => {
       const volumeInfo = item.volumeInfo;
       return {
         id: item.id,
@@ -43,7 +61,7 @@ serve(async (req) => {
         pages: volumeInfo.pageCount || null,
         genre: volumeInfo.categories ? volumeInfo.categories[0] : 'Gênero não especificado',
         cover_url: volumeInfo.imageLinks?.thumbnail?.replace('http://', 'https://') || null,
-        isbn: volumeInfo.industryIdentifiers?.find((id: any) => id.type === 'ISBN_13')?.identifier || null
+        isbn: volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_13')?.identifier || null
       };
     });
 

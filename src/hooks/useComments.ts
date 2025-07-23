@@ -1,17 +1,25 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Tables } from "@/integrations/supabase/types";
+
+type Comment = Tables<'post_comments'> & {
+  profiles: {
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+};
 
 export const useComments = (postId: string) => {
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!postId) return;
 
     setLoading(true);
@@ -20,7 +28,7 @@ export const useComments = (postId: string) => {
         .from('post_comments')
         .select(`
           *,
-          profiles!post_comments_user_id_fkey (
+          profiles (
             display_name,
             avatar_url
           )
@@ -35,7 +43,7 @@ export const useComments = (postId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId]);
 
   const addComment = async (content: string) => {
     if (!user || !content.trim()) return;
@@ -90,7 +98,7 @@ export const useComments = (postId: string) => {
 
   useEffect(() => {
     fetchComments();
-  }, [postId]);
+  }, [fetchComments]);
 
   return {
     comments,

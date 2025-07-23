@@ -13,9 +13,16 @@ interface UserSearchDialogProps {
   children: React.ReactNode;
 }
 
+type ProfileSearchResult = {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+};
+
 export function UserSearchDialog({ children }: UserSearchDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<ProfileSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
@@ -99,7 +106,7 @@ export function UserSearchDialog({ children }: UserSearchDialogProps) {
                 <div key={profile.user_id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3 flex-1">
                     <Avatar className="w-10 h-10">
-                      <AvatarImage src={profile.avatar_url} />
+                      <AvatarImage src={profile.avatar_url ?? undefined} />
                       <AvatarFallback>
                         {profile.display_name?.[0] || '?'}
                       </AvatarFallback>

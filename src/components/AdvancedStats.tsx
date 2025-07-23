@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -37,11 +37,7 @@ export function AdvancedStats() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchStats();
-  }, [user]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -94,7 +90,11 @@ export function AdvancedStats() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, profile]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const statusData = [
     { name: 'Finalizados', value: stats.completed, color: '#22c55e' },

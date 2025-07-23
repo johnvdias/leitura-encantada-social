@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,17 @@ import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+interface RecentActivity {
+  id: string;
+  pages_read: number;
+  previous_progress: number;
+  new_progress: number;
+  created_at: string;
+  books: {
+    title: string;
+  };
+}
+
 const Perfil = () => {
   const { user, profile } = useAuth();
   const { achievements, checkAndUnlockAchievements } = useAchievements();
@@ -24,18 +35,10 @@ const Perfil = () => {
     readingGoal: 12,
     readingProgress: 0
   });
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchUserStats();
-      fetchRecentActivity();
-      checkAndUnlockAchievements();
-    }
-  }, [user]);
-
-  const fetchUserStats = async () => {
+  const fetchUserStats = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -62,9 +65,9 @@ const Perfil = () => {
     } catch (error) {
       console.error('Error fetching user stats:', error);
     }
-  };
+  }, [user, profile]);
 
-  const fetchRecentActivity = async () => {
+  const fetchRecentActivity = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -85,7 +88,15 @@ const Perfil = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserStats();
+      fetchRecentActivity();
+      checkAndUnlockAchievements();
+    }
+  }, [user, fetchUserStats, fetchRecentActivity, checkAndUnlockAchievements]);
 
   if (loading) {
     return (

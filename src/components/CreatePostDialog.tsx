@@ -15,11 +15,14 @@ interface CreatePostDialogProps {
   bookId?: string;
 }
 
+type PostType = 'general' | 'progress' | 'review' | 'recommendation';
+type Visibility = 'public' | 'friends' | 'private';
+
 export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProps) => {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
-  const [postType, setPostType] = useState<'general' | 'progress' | 'review' | 'recommendation'>('general');
-  const [visibility, setVisibility] = useState<'public' | 'friends' | 'private'>('public');
+  const [postType, setPostType] = useState<PostType>('general');
+  const [visibility, setVisibility] = useState<Visibility>('public');
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -90,7 +93,7 @@ export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProp
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="post-type">Tipo de Post</Label>
-            <Select value={postType} onValueChange={(value: any) => setPostType(value)}>
+            <Select value={postType} onValueChange={(value: PostType) => setPostType(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
@@ -125,7 +128,7 @@ export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProp
 
           <div className="space-y-2">
             <Label htmlFor="visibility">Privacidade</Label>
-            <Select value={visibility} onValueChange={(value: any) => setVisibility(value)}>
+            <Select value={visibility} onValueChange={(value: Visibility) => setVisibility(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Quem pode ver?" />
               </SelectTrigger>

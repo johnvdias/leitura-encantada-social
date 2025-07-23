@@ -1,16 +1,33 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Tables } from "@/integrations/supabase/types";
+
+type Post = Tables<'posts'> & {
+  profiles: {
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+  books: {
+    title: string | null;
+    author: string | null;
+  } | null;
+  user: {
+    display_name: string;
+    avatar_url: string | null;
+    user_id: string;
+  };
+};
 
 export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const { user } = useAuth();
 
-  const fetchPosts = async (loadMore = false) => {
+  const fetchPosts = useCallback(async (loadMore = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -19,7 +36,7 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
         .from('posts')
         .select(`
           *,
-          profiles!fk_posts_user_id(
+          profiles(
             display_name,
             avatar_url
           ),
@@ -68,7 +85,7 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
         ...post,
         user: {
           display_name: post.profiles?.display_name || 'Usuário Anônimo',
-          avatar_url: post.profiles?.avatar_url,
+          avatar_url: post.profiles?.avatar_url ?? null,
           user_id: post.user_id
         }
       })) || [];
@@ -89,7 +106,7 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, filter, page]);
 
   const createPost = async (content: string, bookId?: string, postType: string = 'general') => {
     if (!user) {
@@ -120,7 +137,7 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
 
   useEffect(() => {
     fetchPosts();
-  }, [user]);
+  }, [fetchPosts]);
 
   // Set up real-time subscription
   useEffect(() => {
@@ -142,11 +159,10 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchPosts]);
 
   const loadMore = () => {
     setPage(prev => prev + 1);
-    fetchPosts(true);
   };
 
   return {

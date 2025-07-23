@@ -1,18 +1,39 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Tables } from "@/integrations/supabase/types";
+
+type Friendship = Tables<'friendships'>;
+
+type ProfileData = {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
+type Friend = Friendship & {
+  friend: ProfileData;
+};
+
+type FriendRequest = Friendship & {
+  requester: ProfileData;
+};
+
+type SentRequest = Friendship & {
+  addressee: ProfileData;
+};
 
 export const useFriendships = () => {
-  const [friends, setFriends] = useState<any[]>([]);
-  const [friendRequests, setFriendRequests] = useState<any[]>([]);
-  const [sentRequests, setSentRequests] = useState<any[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [sentRequests, setSentRequests] = useState<SentRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const fetchFriendships = async () => {
+  const fetchFriendships = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -26,12 +47,11 @@ export const useFriendships = () => {
 
       if (friendshipsError) throw friendshipsError;
 
-      console.log('Todas as amizades encontradas:', allFriendships);
-
       if (!allFriendships || allFriendships.length === 0) {
         setFriends([]);
         setFriendRequests([]);
         setSentRequests([]);
+        setLoading(false);
         return;
       }
 
@@ -53,160 +73,74 @@ export const useFriendships = () => {
 
       if (profilesError) throw profilesError;
 
-      console.log('Perfis encontrados:', profiles);
-
       // Criar um mapa de perfis para acesso rápido
-      const profilesMap = new Map();
+      const profilesMap = new Map<string, ProfileData>();
       profiles?.forEach(profile => {
         profilesMap.set(profile.user_id, profile);
       });
 
-      // Group friendships by the other user's ID to handle bidirectional relationships
-      const friendshipsByUser = new Map<string, any[]>();
-      
-      allFriendships?.forEach(friendship => {
+      const newFriends: Friend[] = [];
+      const newFriendRequests: FriendRequest[] = [];
+      const newSentRequests: SentRequest[] = [];
+
+      allFriendships.forEach(friendship => {
         const otherUserId = friendship.requester_id === user.id 
           ? friendship.addressee_id 
           : friendship.requester_id;
         
-        if (!friendshipsByUser.has(otherUserId)) {
-          friendshipsByUser.set(otherUserId, []);
-        }
-        friendshipsByUser.get(otherUserId)!.push(friendship);
-      });
-
-      console.log('Amizades agrupadas por usuário:', friendshipsByUser);
-
-      const friends: any[] = [];
-      const friendRequests: any[] = [];
-      const sentRequests: any[] = [];
-
-      friendshipsByUser.forEach((userFriendships, otherUserId) => {
         const otherUserProfile = profilesMap.get(otherUserId);
         
-        if (!otherUserProfile) {
-          console.warn(`Perfil não encontrado para usuário ${otherUserId}`);
-          return;
-        }
+        if (!otherUserProfile) return;
 
-        // Check if there's any accepted friendship
-        const acceptedFriendship = userFriendships.find(f => f.status === 'accepted');
-        
-        if (acceptedFriendship) {
-          // Transform to show the friend profile
-          friends.push({
-            ...acceptedFriendship,
+        if (friendship.status === 'accepted') {
+          newFriends.push({
+            ...friendship,
             friend: otherUserProfile
           });
-        } else {
-          // Check for pending requests
-          const pendingRequests = userFriendships.filter(f => f.status === 'pending');
-          
-          pendingRequests.forEach(friendship => {
-            if (friendship.addressee_id === user.id) {
-              // Request received - adicionar perfil do requester
-              friendRequests.push({
-                ...friendship,
-                requester: profilesMap.get(friendship.requester_id)
-              });
-            } else if (friendship.requester_id === user.id) {
-              // Request sent - adicionar perfil do addressee
-              sentRequests.push({
-                ...friendship,
-                addressee: profilesMap.get(friendship.addressee_id)
-              });
-            }
-          });
+        } else if (friendship.status === 'pending') {
+          if (friendship.addressee_id === user.id) {
+            newFriendRequests.push({
+              ...friendship,
+              requester: otherUserProfile
+            });
+          } else {
+            newSentRequests.push({
+              ...friendship,
+              addressee: otherUserProfile
+            });
+          }
         }
       });
 
-      console.log('Amigos finais:', friends);
-      console.log('Solicitações recebidas:', friendRequests);
-      console.log('Solicitações enviadas:', sentRequests);
-
-      setFriends(friends);
-      setFriendRequests(friendRequests);
-      setSentRequests(sentRequests);
+      setFriends(newFriends);
+      setFriendRequests(newFriendRequests);
+      setSentRequests(newSentRequests);
     } catch (error) {
       console.error('Error fetching friendships:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const sendFriendRequest = async (addresseeId: string) => {
     if (!user) return;
 
     try {
-      console.log('Enviando solicitação de amizade para:', addresseeId);
+      // Verificar se já existe uma relação de amizade
+      const { data: existingFriendship, error: existingError } = await supabase
+        .from('friendships')
+        .select('id, status')
+        .or(`(requester_id.eq.${user.id},and(addressee_id.eq.${addresseeId})),(requester_id.eq.${addresseeId},and(addressee_id.eq.${user.id}))`)
+        .maybeSingle();
       
-      // Verificar se já existe uma solicitação enviada pelo usuário atual
-      const { data: sentRequest, error: sentError } = await supabase
-        .from('friendships')
-        .select('id, status')
-        .eq('requester_id', user.id)
-        .eq('addressee_id', addresseeId)
-        .maybeSingle();
+      if (existingError) throw existingError;
 
-      if (sentError) {
-        console.error('Erro ao verificar solicitação enviada:', sentError);
-        throw sentError;
-      }
-
-      if (sentRequest) {
-        console.log('Solicitação existente encontrada:', sentRequest);
-        if (sentRequest.status === 'pending') {
-          toast({
-            title: "Solicitação já enviada",
-            description: "Você já enviou uma solicitação para esta pessoa",
-            variant: "destructive"
-          });
+      if(existingFriendship) {
+        if(existingFriendship.status === 'accepted') {
+          toast({ title: "Já são amigos", description: "Vocês já são amigos!", variant: "destructive" });
           return;
-        } else if (sentRequest.status === 'accepted') {
-          toast({
-            title: "Já são amigos",
-            description: "Vocês já são amigos!",
-            variant: "destructive"
-          });
-          return;
-        } else if (sentRequest.status === 'rejected') {
-          // Se foi rejeitada, deletar a solicitação antiga para permitir nova
-          console.log('Deletando solicitação rejeitada para permitir nova');
-          await supabase
-            .from('friendships')
-            .delete()
-            .eq('id', sentRequest.id);
-        }
-      }
-
-      // Verificar se já existe uma solicitação recebida do destinatário
-      const { data: receivedRequest, error: receivedError } = await supabase
-        .from('friendships')
-        .select('id, status')
-        .eq('requester_id', addresseeId)
-        .eq('addressee_id', user.id)
-        .maybeSingle();
-
-      if (receivedError) {
-        console.error('Erro ao verificar solicitação recebida:', receivedError);
-        throw receivedError;
-      }
-
-      if (receivedRequest) {
-        console.log('Solicitação recebida encontrada:', receivedRequest);
-        if (receivedRequest.status === 'pending') {
-          toast({
-            title: "Solicitação pendente",
-            description: "Esta pessoa já enviou uma solicitação para você. Verifique suas solicitações recebidas.",
-            variant: "destructive"
-          });
-          return;
-        } else if (receivedRequest.status === 'accepted') {
-          toast({
-            title: "Já são amigos",
-            description: "Vocês já são amigos!",
-            variant: "destructive"
-          });
+        } else if (existingFriendship.status === 'pending') {
+          toast({ title: "Solicitação pendente", description: "Já existe uma solicitação pendente.", variant: "destructive" });
           return;
         }
       }
@@ -248,6 +182,7 @@ export const useFriendships = () => {
   };
 
   const acceptFriendRequest = async (friendshipId: string, requesterId: string) => {
+    if(!user) return;
     try {
       const { error } = await supabase
         .from('friendships')
@@ -264,7 +199,7 @@ export const useFriendships = () => {
           type: 'friend_accepted',
           title: 'Solicitação aceita! 🎉',
           content: 'Sua solicitação de amizade foi aceita',
-          related_id: user?.id
+          related_id: user.id
         });
 
       await fetchFriendships();
@@ -286,7 +221,7 @@ export const useFriendships = () => {
     try {
       const { error } = await supabase
         .from('friendships')
-        .update({ status: 'rejected' })
+        .delete()
         .eq('id', friendshipId);
 
       if (error) throw error;
@@ -294,7 +229,6 @@ export const useFriendships = () => {
       await fetchFriendships();
       toast({
         title: "Solicitação rejeitada",
-        description: "A solicitação foi rejeitada"
       });
     } catch (error) {
       console.error('Error rejecting friend request:', error);
@@ -308,7 +242,7 @@ export const useFriendships = () => {
 
   useEffect(() => {
     fetchFriendships();
-  }, [user]);
+  }, [fetchFriendships]);
 
   const removeFriendship = async (friendshipId: string) => {
     try {

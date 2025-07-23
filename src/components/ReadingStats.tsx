@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -14,8 +14,8 @@ interface ReadingHistory {
   id: string;
   pages_read: number;
   reading_session_minutes: number;
-  created_at: string;
   new_progress: number;
+  created_at: string;
 }
 
 interface Stats {
@@ -33,42 +33,7 @@ export function ReadingStats({ bookId }: ReadingStatsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const { streak: globalStreak } = useStreak();
 
-  useEffect(() => {
-    fetchReadingHistory();
-  }, [bookId]);
-
-  const fetchReadingHistory = async () => {
-    // Validate bookId before making the query
-    if (!bookId || bookId === 'undefined' || bookId === 'null') {
-      console.error("Invalid bookId:", bookId);
-      setHistory([]);
-      setStats(null);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("reading_history")
-        .select("*")
-        .eq("book_id", bookId)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-
-      setHistory(data || []);
-      calculateStats(data || []);
-    } catch (error) {
-      console.error("Error fetching reading history:", error);
-      setHistory([]);
-      setStats(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const calculateStats = (historyData: ReadingHistory[]) => {
+  const calculateStats = useCallback((historyData: ReadingHistory[]) => {
     if (historyData.length === 0) {
       setStats(null);
       return;
@@ -100,7 +65,42 @@ export function ReadingStats({ bookId }: ReadingStatsProps) {
       averageMinutesPerSession,
       streak,
     });
-  };
+  }, []);
+
+  const fetchReadingHistory = useCallback(async () => {
+    // Validate bookId before making the query
+    if (!bookId || bookId === 'undefined' || bookId === 'null') {
+      console.error("Invalid bookId:", bookId);
+      setHistory([]);
+      setStats(null);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("reading_history")
+        .select("*")
+        .eq("book_id", bookId)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      setHistory(data || []);
+      calculateStats(data || []);
+    } catch (error) {
+      console.error("Error fetching reading history:", error);
+      setHistory([]);
+      setStats(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [bookId, calculateStats]);
+
+  useEffect(() => {
+    fetchReadingHistory();
+  }, [fetchReadingHistory]);
 
   const calculateStreak = (historyData: ReadingHistory[]): number => {
     if (historyData.length === 0) return 0;
@@ -109,7 +109,7 @@ export function ReadingStats({ bookId }: ReadingStatsProps) {
     today.setHours(0, 0, 0, 0);
     
     let streak = 0;
-    let currentDate = new Date(today);
+    const currentDate = new Date(today);
     
     const readingDates = new Set(
       historyData.map(session => {

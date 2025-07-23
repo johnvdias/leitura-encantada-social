@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -34,19 +33,13 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
   const { user } = useAuth();
   const { streak, loading: streakLoading } = useStreak();
 
-  useEffect(() => {
-    if (user) {
-      fetchUserGoals();
-      fetchTodayStats();
-    }
-  }, [user]);
-
-  const fetchUserGoals = async () => {
+  const fetchUserGoals = useCallback(async () => {
+    if (!user) return;
     try {
       const { data, error } = await supabase
         .from("profiles")
         .select("reading_goal")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .single();
 
       if (error) throw error;
@@ -58,9 +51,10 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
     } catch (error) {
       console.error("Error fetching goals:", error);
     }
-  };
+  }, [user]);
 
-  const fetchTodayStats = async () => {
+  const fetchTodayStats = useCallback(async () => {
+    if (!user) return;
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -70,7 +64,7 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
       const { data, error } = await supabase
         .from("reading_history")
         .select("pages_read, reading_session_minutes, created_at")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .gte("created_at", today.toISOString())
         .lt("created_at", tomorrow.toISOString());
 
@@ -89,14 +83,22 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, streak]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserGoals();
+      fetchTodayStats();
+    }
+  }, [user, fetchUserGoals, fetchTodayStats]);
 
   const updateGoals = async () => {
+    if (!user) return;
     try {
       const { error } = await supabase
         .from("profiles")
         .update({ reading_goal: weeklyGoal })
-        .eq("user_id", user?.id);
+        .eq("user_id", user.id);
 
       if (error) throw error;
       setIsEditing(false);
