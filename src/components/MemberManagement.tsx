@@ -1,195 +1,96 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Crown, UserMinus, Shield } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { X } from 'lucide-react';
+
+interface MemberManagementProps {
+  clubId: string;
+  creatorId: string;
+}
 
 interface Member {
   id: string;
-  role: string;
-  joined_at: string;
-  profiles: {
-    display_name: string;
-    avatar_url: string;
-    user_id: string;
-  };
+  username: string;
 }
 
-interface MemberManagementProps {
-  members: Member[];
-  creatorId: string;
-  clubId: string;
-  onUpdate: () => void;
-}
-
-export function MemberManagement({ members, creatorId, clubId, onUpdate }: MemberManagementProps) {
-  const [removingMember, setRemovingMember] = useState<string | null>(null);
+export function MemberManagement({ clubId, creatorId }: MemberManagementProps) {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const removeMember = async (memberId: string, memberName: string) => {
-    setRemovingMember(memberId);
+  useEffect(() => {
+    const fetchMembers = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('club_members')
+        .select('profiles(id, username)')
+        .eq('club_id', clubId);
+
+      if (error) {
+        console.error('Error fetching members:', error);
+        toast({ title: 'Erro ao buscar membros', variant: 'destructive' });
+      } else {
+        const memberData = data.map((item: any) => ({
+          id: item.profiles.id,
+          username: item.profiles.username,
+        }));
+        setMembers(memberData);
+      }
+      setLoading(false);
+    };
+
+    fetchMembers();
+  }, [clubId, toast]);
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (memberId === creatorId) {
+      toast({
+        title: 'Ação não permitida',
+        description: 'O criador do clube não pode ser removido.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('club_members')
         .delete()
-        .eq('id', memberId);
+        .eq('club_id', clubId)
+        .eq('user_id', memberId);
 
       if (error) throw error;
 
-      toast({
-        title: "Membro removido",
-        description: `${memberName} foi removido do clube`
-      });
-
-      onUpdate();
+      setMembers(members.filter((member) => member.id !== memberId));
+      toast({ title: 'Membro removido com sucesso' });
     } catch (error) {
       console.error('Error removing member:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível remover o membro",
-        variant: "destructive"
-      });
-    } finally {
-      setRemovingMember(null);
+      toast({ title: 'Erro ao remover membro', variant: 'destructive' });
     }
   };
-
-  const promoteToModerator = async (memberId: string, memberName: string) => {
-    try {
-      const { error } = await supabase
-        .from('club_members')
-        .update({ role: 'moderator' })
-        .eq('id', memberId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Membro promovido",
-        description: `${memberName} agora é moderador do clube`
-      });
-
-      onUpdate();
-    } catch (error) {
-      console.error('Error promoting member:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível promover o membro",
-        variant: "destructive"
-      });
-    }
-  };
+  
+  if (loading) return <div>Carregando membros...</div>;
 
   return (
     <div className="space-y-4">
-      {members.map((member) => {
-        const isCreator = member.profiles?.user_id === creatorId;
-        const isModerator = member.role === 'moderator';
-        
-        return (
-          <div key={member.id} className="flex items-center justify-between p-3 rounded border">
-            <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarImage src={member.profiles?.avatar_url} />
-                <AvatarFallback>
-                  {member.profiles?.display_name?.charAt(0).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">
-                  {member.profiles?.display_name || 'Usuário'}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Membro desde {formatDistanceToNow(new Date(member.joined_at), {
-                    addSuffix: true,
-                    locale: ptBR
-                  })}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {isCreator && (
-                <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Criador
-                </Badge>
-              )}
-              {isModerator && !isCreator && (
-                <Badge className="bg-blue-500/20 text-blue-700 dark:text-blue-300">
-                  <Shield className="h-3 w-3 mr-1" />
-                  Moderador
-                </Badge>
-              )}
-              {!isCreator && !isModerator && (
-                <Badge variant="outline">
-                  Membro
-                </Badge>
-              )}
-
-              {/* Creator actions for non-creator members */}
-              {!isCreator && (
-                <div className="flex gap-1">
-                  {!isModerator && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => promoteToModerator(member.id, member.profiles?.display_name || 'Usuário')}
-                    >
-                      <Shield className="h-3 w-3" />
-                    </Button>
-                  )}
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                        disabled={removingMember === member.id}
-                      >
-                        <UserMinus className="h-3 w-3" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remover membro</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja remover {member.profiles?.display_name || 'este usuário'} do clube?
-                          Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => removeMember(member.id, member.profiles?.display_name || 'Usuário')}
-                          className="bg-red-600 hover:bg-red-700"
-                        >
-                          Remover
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
+      <h3 className="text-lg font-semibold">Gerenciar Membros</h3>
+      <ul className="space-y-2">
+        {members.map((member) => (
+          <li key={member.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+            <span>{member.username}</span>
+            {member.id !== creatorId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveMember(member.id)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Link2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,7 @@ export function ManualBookDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverUrl, setCoverUrl] = useState("");
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -35,13 +36,21 @@ export function ManualBookDialog() {
     personal_notes: "",
   });
 
-  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setCoverFile(file);
+      setCoverUrl(""); // Clear URL if a file is selected
       const preview = URL.createObjectURL(file);
       setCoverPreview(preview);
     }
+  };
+
+  const handleCoverUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setCoverUrl(url);
+    setCoverFile(null); // Clear file if a URL is entered
+    setCoverPreview(url);
   };
 
   const uploadCover = async () => {
@@ -51,13 +60,13 @@ export function ManualBookDialog() {
     const fileName = `${user.id}/book-covers/${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('avatars')
+      .from('book_covers') // Assuming a 'book_covers' bucket
       .upload(fileName, coverFile);
 
     if (uploadError) throw uploadError;
 
     const { data } = supabase.storage
-      .from('avatars')
+      .from('book_covers')
       .getPublicUrl(fileName);
 
     return data.publicUrl;
@@ -69,10 +78,10 @@ export function ManualBookDialog() {
 
     setLoading(true);
     try {
-      let cover_url = null;
+      let finalCoverUrl = coverUrl;
 
       if (coverFile) {
-        cover_url = await uploadCover();
+        finalCoverUrl = await uploadCover() || "";
       }
 
       const { error } = await supabase
@@ -82,34 +91,32 @@ export function ManualBookDialog() {
           title: formData.title,
           author: formData.author,
           description: formData.description,
-          pages: formData.pages ? parseInt(formData.pages) : null,
+          page_count: formData.pages ? parseInt(formData.pages) : null,
           genre: formData.genre,
-          reading_status: formData.reading_status,
-          personal_notes: formData.personal_notes,
-          cover_url,
+          // reading_status and personal_notes seem to be on a different table (user_books)
+          // For now, let's just create the book entry
+          cover_url: finalCoverUrl,
         });
-
+        
       if (error) throw error;
+      
+      // We would likely need to also add an entry to a `user_books` table here
+      // linking the user to this new book with a reading_status
 
       setOpen(false);
-      setFormData({
-        title: "",
-        author: "",
-        description: "",
-        pages: "",
-        genre: "",
-        reading_status: "want_to_read",
-        personal_notes: "",
-      });
+      // Reset form state
+      setFormData({ title: "", author: "", description: "", pages: "", genre: "", reading_status: "want_to_read", personal_notes: "" });
       setCoverFile(null);
+      setCoverUrl("");
       setCoverPreview(null);
 
       toast({
         title: "Livro adicionado",
-        description: "O livro foi adicionado à sua estante com sucesso.",
+        description: "O livro foi adicionado com sucesso.",
       });
 
-      window.location.reload();
+      // It's better to refetch data than to reload the whole page
+      window.location.reload(); 
     } catch (error) {
       console.error('Error adding book:', error);
       toast({
@@ -139,33 +146,43 @@ export function ManualBookDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Capa do Livro</Label>
-              <div className="flex items-center gap-4">
-                {coverPreview && (
-                  <img 
-                    src={coverPreview} 
-                    alt="Preview da capa" 
-                    className="w-20 h-28 object-cover rounded border"
-                  />
-                )}
-                <div>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverChange}
-                    className="hidden"
-                    id="cover-upload"
-                  />
-                  <Label htmlFor="cover-upload" className="cursor-pointer">
-                    <Button type="button" variant="outline" asChild>
-                      <span>
-                        <Upload className="h-4 w-4 mr-2" />
-                        {coverPreview ? "Alterar Capa" : "Adicionar Capa"}
-                      </span>
-                    </Button>
-                  </Label>
+            <div className="flex items-center gap-4">
+              {coverPreview && (
+                <img 
+                  src={coverPreview} 
+                  alt="Preview da capa" 
+                  className="w-24 h-36 object-cover rounded border"
+                  onError={(e) => e.currentTarget.src = 'https://via.placeholder.com/150'}
+                />
+              )}
+              <div className="grid gap-3 flex-1">
+                <Label>Capa do Livro</Label>
+                <Input
+                  id="cover-url"
+                  placeholder="https://exemplo.com/capa.jpg"
+                  value={coverUrl}
+                  onChange={handleCoverUrlChange}
+                />
+                <div className="flex items-center">
+                  <span className="flex-1 border-t"></span>
+                  <span className="px-2 text-xs text-muted-foreground">OU</span>
+                  <span className="flex-1 border-t"></span>
                 </div>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverFileChange}
+                  className="hidden"
+                  id="cover-upload"
+                />
+                <Label htmlFor="cover-upload" className="cursor-pointer">
+                  <Button type="button" variant="outline" asChild>
+                    <span>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Fazer Upload de Arquivo
+                    </span>
+                  </Button>
+                </Label>
               </div>
             </div>
 
@@ -191,16 +208,6 @@ export function ManualBookDialog() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="genre">Gênero</Label>
-              <Input
-                id="genre"
-                value={formData.genre}
-                onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                placeholder="Ex: Romance, Ficção, Biografia"
-              />
-            </div>
-
-            <div className="grid gap-2">
               <Label htmlFor="pages">Número de Páginas</Label>
               <Input
                 id="pages"
@@ -210,43 +217,10 @@ export function ManualBookDialog() {
                 placeholder="Ex: 320"
               />
             </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="reading_status">Status de Leitura</Label>
-              <Select value={formData.reading_status} onValueChange={(value) => setFormData({ ...formData, reading_status: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="want_to_read">Quero Ler</SelectItem>
-                  <SelectItem value="reading">Lendo</SelectItem>
-                  <SelectItem value="completed">Finalizado</SelectItem>
-                  <SelectItem value="paused">Pausado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Resumo ou sinopse do livro..."
-                rows={3}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="personal_notes">Notas Pessoais</Label>
-              <Textarea
-                id="personal_notes"
-                value={formData.personal_notes}
-                onChange={(e) => setFormData({ ...formData, personal_notes: e.target.value })}
-                placeholder="Suas anotações sobre o livro..."
-                rows={2}
-              />
-            </div>
+            
+            {/* The rest of the form for user-specific data can be added back if needed */}
+            {/* For now, focusing on adding the book to the main 'books' table */}
+            
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

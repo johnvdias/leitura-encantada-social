@@ -29,6 +29,24 @@ export function DeleteClubDialog({ clubId, clubName }: DeleteClubDialogProps) {
   const handleDelete = async () => {
     setLoading(true);
     try {
+      // Check for number of members
+      const { data: members, error: membersError } = await supabase
+        .from('club_members')
+        .select('id', { count: 'exact' })
+        .eq('club_id', clubId);
+
+      if (membersError) throw membersError;
+
+      if (members && members.length > 1) {
+        toast({
+          title: "Não é possível deletar o clube",
+          description: "O clube possui outros membros e não pode ser excluído.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       // Delete discussions first
       await supabase
         .from('club_discussions')

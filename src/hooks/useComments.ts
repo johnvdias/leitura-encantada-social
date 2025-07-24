@@ -50,15 +50,27 @@ export const useComments = (postId: string) => {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase
+      const { data: newComment, error } = await supabase
         .from('post_comments')
         .insert({
           post_id: postId,
           user_id: user.id,
           content: content.trim()
-        });
+        })
+        .select(`
+          *,
+          profiles (
+            display_name,
+            avatar_url
+          )
+        `)
+        .single();
 
       if (error) throw error;
+
+      if (newComment) {
+        setComments((prevComments) => [...prevComments, newComment]);
+      }
 
       // Create notification for post author
       const { data: postData } = await supabase
@@ -79,7 +91,6 @@ export const useComments = (postId: string) => {
           });
       }
 
-      await fetchComments();
       toast({
         title: "Comentário adicionado! 💬",
         description: "Seu comentário foi publicado com sucesso"

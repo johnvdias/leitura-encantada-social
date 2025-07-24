@@ -14,6 +14,8 @@ import { ptBR } from "date-fns/locale";
 import { ClubDiscussions } from "@/components/ClubDiscussions";
 import { EditClubDialog } from "@/components/EditClubDialog";
 import { MemberManagement } from "@/components/MemberManagement";
+import { CreateClubScheduleDialog } from "@/components/CreateClubScheduleDialog";
+import { ClubSchedulesSection } from "@/components/ClubSchedulesSection";
 
 interface Club {
   id: string;
@@ -166,7 +168,7 @@ const ClubePage = () => {
         variant: "destructive"
       });
     } finally {
-      setLeaving(false);
+      setLoading(false);
     }
   };
 
@@ -274,9 +276,10 @@ const ClubePage = () => {
       {/* Club Content */}
       {isMember ? (
         <Tabs defaultValue="discussions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="discussions">Discussões</TabsTrigger>
             <TabsTrigger value="members">Membros</TabsTrigger>
+            <TabsTrigger value="schedules">Cronogramas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="discussions">
@@ -290,12 +293,7 @@ const ClubePage = () => {
               </CardHeader>
               <CardContent>
                 {isCreator ? (
-                  <MemberManagement 
-                    members={members} 
-                    creatorId={club.creator_id} 
-                    clubId={clubId!}
-                    onUpdate={fetchClubData}
-                  />
+                  <MemberManagement clubId={club.id} creatorId={club.creator_id} />
                 ) : (
                   <div className="space-y-4">
                     {members.map((member) => (
@@ -337,6 +335,15 @@ const ClubePage = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="schedules">
+            {isCreator && (
+              <div className="flex justify-end mb-4">
+                <CreateClubScheduleDialog clubId={clubId!} />
+              </div>
+            )}
+            <ClubSchedulesSection clubId={clubId!} isCreator={isCreator} />
           </TabsContent>
         </Tabs>
       ) : (
