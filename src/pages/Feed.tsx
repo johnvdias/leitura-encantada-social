@@ -1,211 +1,109 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Users, BookOpen, Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Loader2 } from "lucide-react";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { SchedulesSection } from "@/components/SchedulesSection";
 import PostCard from "@/components/PostCard";
 import { useFeed } from "@/hooks/useFeed";
+import { useAuth } from "@/hooks/useAuth";
 
 const Feed = () => {
+  const { user, profile, loading: authLoading } = useAuth(); // Usando o estado de loading do useAuth
   const [activeTab, setActiveTab] = useState("todas");
   const filterMap = {
     "todas": "all" as const,
     "amigas": "friends" as const,
     "clubes": "clubs" as const
   };
-  const { posts, loading, hasMore, loadMore, refetch } = useFeed(filterMap[activeTab as keyof typeof filterMap]);
+  const { posts, loading: feedLoading, hasMore, loadMore, refetch } = useFeed(filterMap[activeTab as keyof typeof filterMap]);
 
-  if (loading) {
+  // Tela de Loading: Mostra enquanto o perfil do usuário ou o feed inicial estão carregando.
+  if (authLoading || (feedLoading && posts.length === 0)) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p>Carregando feed...</p>
-        </div>
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+        <p className="text-muted-foreground">Carregando seu universo literário...</p>
       </div>
     );
+  }
+  
+  // Tratamento de erro caso o perfil não carregue
+  if (!profile) {
+      return (
+          <div className="container mx-auto px-4 py-8 text-center">
+              <p className="text-destructive">Não foi possível carregar seu perfil. Tente recarregar a página.</p>
+          </div>
+      )
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-enchanted text-enchanted mb-4">
-          Feed da Comunidade
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Compartilhe suas experiências literárias e conecte-se com outras leitoras
+      <header className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-primary mb-2">Feed da Comunidade</h1>
+        <p className="text-muted-foreground">
+          Compartilhe suas experiências literárias e conecte-se com outros leitores.
         </p>
-      </div>
+      </header>
 
-      {/* Create Post Button */}
-      <div className="max-w-2xl mx-auto mb-8">
-        <Card className="card-dreamy">
-          <CardContent className="p-6">
+      <section className="mb-8">
+        <SchedulesSection />
+      </section>
+
+      <Separator className="my-8" />
+
+      <div className="max-w-2xl mx-auto">
+        <Card className="mb-8">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-4">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-primary/20 text-primary">
-                  EU
-                </AvatarFallback>
-              </Avatar>
+              <Link to="/perfil">
+                <Avatar className="h-10 w-10">
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback>{profile.display_name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
+                </Avatar>
+              </Link>
               <CreatePostDialog onPostCreated={refetch} />
             </div>
           </CardContent>
         </Card>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsTrigger value="todas">Todas</TabsTrigger>
+            <TabsTrigger value="amigas">Amigos</TabsTrigger>
+            <TabsTrigger value="clubes">Clubes</TabsTrigger>
+          </TabsList>
+
+          <div className="space-y-6">
+            {posts.length > 0 ? (
+              posts.map((post) => (
+                <PostCard 
+                  key={post.id} 
+                  post={post}
+                  onPostDeleted={refetch}
+                />
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Nenhum post para exibir nesta aba.</p>
+              </div>
+            )}
+            {feedLoading && <div className="text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto"/></div>}
+            {hasMore && !feedLoading && (
+              <div className="text-center">
+                <Button onClick={loadMore} variant="outline">Carregar mais</Button>
+              </div>
+            )}
+             {!hasMore && posts.length > 0 && (
+              <div className="text-center text-sm text-muted-foreground pt-4">Você chegou ao fim!</div>
+            )}
+          </div>
+        </Tabs>
       </div>
-
-      {/* Feed Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-2xl mx-auto">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="todas">
-            <Users className="w-4 h-4 mr-2" />
-            Todas
-          </TabsTrigger>
-          <TabsTrigger value="amigas">
-            <Heart className="w-4 h-4 mr-2" />
-            Amigas
-          </TabsTrigger>
-          <TabsTrigger value="clubes">
-            <BookOpen className="w-4 h-4 mr-2" />
-            Meus Clubes
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="todas">
-          <div className="space-y-6">
-            {posts.length > 0 ? (
-              <>
-                {posts.map((post) => (
-                  <PostCard 
-                    key={post.id} 
-                    id={post.id}
-                    content={post.content}
-                    user={post.user}
-                    book={post.books}
-                    created_at={post.created_at}
-                    post_type={post.post_type}
-                    onPostDeleted={refetch}
-                  />
-                ))}
-                {hasMore && (
-                  <div className="text-center">
-                    <Button onClick={loadMore} variant="outline">
-                      Carregar mais posts
-                    </Button>
-                  </div>
-                )}
-                {!hasMore && (
-                  <div className="text-center text-muted-foreground">
-                    Você chegou ao fim do feed!
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Nenhum post ainda. Seja a primeira a compartilhar!
-                </p>
-                <CreatePostDialog onPostCreated={refetch} />
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="amigas">
-          <div className="space-y-6">
-            {posts.length > 0 ? (
-              <>
-                {posts.map((post) => (
-                  <PostCard 
-                    key={post.id} 
-                    id={post.id}
-                    content={post.content}
-                    user={post.user}
-                    book={post.books}
-                    created_at={post.created_at}
-                    post_type={post.post_type}
-                    onPostDeleted={refetch}
-                  />
-                ))}
-                {hasMore && (
-                  <div className="text-center">
-                    <Button onClick={loadMore} variant="outline">
-                      Carregar mais posts
-                    </Button>
-                  </div>
-                )}
-                {!hasMore && (
-                  <div className="text-center text-muted-foreground">
-                    Você chegou ao fim do feed!
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Conecte-se com outras leitoras para ver suas atualizações aqui
-                </p>
-                <Link to="/perfil">
-                  <Button className="btn-enchanted">
-                    Gerenciar Amigas
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="clubes">
-          <div className="space-y-6">
-            {posts.length > 0 ? (
-              <>
-                {posts.map((post) => (
-                  <PostCard 
-                    key={post.id} 
-                    id={post.id}
-                    content={post.content}
-                    user={post.user}
-                    book={post.books}
-                    created_at={post.created_at}
-                    post_type={post.post_type}
-                    onPostDeleted={refetch}
-                  />
-                ))}
-                {hasMore && (
-                  <div className="text-center">
-                    <Button onClick={loadMore} variant="outline">
-                      Carregar mais posts
-                    </Button>
-                  </div>
-                )}
-                {!hasMore && (
-                  <div className="text-center text-muted-foreground">
-                    Você chegou ao fim do feed!
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Participe de clubes de leitura para ver as discussões aqui
-                </p>
-                <Link to="/clubes">
-                  <Button className="btn-enchanted">
-                    Explorar Clubes
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };

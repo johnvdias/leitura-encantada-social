@@ -9,6 +9,7 @@ type Friendship = Tables<'friendships'>;
 
 type ProfileData = {
   user_id: string;
+  username: string | null;
   display_name: string | null;
   avatar_url: string | null;
 };
@@ -68,7 +69,7 @@ export const useFriendships = () => {
       // Buscar perfis de todos os usuários envolvidos
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, avatar_url')
+        .select('user_id, username, display_name, avatar_url')
         .in('user_id', Array.from(userIds));
 
       if (profilesError) throw profilesError;

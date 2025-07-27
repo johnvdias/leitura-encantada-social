@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,12 +15,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Calendar as CalendarIcon, Plus, Users, Trophy } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Users, Trophy, Book } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useFriendships } from "@/hooks/useFriendships";
 import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface BookOption {
+  id: string;
+  title: string;
+}
 
 export function CreateChallengeDialog() {
   const { user } = useAuth();
@@ -28,6 +34,7 @@ export function CreateChallengeDialog() {
   const { friends } = useFriendships();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [userBooks, setUserBooks] = useState<BookOption[]>([]);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -36,23 +43,49 @@ export function CreateChallengeDialog() {
     goal_value: "",
     start_date: new Date(),
     end_date: new Date(new Date().setDate(new Date().getDate() + 30)),
+    book_id: null as string | null,
   });
 
-  const handleFriendToggle = (friendId: string) => {
-    setSelectedFriends((prev) =>
+  useEffect(() => {
+    const fetchUserBooks = async () => {
+      if (!user || !open) return;
+      const { data, error } = await supabase
+        .from('books')
+        .select('id, title')
+        .eq('user_id', user.id);
+      if (error) console.error("Error fetching user books:", error);
+      else setUserBooks(data || []);
+    };
+    fetchUserBooks();
+  }, [user, open]);
+
+  const handleBookSelection = (bookId: string) => {
+    const selectedBook = userBooks.find(b => b.id === bookId);
+    if (selectedBook) {
+      setFormData(prev => ({
+        ...prev,
+        book_id: bookId,
+        name: `Desafio de Leitura: ${selectedBook.title}`,
+        goal_type: "completion",
+        goal_value: "100",
+      }));
+    }
+  };
+
+  const handleFriendSelection = (friendId: string) => {
+    setSelectedFriends(prev =>
       prev.includes(friendId)
-        ? prev.filter((id) => id !== friendId)
+        ? prev.filter(id => id !== friendId)
         : [...prev, friendId]
     );
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setLoading(true);
     try {
-      // 1. Create the challenge
       const { data: challenge, error: challengeError } = await supabase
         .from('challenges')
         .insert({
@@ -63,37 +96,37 @@ export function CreateChallengeDialog() {
           start_date: formData.start_date.toISOString(),
           end_date: formData.end_date.toISOString(),
           creator_id: user.id,
+          book_id: formData.book_id,
         })
         .select()
         .single();
 
       if (challengeError) throw challengeError;
 
-      // 2. Add creator as a participant
-      await supabase.from('challenge_participants').insert({
-        challenge_id: challenge.id,
-        user_id: user.id,
-        status: 'accepted',
-        joined_at: new Date().toISOString(),
-      });
-
-      // 3. Invite selected friends
-      if (selectedFriends.length > 0) {
-        const invitations = selectedFriends.map((friendId) => ({
+      const participants = [
+        // Add creator
+        { challenge_id: challenge.id, user_id: user.id, status: 'accepted' },
+        // Add friends
+        ...selectedFriends.map(friendId => ({
           challenge_id: challenge.id,
           user_id: friendId,
-          status: 'invited',
-        }));
-        await supabase.from('challenge_participants').insert(invitations);
-      }
-      
-      setOpen(false);
-      // Reset form state if needed
+          status: 'pending' 
+        }))
+      ];
+
+      const { error: participantsError } = await supabase
+        .from('challenge_participants')
+        .insert(participants);
+
+      if (participantsError) throw participantsError;
+
+
       toast({
         title: "Desafio Criado! 🏆",
         description: "Seu desafio foi criado e os convites foram enviados.",
       });
-       window.location.reload();
+      setOpen(false);
+      window.location.reload();
 
     } catch (error) {
       console.error('Error creating challenge:', error);
@@ -124,65 +157,102 @@ export function CreateChallengeDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">Nome do Desafio</Label>
-            <Input id="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
+            <Label>Escolha um Livro (Opcional)</Label>
+            <Select onValueChange={handleBookSelection}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um livro da sua estante..." />
+              </SelectTrigger>
+              <SelectContent>
+                {userBooks.map(book => (
+                  <SelectItem key={book.id} value={book.id}>{book.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
           <div className="grid gap-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea id="description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+            <Label htmlFor="name">Nome do Desafio</Label>
+            <Input id="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required disabled={!!formData.book_id} />
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="goal_type">Meta</Label>
-              <Select value={formData.goal_type} onValueChange={(value) => setFormData({...formData, goal_type: value})}>
+              <Select value={formData.goal_type} onValueChange={(value) => setFormData({...formData, goal_type: value})} disabled={!!formData.book_id}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Tipo de meta" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pages">Páginas Lidas</SelectItem>
                   <SelectItem value="books">Livros Concluídos</SelectItem>
+                  <SelectItem value="completion">Concluir o Livro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="goal_value">Valor da Meta</Label>
-              <Input id="goal_value" type="number" value={formData.goal_value} onChange={(e) => setFormData({...formData, goal_value: e.target.value})} required />
+              <Input id="goal_value" type="number" value={formData.goal_value} onChange={(e) => setFormData({...formData, goal_value: e.target.value})} required disabled={!!formData.book_id} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label>Data de Início</Label>
+              <Label>Início</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline"><CalendarIcon className="mr-2 h-4 w-4" />{format(formData.start_date, "PPP")}</Button>
+                  <Button variant="outline" className="w-full justify-start font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(formData.start_date, "PPP")}
+                  </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formData.start_date} onSelect={(d) => d && setFormData({...formData, start_date: d})} initialFocus /></PopoverContent>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.start_date}
+                    onSelect={(date) => date && setFormData({ ...formData, start_date: date })}
+                    initialFocus
+                  />
+                </PopoverContent>
               </Popover>
             </div>
-             <div className="grid gap-2">
-              <Label>Data de Término</Label>
+            <div className="grid gap-2">
+              <Label>Fim</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline"><CalendarIcon className="mr-2 h-4 w-4" />{format(formData.end_date, "PPP")}</Button>
+                  <Button variant="outline" className="w-full justify-start font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(formData.end_date, "PPP")}
+                  </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formData.end_date} onSelect={(d) => d && setFormData({...formData, end_date: d})} initialFocus /></PopoverContent>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.end_date}
+                    onSelect={(date) => date && setFormData({ ...formData, end_date: date })}
+                    initialFocus
+                  />
+                </PopoverContent>
               </Popover>
             </div>
           </div>
+
           <div className="grid gap-2">
             <Label>Convidar Amigos</Label>
-            <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-2">
-              {friends.map(friendship => (
-                <div key={friendship.friend.user_id} className="flex items-center justify-between">
-                  <span>{friendship.friend.display_name}</span>
-                  <Button type="button" size="sm" variant={selectedFriends.includes(friendship.friend.user_id) ? "default" : "outline"} onClick={() => handleFriendToggle(friendship.friend.user_id)}>
-                    {selectedFriends.includes(friendship.friend.user_id) ? "Convidado" : "Convidar"}
-                  </Button>
+            <div className="space-y-2 max-h-40 overflow-y-auto border p-2 rounded-md">
+              {friends.map(friend => (
+                <div key={friend.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`friend-${friend.friend.user_id}`}
+                    onCheckedChange={() => handleFriendSelection(friend.friend.user_id)}
+                    checked={selectedFriends.includes(friend.friend.user_id)}
+                  />
+                  <Label htmlFor={`friend-${friend.friend.user_id}`} className="font-normal">
+                    {friend.friend.display_name || friend.friend.username}
+                  </Label>
                 </div>
               ))}
-              {friends.length === 0 && <p className="text-sm text-muted-foreground text-center">Você não tem amigos para convidar.</p>}
             </div>
           </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button type="submit" disabled={loading}>{loading ? "Criando..." : "Criar Desafio"}</Button>

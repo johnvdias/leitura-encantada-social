@@ -3,264 +3,126 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Calendar, Pencil, Save, X, MessageSquare, Share2 } from "lucide-react";
-import { StarRating } from "@/components/StarRating";
-import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { BookOpen, Edit, Star, Trash2 } from "lucide-react";
 import { EditBookDialog } from "@/components/EditBookDialog";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
+
+// Definindo a interface para o objeto Book
+interface Book {
+    id: string;
+    title: string;
+    author: string;
+    cover_url: string | null;
+    pages: number | null;
+    reading_status: 'reading' | 'completed' | 'want_to_read';
+    reading_progress: number;
+    description: string | null;
+    genre: string | null;
+    rating: number | null;
+    personal_notes: string | null;
+    tags: string[] | null;
+  }
+
+// A prop do componente agora é o objeto book e o callback onUpdate
 interface BookCardProps {
-  id: string;
-  title: string;
-  author: string;
-  cover?: string;
-  progress: number;
-  status: 'reading' | 'completed' | 'want_to_read';
-  genre: string;
-  rating?: number;
-  currentPage?: number;
-  totalPages?: number;
-  lastRead?: string;
-  description: string;
-  personalNotes?: string;
-  tags?: string[];
-  onUpdate?: () => void;
+  book: Book;
+  onUpdate: () => void;
 }
 
-const BookCard = ({
-  id, title, author, cover, progress, status, genre, rating,
-  currentPage, totalPages, lastRead, description, personalNotes, tags, onUpdate
-}: BookCardProps) => {
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
-  const [notes, setNotes] = useState(personalNotes || "");
-  const [bookRating, setBookRating] = useState(rating || 0);
-  const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+const BookCard = ({ book, onUpdate }: BookCardProps) => {
   const { toast } = useToast();
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'reading': return 'bg-primary/20 text-primary';
-      case 'completed': return 'bg-green-500/20 text-green-700 dark:text-green-300';
-      case 'want_to_read': return 'bg-secondary/20 text-secondary-foreground';
-      default: return 'bg-muted/20 text-muted-foreground';
-    }
-  };
-
   const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'reading': return 'Lendo';
-      case 'completed': return 'Lido';
-      case 'want_to_read': return 'Quero Ler';
-      default: return status;
-    }
+    if (status === 'reading') return 'Lendo';
+    if (status === 'completed') return 'Lido';
+    return 'Quero Ler';
   };
-
-  const handleSaveNotes = async () => {
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
+  
+  const handleDeleteBook = async () => {
+    const { error } = await supabase
         .from('books')
-        .update({ 
-          personal_notes: notes.trim() || null,
-          rating: bookRating || null
-        })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Notas salvas! 📝",
-        description: "Suas anotações pessoais foram atualizadas",
-      });
-
-      setIsEditingNotes(false);
-      onUpdate?.();
-    } catch (error) {
-      console.error('Error saving notes:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar as notas",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+        .delete()
+        .eq('id', book.id);
+    if(error){
+        toast({ title: 'Erro', description: 'Não foi possível remover o livro', variant: 'destructive'})
+    } else {
+        toast({ title: 'Sucesso', description: 'Livro removido da sua estante.'})
+        onUpdate();
     }
-  };
-
-  const cancelEditNotes = () => {
-    setNotes(personalNotes || "");
-    setBookRating(rating || 0);
-    setIsEditingNotes(false);
-  };
+  }
 
   return (
-    <Card className="card-enchanted hover-float">
-      <CardContent className="p-6">
+    <Card className="flex flex-col">
+      <CardContent className="p-4 flex-grow">
         <div className="flex gap-4">
-          <div className="w-16 h-24 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
-            {cover ? (
-              <img src={cover} alt={title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-muted-foreground" />
-              </div>
-            )}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-lg leading-tight truncate" title={title}>
-                  {title}
-                </h3>
-                <p className="text-muted-foreground text-sm mb-2">por {author}</p>
-              </div>
-              <Badge className={getStatusColor(status)}>
-                {getStatusLabel(status)}
-              </Badge>
+            <div className="w-24 flex-shrink-0">
+                <img src={book.cover_url || '/placeholder.svg'} alt={book.title} className="w-full h-36 object-cover rounded-md" />
             </div>
-
-            {/* Rating */}
-            <div className="flex items-center gap-2 mb-3">
-              <StarRating 
-                rating={bookRating} 
-                onRatingChange={setBookRating}
-                readonly={!isEditingNotes}
-                size="sm"
-              />
-              {bookRating > 0 && (
-                <span className="text-sm text-muted-foreground">({bookRating}/5)</span>
-              )}
-            </div>
-
-            {/* Progress */}
-            {status === 'reading' && (
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">Progresso</span>
-                  <span className="text-sm text-muted-foreground">{progress}%</span>
-                </div>
-                <Progress value={progress} className="h-2" />
-                {currentPage && totalPages && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Página {currentPage} de {totalPages}
-                  </p>
+            <div className="flex flex-col min-w-0">
+                <Badge variant={book.reading_status === 'reading' ? 'default' : 'outline'} className="self-start mb-1">{getStatusLabel(book.reading_status)}</Badge>
+                <h3 className="font-bold truncate" title={book.title}>{book.title}</h3>
+                <p className="text-sm text-muted-foreground truncate">{book.author}</p>
+                {book.rating && (
+                    <div className="flex items-center mt-1">
+                        {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < book.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />)}
+                    </div>
                 )}
-                {lastRead && (
-                  <div className="flex items-center gap-1 mt-2">
-                    <Calendar className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
-                      Última leitura: {lastRead}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tags */}
-            {tags && tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-3">
-                {tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Personal Notes */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium flex items-center gap-1">
-                  <MessageSquare className="w-4 h-4" />
-                  Minhas Notas
-                </span>
-                {!isEditingNotes ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditingNotes(true)}
-                  >
-                    <Pencil className="w-3 h-3 mr-1" />
-                    Editar
-                  </Button>
-                ) : (
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSaveNotes}
-                      disabled={loading}
-                    >
-                      <Save className="w-3 h-3 mr-1" />
-                      Salvar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={cancelEditNotes}
-                      disabled={loading}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-              
-              {isEditingNotes ? (
-                <Textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Suas reflexões, citações favoritas ou anotações sobre este livro..."
-                  className="text-sm resize-none"
-                  rows={3}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground bg-muted/30 rounded p-2 min-h-[60px]">
-                  {personalNotes || "Clique em 'Editar' para adicionar suas anotações pessoais sobre este livro."}
-                </p>
-              )}
             </div>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              {status === 'reading' && (
-                <UpdateProgressDialog 
-                  bookId={id}
-                  title={title}
-                  currentPage={currentPage || 0}
-                  totalPages={totalPages || 0}
-                  currentProgress={progress}
-                  onProgressUpdate={onUpdate || (() => {})}
-                >
-                  <Button variant="outline" size="sm">
-                    📖 Atualizar Progresso
-                  </Button>
-                </UpdateProgressDialog>
-              )}
-              <EditBookDialog 
-                bookId={id}
-                title={title}
-                author={author}
-                pages={totalPages}
-                genre={genre}
-                description={description}
-                status={status}
-                onBookUpdated={onUpdate || (() => {})}
-              />
-              <CreatePostDialog bookId={id} />
-            </div>
-          </div>
         </div>
+
+        {book.reading_status === 'reading' && book.pages && book.pages > 0 && (
+            <div className="mt-4">
+                <Progress value={book.reading_progress || 0} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-1 text-right">{book.reading_progress || 0}%</p>
+            </div>
+        )}
       </CardContent>
+      
+      <div className="p-4 pt-0 flex flex-wrap gap-2 justify-end">
+        {book.reading_status === 'reading' && (
+            <UpdateProgressDialog book={book} onProgressUpdate={onUpdate}>
+                <Button variant="outline" size="sm">Atualizar</Button>
+            </UpdateProgressDialog>
+        )}
+        <CreatePostDialog bookId={book.id}>
+             <Button variant="outline" size="sm">Compartilhar</Button>
+        </CreatePostDialog>
+        <EditBookDialog book={book} onBookUpdated={onUpdate} />
+         <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-4 w-4"/>
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Esta ação removerá permanentemente o livro "{book.title}" da sua estante.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteBook}>Sim, remover</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </Card>
   );
 };

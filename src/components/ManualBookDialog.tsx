@@ -1,9 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -13,112 +8,77 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Upload, Link2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PlusCircle, Loader2 } from "lucide-react";
+import { TablesInsert } from "@/integrations/supabase/types";
 
-export function ManualBookDialog() {
+interface ManualBookDialogProps {
+  onBookAdded: () => void;
+}
+
+export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [coverUrl, setCoverUrl] = useState("");
-  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     author: "",
-    description: "",
-    pages: "",
-    genre: "",
-    reading_status: "want_to_read",
-    personal_notes: "",
+    pages: 0,
+    cover_url: "",
   });
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
-  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCoverFile(file);
-      setCoverUrl(""); // Clear URL if a file is selected
-      const preview = URL.createObjectURL(file);
-      setCoverPreview(preview);
-    }
-  };
 
   const handleCoverUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setCoverUrl(url);
-    setCoverFile(null); // Clear file if a URL is entered
-    setCoverPreview(url);
-  };
-
-  const uploadCover = async () => {
-    if (!coverFile || !user) return null;
-
-    const fileExt = coverFile.name.split('.').pop();
-    const fileName = `${user.id}/book-covers/${Date.now()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('book_covers') // Assuming a 'book_covers' bucket
-      .upload(fileName, coverFile);
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage
-      .from('book_covers')
-      .getPublicUrl(fileName);
-
-    return data.publicUrl;
-  };
+    setFormData({ ...formData, cover_url: e.target.value });
+    setCoverPreview(e.target.value);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !formData.title || !formData.author || formData.pages <= 0) {
+        toast({
+            title: "Campos obrigatórios",
+            description: "Por favor, preencha o título, autor e o número de páginas.",
+            variant: "destructive"
+        })
+      return;
+    }
 
     setLoading(true);
     try {
-      let finalCoverUrl = coverUrl;
+        const newBook: TablesInsert<'books'> = {
+            user_id: user.id,
+            title: formData.title,
+            author: formData.author,
+            pages: formData.pages,
+            cover_url: formData.cover_url || null,
+            reading_status: 'want_to_read',
+        };
 
-      if (coverFile) {
-        finalCoverUrl = await uploadCover() || "";
-      }
+      const { error } = await supabase.from("books").insert(newBook);
 
-      const { error } = await supabase
-        .from('books')
-        .insert({
-          user_id: user.id,
-          title: formData.title,
-          author: formData.author,
-          description: formData.description,
-          page_count: formData.pages ? parseInt(formData.pages) : null,
-          genre: formData.genre,
-          // reading_status and personal_notes seem to be on a different table (user_books)
-          // For now, let's just create the book entry
-          cover_url: finalCoverUrl,
-        });
-        
       if (error) throw error;
-      
-      // We would likely need to also add an entry to a `user_books` table here
-      // linking the user to this new book with a reading_status
-
-      setOpen(false);
-      // Reset form state
-      setFormData({ title: "", author: "", description: "", pages: "", genre: "", reading_status: "want_to_read", personal_notes: "" });
-      setCoverFile(null);
-      setCoverUrl("");
-      setCoverPreview(null);
 
       toast({
-        title: "Livro adicionado",
-        description: "O livro foi adicionado com sucesso.",
+        title: "Livro Adicionado! 📚",
+        description: `"${formData.title}" foi adicionado à sua estante.`,
       });
+      
+      setOpen(false);
+      onBookAdded(); // Callback to refresh the book list
+      // Reset form
+      setFormData({ title: "", author: "", pages: 0, cover_url: "" });
+      setCoverPreview(null);
 
-      // It's better to refetch data than to reload the whole page
-      window.location.reload(); 
     } catch (error) {
-      console.error('Error adding book:', error);
+      console.error("Error adding book manually:", error);
       toast({
         title: "Erro",
         description: "Não foi possível adicionar o livro.",
@@ -132,102 +92,70 @@ export function ManualBookDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Plus className="h-4 w-4 mr-2" />
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
           Adicionar Manualmente
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adicionar Livro Manualmente</DialogTitle>
           <DialogDescription>
-            Preencha as informações do livro que você quer adicionar à sua estante.
+            Preencha os detalhes do livro que você deseja adicionar à sua estante.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="flex items-center gap-4">
-              {coverPreview && (
-                <img 
-                  src={coverPreview} 
-                  alt="Preview da capa" 
-                  className="w-24 h-36 object-cover rounded border"
-                  onError={(e) => e.currentTarget.src = 'https://via.placeholder.com/150'}
-                />
-              )}
-              <div className="grid gap-3 flex-1">
-                <Label>Capa do Livro</Label>
-                <Input
-                  id="cover-url"
-                  placeholder="https://exemplo.com/capa.jpg"
-                  value={coverUrl}
-                  onChange={handleCoverUrlChange}
-                />
-                <div className="flex items-center">
-                  <span className="flex-1 border-t"></span>
-                  <span className="px-2 text-xs text-muted-foreground">OU</span>
-                  <span className="flex-1 border-t"></span>
-                </div>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverFileChange}
-                  className="hidden"
-                  id="cover-upload"
-                />
-                <Label htmlFor="cover-upload" className="cursor-pointer">
-                  <Button type="button" variant="outline" asChild>
-                    <span>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Fazer Upload de Arquivo
-                    </span>
-                  </Button>
-                </Label>
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="title">Título *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Nome do livro"
-                required
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="author">Autor</Label>
-              <Input
-                id="author"
-                value={formData.author}
-                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                placeholder="Nome do autor"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="pages">Número de Páginas</Label>
-              <Input
-                id="pages"
-                type="number"
-                value={formData.pages}
-                onChange={(e) => setFormData({ ...formData, pages: e.target.value })}
-                placeholder="Ex: 320"
-              />
-            </div>
-            
-            {/* The rest of the form for user-specific data can be added back if needed */}
-            {/* For now, focusing on adding the book to the main 'books' table */}
-            
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Título</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="author">Autor</Label>
+            <Input
+              id="author"
+              value={formData.author}
+              onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pages">Número de Páginas</Label>
+            <Input
+              id="pages"
+              type="number"
+              min="1"
+              value={formData.pages === 0 ? '' : formData.pages}
+              onChange={(e) => setFormData({ ...formData, pages: parseInt(e.target.value) || 0 })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cover_url">URL da Capa (Opcional)</Label>
+            <Input
+              id="cover_url"
+              value={formData.cover_url}
+              onChange={handleCoverUrlChange}
+              placeholder="https://exemplo.com/capa.jpg"
+            />
+          </div>
+          {coverPreview && (
+            <div className="flex justify-center">
+                <img src={coverPreview} alt="Pré-visualização da capa" className="h-48 w-32 object-cover rounded-md border" />
+            </div>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Adicionando..." : "Adicionar Livro"}
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Adicionar Livro
             </Button>
           </DialogFooter>
         </form>
