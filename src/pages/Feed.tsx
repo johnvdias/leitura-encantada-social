@@ -83,7 +83,7 @@ const Feed = () => {
               posts.map((post) => (
                 <PostCard 
                   key={post.id} 
-                  post={post}
+                  {...post}
                   onPostDeleted={refetch}
                 />
               ))

@@ -14,7 +14,7 @@ export const useAchievements = () => {
   const { toast } = useToast();
 
   const fetchAchievements = useCallback(async () => {
-    if (!user) return;
+    if (!user?.id) return;
 
     setLoading(true);
     try {
@@ -34,7 +34,7 @@ export const useAchievements = () => {
   }, [user]);
 
   const checkAndUnlockAchievements = async () => {
-    if (!user) return;
+    if (!user?.id) return;
 
     try {
       // Check for book completion achievements
