@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useParams } from "react-router-dom";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, BookOpen, Crown, UserMinus, Lock, Globe, CalendarClock } from "lucide-react";
+import { UserMinus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +24,7 @@ interface Club {
   created_at: string;
   is_private: boolean;
   creator_id: string;
+  current_book_id?: string | null;
   books?: {
     id: string;
     title: string;
@@ -61,30 +61,88 @@ const ClubePage = () => {
   const fetchClubData = useCallback(async () => {
     if (!clubId) return;
     try {
-      const { data: clubData, error: clubError } = await supabase
-        .from('clubs')
-        .select(`*, books (id, title, author, cover_url), profiles!clubs_creator_id_fkey (display_name, avatar_url)`)
-        .eq('id', clubId)
-        .single();
+        setLoading(true);
 
-      if (clubError) throw new Error("Clube não encontrado.");
-      setClub(clubData as unknown as Club);
+        // 1. Fetch club data without nested books join initially
+        const { data: clubData, error: clubError } = await supabase
+            .from('clubs')
+            .select(`*`)
+            .eq('id', clubId)
+            .single();
 
-      const { data: membersData, error: membersError } = await supabase
-        .from('club_members')
-        .select(`user_id, role, profiles (display_name, avatar_url)`)
-        .eq('club_id', clubId);
+        if (clubError || !clubData) {
+            throw new Error("Clube não encontrado.");
+        }
 
-      if (membersError) throw new Error("Erro ao carregar membros.");
-      
-      setMembers(membersData as unknown as Member[]);
-      setIsMember(!!user && membersData.some(m => m.user_id === user.id));
+        // 2. Fetch creator profile separately
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('display_name, avatar_url')
+            .eq('user_id', clubData.creator_id)
+            .single();
+
+        if (profileError) {
+            console.warn("Erro ao carregar o perfil do criador:", profileError);
+            // Continue even if creator profile fails to load
+        }
+
+        // 3. Fetch current book details if current_book_id exists
+        let currentBookDetails = null;
+        if (clubData.current_book_id) {
+            const { data: bookData, error: bookError } = await supabase
+                .from('books')
+                .select('id, title, author, cover_url')
+                .eq('id', clubData.current_book_id)
+                .single();
+            if (bookError) {
+                console.warn("Erro ao carregar os detalhes do livro atual:", bookError);
+            } else {
+                currentBookDetails = bookData;
+            }
+        }
+
+        const enrichedClubData = {
+            ...clubData,
+            profiles: profileData || { display_name: 'Desconhecido', avatar_url: '' }, // Default profile
+            books: currentBookDetails
+        };
+
+        setClub(enrichedClubData as unknown as Club);
+
+        const { data: memberInfoData, error: memberInfoError } = await supabase
+            .from('club_members')
+            .select('user_id, role')
+            .eq('club_id', clubId);
+
+        if (memberInfoError) throw new Error("Erro ao carregar informações dos membros.");
+        
+        if (!memberInfoData || memberInfoData.length === 0) {
+            setMembers([]);
+        } else {
+            const memberUserIds = memberInfoData.map(m => m.user_id);
+            const { data: membersProfileData, error: membersProfileError } = await supabase
+                .from('profiles')
+                .select('user_id, display_name, avatar_url')
+                .in('user_id', memberUserIds);
+
+            if (membersProfileError) throw new Error("Erro ao carregar perfis dos membros.");
+
+            const membersMap = new Map(membersProfileData.map(p => [p.user_id, p]));
+            const combinedMembers = memberInfoData.map(memberInfo => ({
+                ...memberInfo,
+                profiles: membersMap.get(memberInfo.user_id) || { display_name: 'Usuário', avatar_url: '' }
+            }));
+            
+            setMembers(combinedMembers as unknown as Member[]);
+            setIsMember(!!user && combinedMembers.some(m => m.user_id === user.id));
+        }
 
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-      setClub(null);
+        toast({ title: "Erro", description: err.message, variant: "destructive" });
+        setClub(null);
+        setMembers([]);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   }, [clubId, user, toast]);
 
@@ -92,7 +150,6 @@ const ClubePage = () => {
     fetchClubData();
   }, [fetchClubData]);
   
-  // Placeholder functions
   const handleJoinClub = async () => {};
   const handleLeaveClub = async () => {};
 
@@ -120,7 +177,7 @@ const ClubePage = () => {
         </CardHeader>
          {club.books && (
             <CardContent>
-                <CardDescription>Leitura Atual</CardDescription>
+                <p className="font-semibold text-sm text-muted-foreground">Leitura Atual</p>
                 <div className="flex items-center gap-4 mt-2">
                     <img src={club.books.cover_url || '/placeholder.svg'} alt={club.books.title} className="h-24 w-16 object-cover rounded"/>
                     <div>
@@ -155,7 +212,7 @@ const ClubePage = () => {
           
           <TabsContent value="members" className="mt-6">
             <Card>
-              <CardHeader><CardTitle>Membros do Clube</CardTitle></CardHeader>
+              <CardHeader><h3 className="text-lg font-semibold">Membros do Clube</h3></CardHeader>
               <CardContent>
                 {isCreator ? (
                   <MemberManagement clubId={club.id} members={members} creatorId={club.creator_id} onMemberRemoved={fetchClubData} />

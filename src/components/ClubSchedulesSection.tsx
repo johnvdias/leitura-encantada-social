@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, CalendarClock, Trash2 } from 'lucide-react';
+import { CalendarClock, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,7 +12,7 @@ interface Schedule {
   id: string;
   name: string;
   reading_goal: string;
-  due_date: string;
+  end_date: string;
   books: {
     title: string;
   };
@@ -25,7 +24,7 @@ interface ClubSchedulesSectionProps {
   onSchedulesUpdated: () => void;
 }
 
-export function ClubSchedulesSection({ clubId, isCreator, onSchedulesUpdated }: ClubSchedulesSectionProps) {
+export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSectionProps) {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -36,11 +35,11 @@ export function ClubSchedulesSection({ clubId, isCreator, onSchedulesUpdated }: 
       const { data, error } = await supabase
         .from('club_reading_schedules')
         .select(`
-          id, name, reading_goal, due_date,
+          id, name, reading_goal, end_date,
           books (title)
         `)
         .eq('club_id', clubId)
-        .order('due_date', { ascending: false });
+        .order('end_date', { ascending: false });
 
       if (error) throw error;
       setSchedules(data as Schedule[]);
@@ -55,11 +54,6 @@ export function ClubSchedulesSection({ clubId, isCreator, onSchedulesUpdated }: 
   useEffect(() => {
     fetchSchedules();
   }, [fetchSchedules]);
-  
-  // Expose fetchSchedules to parent through the callback prop
-  useEffect(() => {
-    onSchedulesUpdated();
-  }, [onSchedulesUpdated])
 
   const handleDeleteSchedule = async (scheduleId: string) => {
     try {
@@ -79,7 +73,7 @@ export function ClubSchedulesSection({ clubId, isCreator, onSchedulesUpdated }: 
   }
 
   const renderScheduleCard = (schedule: Schedule) => {
-    const isOverdue = isPast(new Date(schedule.due_date));
+    const isOverdue = isPast(new Date(schedule.end_date));
 
     return (
         <Card key={schedule.id} className={isOverdue ? 'border-dashed' : ''}>
@@ -95,7 +89,7 @@ export function ClubSchedulesSection({ clubId, isCreator, onSchedulesUpdated }: 
             <CardFooter className="flex justify-between items-center text-sm">
                  <Badge variant={isOverdue ? 'outline' : 'default'}>
                     <CalendarClock className="h-3 w-3 mr-1" />
-                    {isOverdue ? 'Terminou' : 'Termina'} {formatDistanceToNow(new Date(schedule.due_date), { addSuffix: true, locale: ptBR })}
+                    {isOverdue ? 'Terminou' : 'Termina'} {formatDistanceToNow(new Date(schedule.end_date), { addSuffix: true, locale: ptBR })}
                 </Badge>
                 {isCreator && (
                   <Button variant="ghost" size="sm" onClick={() => handleDeleteSchedule(schedule.id)}>
