@@ -31,9 +31,7 @@ const Perfil = () => {
   const [stats, setStats] = useState({
     totalBooks: 0,
     completedBooks: 0,
-    currentlyReading: 0,
-    readingGoal: 12,
-    readingProgress: 0
+    currentlyReading: 0
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,15 +50,11 @@ const Perfil = () => {
       const totalBooks = books?.length || 0;
       const completedBooks = books?.filter(b => b.reading_status === 'completed').length || 0;
       const currentlyReading = books?.filter(b => b.reading_status === 'reading').length || 0;
-      const readingGoal = profile?.reading_goal || 12;
-      const readingProgress = Math.round((completedBooks / readingGoal) * 100);
-
+      
       setStats({
         totalBooks,
         completedBooks,
-        currentlyReading,
-        readingGoal,
-        readingProgress: Math.min(readingProgress, 100)
+        currentlyReading
       });
     } catch (error) {
       console.error('Error fetching user stats:', error);
@@ -134,10 +128,6 @@ const Perfil = () => {
                   <Trophy className="h-4 w-4" />
                   <span>{achievements.length} conquistas</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Target className="h-4 w-4" />
-                  <span>Meta: {stats.readingGoal} livros/ano</span>
-                </div>
               </div>
             </div>
             <div className="ml-auto">
@@ -156,7 +146,7 @@ const Perfil = () => {
         </TabsList>
 
         <TabsContent value="estatisticas" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="card-enchanted">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total de Livros</CardTitle>
@@ -179,19 +169,6 @@ const Perfil = () => {
                 <div className="text-2xl font-bold">{stats.completedBooks}</div>
                 <p className="text-xs text-muted-foreground">
                   Este ano
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="card-enchanted">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Meta Anual</CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.readingProgress}%</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.completedBooks} de {stats.readingGoal} livros
                 </p>
               </CardContent>
             </Card>

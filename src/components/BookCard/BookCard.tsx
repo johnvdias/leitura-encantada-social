@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Edit, Star, Trash2 } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { EditBookDialog } from "@/components/EditBookDialog";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
@@ -67,7 +67,7 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
   }
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-full">
       <CardContent className="p-4 flex-grow">
         <div className="flex gap-4">
             <div className="w-24 flex-shrink-0">
@@ -93,35 +93,37 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
         )}
       </CardContent>
       
-      <div className="p-4 pt-0 flex flex-wrap gap-2 justify-end">
-        {book.reading_status === 'reading' && (
-            <UpdateProgressDialog book={book} onProgressUpdate={onUpdate}>
-                <Button variant="outline" size="sm">Atualizar</Button>
-            </UpdateProgressDialog>
-        )}
-        <CreatePostDialog bookId={book.id}>
-             <Button variant="outline" size="sm">Compartilhar</Button>
-        </CreatePostDialog>
-        <EditBookDialog book={book} onBookUpdated={onUpdate} />
-         <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive">
-                    <Trash2 className="h-4 w-4"/>
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Esta ação removerá permanentemente o livro "{book.title}" da sua estante.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteBook}>Sim, remover</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+      <div className="p-4 pt-0 mt-auto">
+        <div className="flex flex-wrap gap-2 justify-end">
+            {book.reading_status === 'reading' && (
+                <UpdateProgressDialog book={book} onProgressUpdate={onUpdate}>
+                    <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Atualizar</Button>
+                </UpdateProgressDialog>
+            )}
+            <CreatePostDialog bookId={book.id} onPostCreated={onUpdate}>
+                <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Compartilhar</Button>
+            </CreatePostDialog>
+            <EditBookDialog book={book} onBookUpdated={onUpdate} />
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4"/>
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta ação removerá permanentemente o livro "{book.title}" da sua estante.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteBook}>Sim, remover</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
       </div>
     </Card>
   );

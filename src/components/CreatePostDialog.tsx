@@ -1,28 +1,46 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Sparkles, BookOpen, Heart, Lightbulb } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import React from "react";
 
 interface CreatePostDialogProps {
   onPostCreated?: () => void;
   bookId?: string;
+  children: React.ReactNode;
 }
 
-type PostType = 'general' | 'progress' | 'review' | 'recommendation';
-type Visibility = 'public' | 'friends' | 'private';
+type PostType = "general" | "progress" | "review" | "recommendation";
+type Visibility = "public" | "friends" | "private";
 
-export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProps) => {
+export const CreatePostDialog = ({
+  onPostCreated,
+  bookId,
+  children,
+}: CreatePostDialogProps) => {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
-  const [postType, setPostType] = useState<PostType>('general');
-  const [visibility, setVisibility] = useState<Visibility>('public');
+  const [postType, setPostType] = useState<PostType>("general");
+  const [visibility, setVisibility] = useState<Visibility>("public");
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -32,15 +50,13 @@ export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProp
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('posts')
-        .insert({
-          user_id: user.id,
-          book_id: bookId || null,
-          content: content.trim(),
-          post_type: postType,
-          visibility
-        });
+      const { error } = await supabase.from("posts").insert({
+        user_id: user.id,
+        book_id: bookId,
+        content: content.trim(),
+        post_type: postType,
+        visibility,
+      });
 
       if (error) throw error;
 
@@ -50,12 +66,12 @@ export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProp
       });
 
       setContent("");
-      setPostType('general');
-      setVisibility('public');
+      setPostType("general");
+      setVisibility("public");
       setOpen(false);
       onPostCreated?.();
     } catch (error) {
-      console.error('Error creating post:', error);
+      console.error("Error creating post:", error);
       toast({
         title: "Erro",
         description: "Não foi possível criar o post",
@@ -66,23 +82,9 @@ export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProp
     }
   };
 
-  const getPostTypeIcon = (type: string) => {
-    switch (type) {
-      case 'progress': return BookOpen;
-      case 'review': return Heart;
-      case 'recommendation': return Lightbulb;
-      default: return Sparkles;
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="btn-enchanted flex-1">
-          <Sparkles className="w-4 h-4 mr-2" />
-          Compartilhar uma experiência de leitura
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -93,7 +95,10 @@ export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProp
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="post-type">Tipo de Post</Label>
-            <Select value={postType} onValueChange={(value: PostType) => setPostType(value)}>
+            <Select
+              value={postType}
+              onValueChange={(value: PostType) => setPostType(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
@@ -128,7 +133,10 @@ export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProp
 
           <div className="space-y-2">
             <Label htmlFor="visibility">Privacidade</Label>
-            <Select value={visibility} onValueChange={(value: Visibility) => setVisibility(value)}>
+            <Select
+              value={visibility}
+              onValueChange={(value: Visibility) => setVisibility(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Quem pode ver?" />
               </SelectTrigger>
@@ -160,7 +168,11 @@ export const CreatePostDialog = ({ onPostCreated, bookId }: CreatePostDialogProp
             >
               {loading ? "Compartilhando..." : "Compartilhar"}
             </Button>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
               Cancelar
             </Button>
           </div>

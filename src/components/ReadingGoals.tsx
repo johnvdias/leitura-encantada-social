@@ -8,96 +8,106 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
-import { Target, Calendar, TrendingUp, Clock, Flame } from "lucide-react";
+import { Target, TrendingUp, Clock, Flame, Book } from "lucide-react";
 
 interface ReadingGoalsProps {
   className?: string;
 }
 
-interface DailyStats {
+interface ReadingStats {
   pagesReadToday: number;
   timeReadToday: number;
-  streak: number;
+  booksReadThisYear: number;
 }
 
 export function ReadingGoals({ className }: ReadingGoalsProps) {
   const [dailyGoal, setDailyGoal] = useState(10);
-  const [weeklyGoal, setWeeklyGoal] = useState(70);
-  const [stats, setStats] = useState<DailyStats>({
+  const [annualBooksGoal, setAnnualBooksGoal] = useState(12);
+  const [stats, setStats] = useState<ReadingStats>({
     pagesReadToday: 0,
     timeReadToday: 0,
-    streak: 0,
+    booksReadThisYear: 0,
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  const { streak, loading: streakLoading } = useStreak();
+  const { streak } = useStreak();
 
-  const fetchUserGoals = useCallback(async () => {
+  const fetchGoalsAndStats = useCallback(async () => {
     if (!user) return;
+
     try {
-      const { data, error } = await supabase
+      setIsLoading(true);
+
+      // Fetch goals from profiles table
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("reading_goal")
+        .select("reading_goal, annual_books_goal")
         .eq("user_id", user.id)
         .single();
 
-      if (error) throw error;
-      
-      if (data?.reading_goal) {
-        setDailyGoal(Math.round(data.reading_goal / 7)); // Convert weekly to daily
-        setWeeklyGoal(data.reading_goal);
-      }
-    } catch (error) {
-      console.error("Error fetching goals:", error);
-    }
-  }, [user]);
+      if (profileError) throw profileError;
 
-  const fetchTodayStats = useCallback(async () => {
-    if (!user) return;
-    try {
+      if (profileData) {
+        setDailyGoal(profileData.reading_goal || 10);
+        setAnnualBooksGoal(profileData.annual_books_goal || 12);
+      }
+
+      // Fetch today's reading history
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const { data, error } = await supabase
+      const { data: historyData, error: historyError } = await supabase
         .from("reading_history")
-        .select("pages_read, reading_session_minutes, created_at")
+        .select("pages_read, reading_session_minutes")
         .eq("user_id", user.id)
         .gte("created_at", today.toISOString())
         .lt("created_at", tomorrow.toISOString());
 
-      if (error) throw error;
+      if (historyError) throw historyError;
+      
+      const pagesReadToday = historyData?.reduce((sum, r) => sum + (r.pages_read || 0), 0) || 0;
+      const timeReadToday = historyData?.reduce((sum, r) => sum + (r.reading_session_minutes || 0), 0) || 0;
 
-      const pagesReadToday = data?.reduce((sum, session) => sum + (session.pages_read || 0), 0) || 0;
-      const timeReadToday = data?.reduce((sum, session) => sum + (session.reading_session_minutes || 0), 0) || 0;
+      // Fetch books completed this year
+      const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString();
+      const { count, error: booksError } = await supabase
+        .from("books")
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('reading_status', 'completed')
+        .gte('updated_at', yearStart);
+        
+      if (booksError) throw booksError;
 
       setStats({
         pagesReadToday,
         timeReadToday,
-        streak: streak,
+        booksReadThisYear: count || 0,
       });
+
     } catch (error) {
-      console.error("Error fetching today's stats:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [user, streak]);
+  }, [user]);
 
   useEffect(() => {
-    if (user) {
-      fetchUserGoals();
-      fetchTodayStats();
-    }
-  }, [user, fetchUserGoals, fetchTodayStats]);
+    fetchGoalsAndStats();
+  }, [fetchGoalsAndStats]);
 
   const updateGoals = async () => {
     if (!user) return;
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ reading_goal: weeklyGoal })
+        .update({ 
+          reading_goal: dailyGoal, 
+          annual_books_goal: annualBooksGoal 
+        })
         .eq("user_id", user.id);
 
       if (error) throw error;
@@ -108,7 +118,7 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
   };
 
   const dailyProgress = dailyGoal > 0 ? Math.min((stats.pagesReadToday / dailyGoal) * 100, 100) : 0;
-  const weeklyProgress = weeklyGoal > 0 ? Math.min(((stats.pagesReadToday * 7) / weeklyGoal) * 100, 100) : 0;
+  const annualProgress = annualBooksGoal > 0 ? Math.min((stats.booksReadThisYear / annualBooksGoal) * 100, 100) : 0;
 
   if (isLoading) {
     return (
@@ -137,7 +147,7 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {isEditing ? (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -147,25 +157,17 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
                 type="number"
                 min={1}
                 value={dailyGoal}
-                onChange={(e) => {
-                  const daily = Number(e.target.value) || 1;
-                  setDailyGoal(daily);
-                  setWeeklyGoal(daily * 7);
-                }}
+                onChange={(e) => setDailyGoal(Number(e.target.value) || 1)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="weekly">Meta Semanal (páginas)</Label>
+              <Label htmlFor="annual">Meta Anual (livros)</Label>
               <Input
-                id="weekly"
+                id="annual"
                 type="number"
                 min={1}
-                value={weeklyGoal}
-                onChange={(e) => {
-                  const weekly = Number(e.target.value) || 7;
-                  setWeeklyGoal(weekly);
-                  setDailyGoal(Math.round(weekly / 7));
-                }}
+                value={annualBooksGoal}
+                onChange={(e) => setAnnualBooksGoal(Number(e.target.value) || 1)}
               />
             </div>
             <Button onClick={updateGoals} className="w-full">
@@ -174,14 +176,27 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
+            <div>
+              <div className="flex justify-between items-center mb-1">
                 <span className="text-sm font-medium">Meta Diária</span>
                 <Badge variant={dailyProgress >= 100 ? "default" : "secondary"}>
-                  {stats.pagesReadToday}/{dailyGoal} páginas
+                  {stats.pagesReadToday}/{dailyGoal} págs
                 </Badge>
               </div>
               <Progress value={dailyProgress} className="h-2" />
+               {dailyProgress >= 100 && (
+                <p className="text-xs text-green-600 mt-1 text-center">🎉 Meta diária alcançada!</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm font-medium">Meta Anual</span>
+                <Badge variant={annualProgress >= 100 ? "default" : "secondary"}>
+                  {stats.booksReadThisYear}/{annualBooksGoal} livros
+                </Badge>
+              </div>
+              <Progress value={annualProgress} className="h-2" />
             </div>
 
             <div className="grid grid-cols-3 gap-4 pt-2">
@@ -192,11 +207,11 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
                   Minutos hoje
                 </div>
               </div>
-              <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                <div className="text-2xl font-bold text-primary">{Math.round(dailyProgress)}%</div>
+               <div className="text-center p-3 bg-secondary/50 rounded-lg">
+                <div className="text-2xl font-bold text-primary">{stats.booksReadThisYear}</div>
                 <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                  <TrendingUp className="w-3 h-3" />
-                  Meta diária
+                  <Book className="w-3 h-3" />
+                  Lidos este ano
                 </div>
               </div>
               <div className="text-center p-3 bg-secondary/50 rounded-lg">
@@ -207,14 +222,6 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
                 </div>
               </div>
             </div>
-
-            {dailyProgress >= 100 && (
-              <div className="text-center p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                  🎉 Meta diária alcançada!
-                </span>
-              </div>
-            )}
           </div>
         )}
       </CardContent>

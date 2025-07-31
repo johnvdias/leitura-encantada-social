@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Library, BookOpen, CheckCircle } from "lucide-react";
+import { Search } from "lucide-react";
 import BookCard from "@/components/BookCard/BookCard";
 import { AddBookDialog } from "@/components/AddBookDialog";
-import { ManualBookDialog } from "@/components/ManualBookDialog"; // Importando o novo componente
-import { ReadingGoals } from "@/components/ReadingGoals";
+import { ManualBookDialog } from "@/components/ManualBookDialog";
+// import { ReadingGoals } from "@/components/ReadingGoals";
+// import { SchedulesSection } from "@/components/SchedulesSection";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -66,10 +68,6 @@ const Estante = () => {
   const completedBooks = filteredBooks.filter(book => book.reading_status === "completed");
   const wantToReadBooks = filteredBooks.filter(book => book.reading_status === "want_to_read");
 
-  const totalBooks = books.length;
-  const readingCount = readingBooks.length;
-  const completedCount = completedBooks.length;
-
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="text-center mb-8">
@@ -77,9 +75,12 @@ const Estante = () => {
         <p className="text-muted-foreground">Organize seus livros e acompanhe seu progresso.</p>
       </header>
 
-      <section className="mb-8">
+      {/* <section className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ReadingGoals />
+        <SchedulesSection />
       </section>
+
+      <Separator className="my-8" /> */}
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
           <div className="relative w-full sm:w-auto sm:flex-1 max-w-sm">
@@ -92,7 +93,9 @@ const Estante = () => {
               />
           </div>
           <div className="flex gap-2">
-            <AddBookDialog onBookAdded={fetchBooks} />
+            <AddBookDialog onBookAdded={fetchBooks}>
+                <Button>Adicionar Livro</Button>
+            </AddBookDialog>
             <ManualBookDialog onBookAdded={fetchBooks} /> 
           </div>
       </div>

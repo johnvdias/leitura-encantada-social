@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { SchedulesSection } from "@/components/SchedulesSection";
 import PostCard from "@/components/PostCard";
 import { useFeed } from "@/hooks/useFeed";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,12 +48,6 @@ const Feed = () => {
           Compartilhe suas experiências literárias e conecte-se com outros leitores.
         </p>
       </header>
-
-      <section className="mb-8">
-        <SchedulesSection />
-      </section>
-
-      <Separator className="my-8" />
 
       <div className="max-w-2xl mx-auto">
         <Card className="mb-8">

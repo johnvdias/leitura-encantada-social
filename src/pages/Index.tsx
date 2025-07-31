@@ -74,7 +74,7 @@ const Index = () => {
       icon: <Calendar className="w-8 h-8 text-primary" />,
       title: "Metas e Cronograma",
       description: "Defina objetivos e receba lembretes motivacionais diários",
-      link: "/perfil"
+      link: "/estante"
     }
   ];
 
