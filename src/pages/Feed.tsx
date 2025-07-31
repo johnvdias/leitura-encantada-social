@@ -4,15 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import PostCard from "@/components/PostCard";
 import { useFeed } from "@/hooks/useFeed";
 import { useAuth } from "@/hooks/useAuth";
 
 const Feed = () => {
-  const { user, profile, loading: authLoading } = useAuth(); // Usando o estado de loading do useAuth
+  const { profile, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("todas");
   const filterMap = {
     "todas": "all" as const,
@@ -21,7 +20,6 @@ const Feed = () => {
   };
   const { posts, loading: feedLoading, hasMore, loadMore, refetch } = useFeed(filterMap[activeTab as keyof typeof filterMap]);
 
-  // Tela de Loading: Mostra enquanto o perfil do usuário ou o feed inicial estão carregando.
   if (authLoading || (feedLoading && posts.length === 0)) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
@@ -31,7 +29,6 @@ const Feed = () => {
     );
   }
   
-  // Tratamento de erro caso o perfil não carregue
   if (!profile) {
       return (
           <div className="container mx-auto px-4 py-8 text-center">
@@ -59,7 +56,12 @@ const Feed = () => {
                     <AvatarFallback>{profile.display_name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
                 </Avatar>
               </Link>
-              <CreatePostDialog onPostCreated={refetch} />
+              <CreatePostDialog onPostCreated={refetch}>
+                <Button className="btn-enchanted flex-1 w-full justify-start text-muted-foreground hover:text-foreground">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Compartilhar uma experiência...
+                </Button>
+              </CreatePostDialog>
             </div>
           </CardContent>
         </Card>
