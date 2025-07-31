@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, Trash2 } from "lucide-react";
+import { Star, Trash2, Play, Loader2 } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
 import { EditBookDialog } from "@/components/EditBookDialog";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
@@ -21,7 +21,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-
 // Definindo a interface para o objeto Book
 interface Book {
     id: string;
@@ -36,7 +35,7 @@ interface Book {
     rating: number | null;
     personal_notes: string | null;
     tags: string[] | null;
-  }
+}
 
 // A prop do componente agora é o objeto book e o callback onUpdate
 interface BookCardProps {
@@ -46,6 +45,7 @@ interface BookCardProps {
 
 const BookCard = ({ book, onUpdate }: BookCardProps) => {
   const { toast } = useToast();
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const getStatusLabel = (status: string) => {
     if (status === 'reading') return 'Lendo';
@@ -64,7 +64,29 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
         toast({ title: 'Sucesso', description: 'Livro removido da sua estante.'})
         onUpdate();
     }
-  }
+  };
+
+  const handleStartReading = async () => {
+    setIsUpdatingStatus(true);
+    try {
+      const { error } = await supabase
+        .from('books')
+        .update({ reading_status: 'reading' })
+        .eq('id', book.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Boa leitura! 📖",
+        description: `Você começou a ler "${book.title}".`,
+      });
+      onUpdate(); // Atualiza a lista de livros
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Não foi possível atualizar o status do livro.', variant: 'destructive' });
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   return (
     <Card className="flex flex-col h-full">
@@ -95,15 +117,32 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
       
       <div className="p-4 pt-0 mt-auto">
         <div className="flex flex-wrap gap-2 justify-end">
+            {book.reading_status === 'want_to_read' && (
+              <Button onClick={handleStartReading} disabled={isUpdatingStatus} size="sm" className="flex-grow sm:flex-grow-0">
+                {isUpdatingStatus ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="mr-2 h-4 w-4" /> // Corrigido: Trocado BookPlay por Play
+                )}
+                Começar a Ler
+              </Button>
+            )}
+
             {book.reading_status === 'reading' && (
                 <UpdateProgressDialog book={book} onProgressUpdate={onUpdate}>
                     <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Atualizar</Button>
                 </UpdateProgressDialog>
             )}
-            <CreatePostDialog bookId={book.id} onPostCreated={onUpdate}>
-                <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Compartilhar</Button>
-            </CreatePostDialog>
+            
+            {/* O botão de compartilhar agora só aparece para livros sendo lidos ou já lidos */}
+            {(book.reading_status === 'reading' || book.reading_status === 'completed') && (
+              <CreatePostDialog bookId={book.id} onPostCreated={onUpdate}>
+                  <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Compartilhar</Button>
+              </CreatePostDialog>
+            )}
+            
             <EditBookDialog book={book} onBookUpdated={onUpdate} />
+            
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive">
