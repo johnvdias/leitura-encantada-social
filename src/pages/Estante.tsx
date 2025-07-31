@@ -6,8 +6,8 @@ import { Search } from "lucide-react";
 import BookCard from "@/components/BookCard/BookCard";
 import { AddBookDialog } from "@/components/AddBookDialog";
 import { ManualBookDialog } from "@/components/ManualBookDialog";
-// import { ReadingGoals } from "@/components/ReadingGoals";
-// import { SchedulesSection } from "@/components/SchedulesSection";
+import { ReadingGoals } from "@/components/ReadingGoals";
+import { SchedulesSection } from "@/components/SchedulesSection";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,12 +75,12 @@ const Estante = () => {
         <p className="text-muted-foreground">Organize seus livros e acompanhe seu progresso.</p>
       </header>
 
-      {/* <section className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <section className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ReadingGoals />
         <SchedulesSection />
       </section>
 
-      <Separator className="my-8" /> */}
+      <Separator className="my-8" />
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
           <div className="relative w-full sm:w-auto sm:flex-1 max-w-sm">
