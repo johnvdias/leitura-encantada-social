@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserMinus } from "lucide-react";
+import { UserMinus, Hourglass } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -39,7 +39,8 @@ interface Club {
 
 interface Member {
   user_id: string;
-  role: string;
+  role: 'creator' | 'member';
+  status: 'approved' | 'pending' | 'rejected';
   profiles: {
     display_name: string;
     avatar_url: string;
@@ -50,92 +51,69 @@ const ClubePage = () => {
   const { clubId } = useParams<{ clubId: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [club, setClub] = useState<Club | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
   
   const isCreator = club?.creator_id === user?.id;
 
   const fetchClubData = useCallback(async () => {
-    if (!clubId) return;
+    if (!clubId || !user) return;
     try {
         setLoading(true);
 
-        // 1. Fetch club data without nested books join initially
+        // Etapa 1: Buscar os dados básicos do clube.
         const { data: clubData, error: clubError } = await supabase
             .from('clubs')
-            .select(`*`)
+            .select('*')
             .eq('id', clubId)
             .single();
+        if (clubError || !clubData) throw new Error("Clube não encontrado ou acesso restrito.");
 
-        if (clubError || !clubData) {
-            throw new Error("Clube não encontrado.");
-        }
-
-        // 2. Fetch creator profile separately
-        const { data: profileData, error: profileError } = await supabase
+        // Etapa 2: Buscar o perfil do criador.
+        const { data: creatorProfile, error: profileError } = await supabase
             .from('profiles')
             .select('display_name, avatar_url')
             .eq('user_id', clubData.creator_id)
             .single();
-
-        if (profileError) {
-            console.warn("Erro ao carregar o perfil do criador:", profileError);
-            // Continue even if creator profile fails to load
-        }
-
-        // 3. Fetch current book details if current_book_id exists
-        let currentBookDetails = null;
+        if (profileError) throw new Error("Não foi possível carregar o perfil do criador.");
+        
+        // Etapa 3: Buscar o livro atual (se existir).
+        let bookData = null;
         if (clubData.current_book_id) {
-            const { data: bookData, error: bookError } = await supabase
+            const { data: currentBook, error: bookError } = await supabase
                 .from('books')
-                .select('id, title, author, cover_url')
+                .select('*')
                 .eq('id', clubData.current_book_id)
                 .single();
-            if (bookError) {
-                console.warn("Erro ao carregar os detalhes do livro atual:", bookError);
-            } else {
-                currentBookDetails = bookData;
-            }
+            if (bookError) console.warn("Não foi possível carregar o livro atual.");
+            else bookData = currentBook;
         }
 
-        const enrichedClubData = {
-            ...clubData,
-            profiles: profileData || { display_name: 'Desconhecido', avatar_url: '' }, // Default profile
-            books: currentBookDetails
+        // Etapa 4: Combinar os dados.
+        const formattedClubData = {
+          ...clubData,
+          profiles: creatorProfile,
+          books: bookData
         };
+        setClub(formattedClubData as unknown as Club);
 
-        setClub(enrichedClubData as unknown as Club);
-
-        const { data: memberInfoData, error: memberInfoError } = await supabase
+        // Etapa 5: Buscar os membros.
+        const { data: membersData, error: membersError } = await supabase
             .from('club_members')
-            .select('user_id, role')
+            .select('user_id, role, status, profiles(display_name, avatar_url)')
             .eq('club_id', clubId);
 
-        if (memberInfoError) throw new Error("Erro ao carregar informações dos membros.");
+        if (membersError) throw new Error("Erro ao carregar membros.");
         
-        if (!memberInfoData || memberInfoData.length === 0) {
-            setMembers([]);
-        } else {
-            const memberUserIds = memberInfoData.map(m => m.user_id);
-            const { data: membersProfileData, error: membersProfileError } = await supabase
-                .from('profiles')
-                .select('user_id, display_name, avatar_url')
-                .in('user_id', memberUserIds);
-
-            if (membersProfileError) throw new Error("Erro ao carregar perfis dos membros.");
-
-            const membersMap = new Map(membersProfileData.map(p => [p.user_id, p]));
-            const combinedMembers = memberInfoData.map(memberInfo => ({
-                ...memberInfo,
-                profiles: membersMap.get(memberInfo.user_id) || { display_name: 'Usuário', avatar_url: '' }
-            }));
-            
-            setMembers(combinedMembers as unknown as Member[]);
-            setIsMember(!!user && combinedMembers.some(m => m.user_id === user.id));
-        }
+        setMembers(membersData as Member[]);
+        const currentUserMembership = membersData.find(m => m.user_id === user.id);
+        setIsMember(currentUserMembership?.status === 'approved');
+        setHasPendingRequest(currentUserMembership?.status === 'pending');
 
     } catch (err: any) {
         toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -150,11 +128,41 @@ const ClubePage = () => {
     fetchClubData();
   }, [fetchClubData]);
   
-  const handleJoinClub = async () => {};
-  const handleLeaveClub = async () => {};
+  const handleJoinClub = async () => {
+    if (!user || !club) return;
+    try {
+        const { error } = await supabase.from('club_members').insert({
+            club_id: club.id,
+            user_id: user.id
+        });
+        if (error) throw error;
+        toast({ title: "Solicitação enviada", description: "Seu pedido para entrar no clube foi enviado ao criador." });
+        fetchClubData();
+    } catch (error) {
+        toast({ title: "Erro", description: "Não foi possível enviar sua solicitação.", variant: "destructive" });
+    }
+  };
+  
+  const handleLeaveClub = async () => {
+    if (!user || !club) return;
+    try {
+      const { error } = await supabase.from('club_members')
+        .delete()
+        .eq('club_id', club.id)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast({ title: "Você saiu do clube", description: `Você não é mais membro de "${club.name}".`});
+      if(isCreator) navigate('/clubes');
+      else fetchClubData();
+    } catch (error) {
+        toast({ title: "Erro", description: "Não foi possível sair do clube.", variant: "destructive" });
+    }
+  };
 
   if (loading) return <div className="container py-8"><Skeleton className="h-48 w-full" /></div>;
-  if (!club) return <div className="container py-8 text-center">Clube não encontrado ou você não tem permissão para vê-lo.</div>;
+  if (!club) return <div className="container py-8 text-center">Clube não encontrado.</div>;
+
+  const approvedMembers = members.filter(m => m.status === 'approved');
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -171,7 +179,8 @@ const ClubePage = () => {
               <div className="flex items-center gap-2 self-start sm:self-end shrink-0">
                 {isCreator && (<><EditClubDialog club={club} onUpdate={fetchClubData} /> <DeleteClubDialog clubId={club.id} clubName={club.name} memberCount={members.length} /></>)}
                 {isMember && !isCreator && <Button variant="outline" onClick={handleLeaveClub}><UserMinus className="h-4 w-4 mr-2" /> Sair</Button>}
-                {!isMember && !club.is_private && <Button onClick={handleJoinClub}>Entrar no Clube</Button>}
+                {!isMember && !hasPendingRequest && <Button onClick={handleJoinClub}>Entrar no Clube</Button>}
+                {hasPendingRequest && <Button variant="outline" disabled><Hourglass className="h-4 w-4 mr-2 animate-spin" /> Pendente</Button>}
               </div>
           </div>
         </CardHeader>
@@ -194,7 +203,7 @@ const ClubePage = () => {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="discussions">Discussões</TabsTrigger>
             <TabsTrigger value="schedules">Cronogramas</TabsTrigger>
-            <TabsTrigger value="members">Membros ({members.length})</TabsTrigger>
+            <TabsTrigger value="members">Membros ({approvedMembers.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="discussions" className="mt-6">
@@ -211,26 +220,28 @@ const ClubePage = () => {
           </TabsContent>
           
           <TabsContent value="members" className="mt-6">
-            <Card>
-              <CardHeader><h3 className="text-lg font-semibold">Membros do Clube</h3></CardHeader>
-              <CardContent>
-                {isCreator ? (
-                  <MemberManagement clubId={club.id} members={members} creatorId={club.creator_id} onMemberRemoved={fetchClubData} />
+             {isCreator ? (
+                  <MemberManagement clubId={club.id} initialMembers={members} creatorId={club.creator_id} onMembersUpdate={fetchClubData} />
                 ) : (
-                  <ul className="space-y-3">
-                    {members.map(member => (
-                      <li key={member.user_id} className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10"><AvatarImage src={member.profiles.avatar_url} /><AvatarFallback>{member.profiles.display_name?.charAt(0)}</AvatarFallback></Avatar>
-                        <div>
-                          <p className="font-medium">{member.profiles.display_name}</p>
-                          <span className="text-xs text-muted-foreground">{member.role === 'creator' ? 'Criador' : 'Membro'}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  <Card>
+                    <CardHeader><h3 className="text-lg font-semibold">Membros do Clube</h3></CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3">
+                        {approvedMembers.map(member => (
+                          <li key={member.user_id} className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10"><AvatarImage src={member.profiles.avatar_url} /><AvatarFallback>{member.profiles.display_name?.charAt(0)}</AvatarFallback></Avatar>
+                            <div>
+                              <p className="font-medium">{member.profiles.display_name}</p>
+                              {member.user_id === club.creator_id && (
+                                <span className="text-xs text-muted-foreground">Criador</span>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
                 )}
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       ) : (

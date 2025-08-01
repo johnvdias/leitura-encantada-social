@@ -1,24 +1,16 @@
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X, ShieldCheck, User } from "lucide-react";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Check, X, Crown, UserPlus, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { UserSearchDialog } from './UserSearchDialog';
 
 interface Member {
   user_id: string;
-  role: string;
+  role: 'creator' | 'member';
+  status: 'approved' | 'pending' | 'rejected';
   profiles: {
     display_name: string;
     avatar_url: string;
@@ -27,92 +19,166 @@ interface Member {
 
 interface MemberManagementProps {
   clubId: string;
-  members: Member[];
+  initialMembers: Member[];
   creatorId: string;
-  onMemberRemoved: () => void;
+  onMembersUpdate: () => void;
 }
 
-export function MemberManagement({ clubId, members, creatorId, onMemberRemoved }: MemberManagementProps) {
+export function MemberManagement({ clubId, initialMembers, creatorId, onMembersUpdate }: MemberManagementProps) {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [members, setMembers] = useState(initialMembers);
+  const [loadingMemberId, setLoadingMemberId] = useState<string | null>(null);
 
-  const handleRemoveMember = async (userId: string) => {
-    setLoading(true);
+  const approvedMembers = members.filter(m => m.status === 'approved');
+  const pendingMembers = members.filter(m => m.status === 'pending');
+
+  const handleUpdateMemberStatus = async (userId: string, status: 'approved' | 'rejected') => {
+    setLoadingMemberId(userId);
     try {
-      const { error } = await supabase.rpc('remove_club_member', {
-        p_club_id: clubId,
-        p_user_id: userId
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Membro Removido",
-        description: "O usuário foi removido do clube com sucesso.",
-      });
-      onMemberRemoved();
-    } catch (error: any) {
-      console.error("Error removing member:", error);
-      toast({
-        title: "Erro",
-        description: error.message || "Não foi possível remover o membro.",
-        variant: "destructive",
-      });
+      if (status === 'rejected') {
+        // Se for rejeitado, removemos o membro da tabela
+        const { error } = await supabase
+          .from('club_members')
+          .delete()
+          .eq('club_id', clubId)
+          .eq('user_id', userId);
+        if (error) throw error;
+      } else {
+        // Se for aprovado, atualizamos o status
+        const { error } = await supabase
+          .from('club_members')
+          .update({ status: 'approved' })
+          .eq('club_id', clubId)
+          .eq('user_id', userId);
+        if (error) throw error;
+      }
+      toast({ title: 'Sucesso', description: `O status do membro foi atualizado.` });
+      onMembersUpdate(); // Notifica o componente pai para recarregar os dados
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Não foi possível atualizar o status do membro.', variant: 'destructive' });
     } finally {
-      setLoading(false);
+        setLoadingMemberId(null);
+    }
+  };
+
+  const handleAddMember = async (userId: string) => {
+    try {
+      // Verifica se o usuário já é membro ou tem um pedido pendente
+      const isAlreadyMember = members.some(m => m.user_id === userId);
+      if (isAlreadyMember) {
+        toast({ title: 'Aviso', description: 'Este usuário já é membro ou tem uma solicitação pendente.', variant: 'default' });
+        return;
+      }
+      
+      const { error } = await supabase.from('club_members').insert({
+        club_id: clubId,
+        user_id: userId,
+        status: 'approved', // Adicionado diretamente pelo criador, então já é aprovado
+        role: 'member',
+      });
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Novo membro adicionado ao clube.' });
+      onMembersUpdate();
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Não foi possível adicionar o membro.', variant: 'destructive' });
     }
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Gerenciar Membros</h3>
-      <ul className="space-y-3">
-        {members.map((member) => (
-          <li key={member.user_id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={member.profiles.avatar_url} />
-                <AvatarFallback>{member.profiles.display_name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">{member.profiles.display_name}</p>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {member.role === 'creator' ? <ShieldCheck className="h-3 w-3 text-primary" /> : <User className="h-3 w-3" />}
-                  <span>{member.role === 'creator' ? 'Criador' : 'Membro'}</span>
-                </div>
-              </div>
-            </div>
-
-            {creatorId !== member.user_id && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Remover Membro?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Você tem certeza que deseja remover <span className="font-bold">{member.profiles.display_name}</span> do clube? Esta ação não poderá ser desfeita.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleRemoveMember(member.user_id)}
-                      disabled={loading}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+    <div className="space-y-6">
+      {/* Seção para Adicionar Membros */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            Adicionar Novo Membro
+            <UserSearchDialog onUserSelected={handleAddMember}>
+              <Button size="sm">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Buscar Usuário
+              </Button>
+            </UserSearchDialog>
+          </CardTitle>
+        </CardHeader>
+      </Card>
+      
+      {/* Seção de Pedidos Pendentes */}
+      {pendingMembers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pedidos Pendentes ({pendingMembers.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-4">
+              {pendingMembers.map(member => (
+                <li key={member.user_id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={member.profiles.avatar_url} />
+                      <AvatarFallback>{member.profiles.display_name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <p className="font-medium">{member.profiles.display_name}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="text-green-600 hover:text-green-700"
+                      onClick={() => handleUpdateMemberStatus(member.user_id, 'approved')}
+                      disabled={loadingMemberId === member.user_id}
                     >
-                      {loading ? "Removendo..." : "Sim, remover"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </li>
-        ))}
-      </ul>
+                      {loadingMemberId === member.user_id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Check className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => handleUpdateMemberStatus(member.user_id, 'rejected')}
+                       disabled={loadingMemberId === member.user_id}
+                    >
+                       {loadingMemberId === member.user_id ? <Loader2 className="h-4 w-4 animate-spin"/> : <X className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Seção de Membros Aprovados */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Membros ({approvedMembers.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-4">
+            {approvedMembers.map(member => (
+              <li key={member.user_id} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={member.profiles.avatar_url} />
+                    <AvatarFallback>{member.profiles.display_name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{member.profiles.display_name}</p>
+                    {member.role === 'creator' && (
+                      <span className="text-xs font-semibold text-yellow-500 flex items-center gap-1">
+                        <Crown className="h-3 w-3" />
+                        Criador
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {member.user_id !== creatorId && (
+                   <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => handleUpdateMemberStatus(member.user_id, 'rejected')}>
+                       Remover
+                   </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 }
