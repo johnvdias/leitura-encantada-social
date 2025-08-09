@@ -11,6 +11,7 @@ export interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  refreshProfile: () => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -25,11 +26,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const refreshProfile = async (userId?: string) => {
+    const id = userId || user?.id;
+    if (!id) return;
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', id)
       .single();
     
     if (!error && data) {
@@ -42,12 +46,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
         
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
+        if (currentUser) {
+          setTimeout(() => refreshProfile(currentUser.id), 0);
         } else {
           setProfile(null);
         }
@@ -57,12 +60,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
       
-      if (session?.user) {
-        fetchProfile(session.user.id);
+      if (currentUser) {
+        await refreshProfile(currentUser.id);
       }
       setLoading(false);
     });
@@ -108,17 +112,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .eq('user_id', user.id);
 
     if (!error) {
-      setProfile((prev) => (prev ? { ...prev, ...updates } : null));
+        await refreshProfile();
     }
 
     return { error };
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     profile,
     loading,
+    refreshProfile,
     signUp,
     signIn,
     signOut,

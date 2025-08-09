@@ -1,26 +1,18 @@
-{pkgs}: {
+{ pkgs, ... }: {
   channel = "stable-24.05";
   packages = [
-    pkgs.nodejs_20,
+    pkgs.nodejs_20
     pkgs.supabase-cli
   ];
   idx.extensions = [
-    "svelte.svelte-vscode",
-    "vue.volar"
+    "dbaeumer.vscode-eslint"
   ];
   idx.previews = {
+    enable = true;
     previews = {
       web = {
-        command = [
-          "npm",
-          "run",
-          "dev",
-          "--",
-          "--port",
-          "$PORT",
-          "--host",
-          "0.0.0.0"
-        ];
+        # Executa o Vite diretamente para evitar problemas de detecção com o npm
+        command = [ "node_modules/.bin/vite" ];
         manager = "web";
       };
     };

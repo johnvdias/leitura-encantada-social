@@ -59,7 +59,7 @@ const Perfil = () => {
     } catch (error) {
       console.error('Error fetching user stats:', error);
     }
-  }, [user, profile]);
+  }, [user]);
 
   const fetchRecentActivity = useCallback(async () => {
     if (!user) return;

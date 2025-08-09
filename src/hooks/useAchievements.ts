@@ -10,6 +10,7 @@ type Achievement = Tables<'achievements'>;
 export const useAchievements = () => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(false); // Trava para evitar execuções múltiplas
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -33,9 +34,10 @@ export const useAchievements = () => {
     }
   }, [user]);
 
-  const checkAndUnlockAchievements = async () => {
-    if (!user?.id) return;
+  const checkAndUnlockAchievements = useCallback(async () => {
+    if (!user?.id || isChecking) return; // Verifica a trava
 
+    setIsChecking(true); // Ativa a trava
     try {
       // Check for book completion achievements
       const { data: completedBooks } = await supabase
@@ -147,8 +149,10 @@ export const useAchievements = () => {
       }
     } catch (error) {
       console.error('Error checking achievements:', error);
+    } finally {
+      setIsChecking(false); // Libera a trava
     }
-  };
+  }, [user, toast, fetchAchievements, isChecking]);
 
   useEffect(() => {
     fetchAchievements();
