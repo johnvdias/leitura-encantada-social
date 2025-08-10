@@ -29,7 +29,7 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
     setLoading(true);
     
     try {
-      // Estas operações são rápidas e podemos esperar por elas.
+      // Estas operações são r��pidas e podemos esperar por elas.
       const { error: nudgeError } = await supabase
         .from('nudges')
         .insert({
@@ -75,7 +75,12 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
 
     } catch (error) {
       console.error('Erro ao registrar o cutucão:', error);
-      toast({ title: 'Erro ao enviar cutucão', variant: 'destructive' });
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast({
+        title: 'Erro ao enviar cutucão',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
       setOpen(false); // Fecha o pop-up imediatamente.
