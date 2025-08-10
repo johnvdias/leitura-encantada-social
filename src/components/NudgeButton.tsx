@@ -37,34 +37,35 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
           type,
           message,
         });
-      
       if (nudgeError) throw nudgeError;
 
       const notificationTitle = `${profile.display_name} te cutucou! 👋`;
 
-      // 2. Cria uma notificação no sistema de notificação do aplicativo
+      // 2. Cria a notificação no sistema de notificação do aplicativo
       await supabase.from('notifications').insert({
         user_id: friendId,
         type: 'nudge',
         title: notificationTitle,
         content: message,
-        related_id: user.id, // Link para o perfil de quem enviou
+        related_id: user.id,
       });
       
-      // 3. Dispara a notificação push através da Função Edge correta
+      // 3. (RESTAURADO) Invoca a Função Edge diretamente.
+      // Agora que a função tem o CORS configurado, esta é a abordagem correta.
       const { error: functionError } = await supabase.functions.invoke('send-push-notification', {
         body: { 
           targetUserId: friendId,
           title: notificationTitle,
           body: message,
-          // A tag impede o empilhamento de notificações do mesmo tipo
           tag: `nudge-${user.id}-${friendId}` 
         },
       });
 
       if (functionError) {
-          // Este erro é esperado se o usuário não tiver permissão para notificações
-          console.warn('Não foi possível enviar a notificação push. O usuário pode não ter concedido permissão ou não ter uma subscrição ativa.', functionError);
+        console.error('Erro ao invocar a Função Edge:', functionError);
+        // Este erro é esperado se o usuário não tiver permissão para notificações
+        // ou se houver um problema de rede/CORS.
+        throw functionError;
       }
 
       toast({
@@ -74,7 +75,7 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
       setOpen(false);
 
     } catch (error) {
-      console.error('Erro ao enviar cutucão:', error);
+      console.error('Erro final ao enviar cutucão:', error);
       toast({ title: 'Erro ao enviar cutucão', variant: 'destructive' });
     } finally {
       setLoading(false);
