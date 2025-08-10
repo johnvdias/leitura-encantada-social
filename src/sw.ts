@@ -1,9 +1,12 @@
 /// <reference lib="WebWorker" />
 
+import { precacheAndRoute } from 'workbox-precaching';
+
 declare let self: ServiceWorkerGlobalScope;
 
-// O Workbox e o vite-plugin-pwa gerenciarão o skipWaiting, clientsClaim e o pré-cache.
-// O manifesto do Workbox será injetado automaticamente aqui.
+// A injeção do manifesto agora é tratada explicitamente aqui.
+// O Workbox pegará a lista de arquivos do self.__WB_MANIFEST e configurará o pré-cache.
+precacheAndRoute(self.__WB_MANIFEST);
 
 // Escuta por notificações push.
 self.addEventListener('push', (event) => {

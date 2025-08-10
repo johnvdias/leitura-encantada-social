@@ -52,4 +52,8 @@ export const pwaOptions: Partial<VitePWAOptions> = {
       },
     ],
   },
+  // Adiciona a chave pública VAPID ao manifesto
+  webPush: {
+    vapidKey: 'BDqAiOYTmygRhL7nILdgnCK6XOlaGiwV4cXusWOAUNLyfGwiz16PHMAoiSKnNcxP6dXOKtuiXfi9I0_0ul1EgfM',
+  },
 };
