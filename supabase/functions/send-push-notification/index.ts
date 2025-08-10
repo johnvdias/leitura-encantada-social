@@ -55,16 +55,19 @@ Deno.serve(async (req) => {
     }
 
     const notificationPayload = JSON.stringify({ title, body, tag, data: { url: '/' } });
-
-    // **A CORREÇÃO PARA A APPLE (APNs)**
-    // O APNs exige um cabeçalho 'topic', que é mapeado para o 'bundle ID' do seu app.
-    // 'default' é um valor seguro que geralmente funciona.
+    
+    // **A CORREÇÃO FINAL PARA A APPLE (APNs)**
+    // As opções precisam ser formatadas como cabeçalhos (headers).
     const options = {
-      topic: 'default',
+      TTL: 86400, // 1 dia em segundos
+      headers: {
+        'Urgency': 'high', // Prioridade da notificação
+        'Topic': 'default' // REQUISITO OBRIGATÓRIO PARA O APNs
+      }
     };
 
     const sendPromises = subscriptions.map(({ subscription }) =>
-      webpush.sendNotification(subscription, notificationPayload, options) // Adiciona as opções aqui
+      webpush.sendNotification(subscription, notificationPayload, options)
         .catch(err => {
           console.error(`Falha ao enviar notificação para ${subscription.endpoint}. Erro: ${err.message}`);
         })
