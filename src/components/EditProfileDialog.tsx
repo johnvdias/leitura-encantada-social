@@ -165,6 +165,9 @@ export function EditProfileDialog() {
       setLoading(false);
     }
   };
+  
+  const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
 
   return (
     <>
@@ -232,19 +235,28 @@ export function EditProfileDialog() {
               <Input id="reading_goal" type="number" min="1" value={formData.reading_goal} onChange={(e) => setFormData({ ...formData, reading_goal: parseInt(e.target.value) || 1 })} />
             </div>
 
-            {notificationsSupported && (
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="flex items-center space-x-2">
-                  <Bell className="h-4 w-4" />
-                  <Label htmlFor="notifications-switch">Notificações Push</Label>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="flex items-center space-x-2">
+                        <Bell className="h-4 w-4" />
+                        <Label htmlFor="notifications-switch" className={!notificationsSupported ? "text-muted-foreground" : ""}>
+                            Notificações Push
+                        </Label>
+                    </div>
+                    <Switch
+                        id="notifications-switch"
+                        checked={isSubscribed}
+                        onCheckedChange={handleNotificationToggle}
+                        disabled={!notificationsSupported}
+                    />
                 </div>
-                <Switch
-                  id="notifications-switch"
-                  checked={isSubscribed}
-                  onCheckedChange={handleNotificationToggle}
-                />
-              </div>
-            )}
+                {!notificationsSupported && isIos && (
+                    <p className="text-xs text-muted-foreground text-center px-3">
+                        Para ativar no iPhone, adicione o app à sua Tela de Início pelo menu de compartilhamento do Safari.
+                    </p>
+                )}
+            </div>
+
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
