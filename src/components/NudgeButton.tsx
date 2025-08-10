@@ -27,8 +27,9 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
     if (!user || !profile) return;
 
     setLoading(true);
+    
     try {
-      // 1. Cria a entrada do cutucão (rastreamento interno)
+      // Estas operações são rápidas e podemos esperar por elas.
       const { error: nudgeError } = await supabase
         .from('nudges')
         .insert({
@@ -41,7 +42,6 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
 
       const notificationTitle = `${profile.display_name} te cutucou! 👋`;
 
-      // 2. Cria a notificação no sistema de notificação do aplicativo
       await supabase.from('notifications').insert({
         user_id: friendId,
         type: 'nudge',
@@ -50,35 +50,35 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
         related_id: user.id,
       });
       
-      // 3. (RESTAURADO) Invoca a Função Edge diretamente.
-      // Agora que a função tem o CORS configurado, esta é a abordagem correta.
-      const { error: functionError } = await supabase.functions.invoke('send-push-notification', {
+      // (A CORREÇÃO) "Dispare e esqueça" - Não esperamos (await) pela função.
+      // O código do navegador continua imediatamente, proporcionando uma resposta rápida ao usuário.
+      // A função executará em segundo plano no servidor.
+      supabase.functions.invoke('send-push-notification', {
         body: { 
           targetUserId: friendId,
           title: notificationTitle,
           body: message,
           tag: `nudge-${user.id}-${friendId}` 
         },
+      }).then(({ error: functionError }) => {
+        // Lidamos com o erro em um bloco .then() para não pausar a execução.
+        if (functionError) {
+          console.error('Erro de segundo plano ao invocar a Função Edge:', functionError);
+        }
       });
 
-      if (functionError) {
-        console.error('Erro ao invocar a Função Edge:', functionError);
-        // Este erro é esperado se o usuário não tiver permissão para notificações
-        // ou se houver um problema de rede/CORS.
-        throw functionError;
-      }
-
+      // Como não estamos mais esperando, o toast de sucesso é mostrado imediatamente.
       toast({
         title: 'Cutucão enviado!',
         description: `Você cutucou ${friendName}.`,
       });
-      setOpen(false);
 
     } catch (error) {
-      console.error('Erro final ao enviar cutucão:', error);
+      console.error('Erro ao registrar o cutucão:', error);
       toast({ title: 'Erro ao enviar cutucão', variant: 'destructive' });
     } finally {
       setLoading(false);
+      setOpen(false); // Fecha o pop-up imediatamente.
     }
   };
 
