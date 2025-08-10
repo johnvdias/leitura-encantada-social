@@ -1,67 +1,91 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import webpush from 'npm:web-push';
 
-const VAPID_PUBLIC_KEY = "BPQgv9sXBsmA0r6uR__4CZhAJL22o37CXBC2EeOrNQAjAg21VysA8Vikf9LRHqp8hWRmpcIenPGuHVKkeNpGUNg";
-const VAPID_PRIVATE_KEY = "0w9y2i_vxd-WDrzNadA_yXrfPnGc-RcMIEVpspnq0t8";
-
-webpush.setVapidDetails(
-  'mailto:your-email@example.com', // Replace with your email
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-);
+console.log('Função send-push-notification iniciada.');
 
 Deno.serve(async (req) => {
+  console.log('Requisição recebida.');
+
   if (req.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
+    return new Response('Método não permitido', { status: 405 });
   }
 
   try {
-    const { targetUserId, title, body, tag } = await req.json();
+    // 1. Configura o web-push com os segredos do ambiente
+    console.log('Configurando detalhes VAPID...');
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
 
-    if (!targetUserId || !title || !body) {
-      return new Response('Missing required fields', { status: 400 });
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      console.error('As chaves VAPID não foram encontradas nas variáveis de ambiente.');
+      return new Response('Configuração do servidor incompleta.', { status: 500 });
     }
 
-    // Create a Supabase client with the appropriate permissions
+    webpush.setVapidDetails(
+      'mailto:notifications@leituraencantada.com',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+    console.log('Detalhes VAPID configurados com sucesso.');
+
+    // 2. Extrai os dados do corpo da requisição
+    const { targetUserId, title, body, tag } = await req.json();
+    console.log(`Dados recebidos: targetUserId=${targetUserId}`);
+
+    if (!targetUserId || !title || !body) {
+      return new Response('Campos obrigatórios ausentes', { status: 400 });
+    }
+
+    // 3. Cria um cliente Supabase com permissões de administrador
+    console.log('Criando cliente Supabase admin...');
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+    console.log('Cliente Supabase admin criado.');
 
-    // Fetch subscriptions for the target user
+    // 4. Busca as subscrições do usuário alvo
+    console.log(`Buscando subscrições para o usuário: ${targetUserId}`);
     const { data: subscriptions, error } = await supabaseAdmin
-      .from('push_subscriptions') // Make sure this table name is correct
+      .from('push_subscriptions')
       .select('subscription')
       .eq('user_id', targetUserId);
 
     if (error) {
-      console.error('Error fetching subscriptions:', error);
+      console.error('Erro ao buscar subscrições:', error);
       throw error;
     }
 
     if (!subscriptions || subscriptions.length === 0) {
-      return new Response('No subscriptions found for user', { status: 404 });
+      console.log('Nenhuma subscrição encontrada para o usuário.');
+      // Isso não é um erro fatal, apenas significa que o usuário não tem notificações ativas.
+      return new Response(JSON.stringify({ success: true, message: 'Nenhuma subscrição encontrada.' }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
+    console.log(`Encontradas ${subscriptions.length} subscrições.`);
 
-    const notificationPayload = JSON.stringify({ title, body, tag });
+    // 5. Envia a notificação para cada subscrição
+    const notificationPayload = JSON.stringify({ title, body, tag, data: { url: '/' } });
 
-    // Send notifications to all subscriptions
+    console.log('Enviando notificações...');
     const sendPromises = subscriptions.map(({ subscription }) =>
       webpush.sendNotification(subscription, notificationPayload)
         .catch(err => {
-          console.error(`Failed to send notification to ${subscription.endpoint}. Error: ${err.message}`);
-          // Here you might want to handle expired subscriptions by deleting them
+          console.error(`Falha ao enviar notificação para ${subscription.endpoint}. Erro: ${err.message}`);
+          // Futuramente, você pode adicionar lógica para remover subscrições expiradas (erro 410)
         })
     );
 
     await Promise.all(sendPromises);
+    console.log('Notificações enviadas com sucesso.');
 
     return new Response(JSON.stringify({ success: true, sent: subscriptions.length }), {
       headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (err) {
-    console.error('Internal server error:', err);
+    console.error('Erro interno do servidor:', err);
     return new Response(err.message, { status: 500 });
   }
 });

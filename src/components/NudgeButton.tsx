@@ -28,7 +28,7 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
 
     setLoading(true);
     try {
-      // 1. Create the nudge entry (internal tracking)
+      // 1. Cria a entrada do cutucão (rastreamento interno)
       const { error: nudgeError } = await supabase
         .from('nudges')
         .insert({
@@ -42,27 +42,29 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
 
       const notificationTitle = `${profile.display_name} te cutucou! 👋`;
 
-      // 2. Create a notification in the app's notification system
+      // 2. Cria uma notificação no sistema de notificação do aplicativo
       await supabase.from('notifications').insert({
         user_id: friendId,
         type: 'nudge',
         title: notificationTitle,
         content: message,
-        related_id: user.id, // Link back to the sender's profile
+        related_id: user.id, // Link para o perfil de quem enviou
       });
       
-      // 3. Trigger the push notification via the Edge Function
+      // 3. Dispara a notificação push através da Função Edge correta
       const { error: functionError } = await supabase.functions.invoke('send-push-notification', {
         body: { 
           targetUserId: friendId,
           title: notificationTitle,
           body: message,
-          tag: `nudge-${user.id}` // A tag prevents stacking notifications from the same user
+          // A tag impede o empilhamento de notificações do mesmo tipo
+          tag: `nudge-${user.id}-${friendId}` 
         },
       });
 
       if (functionError) {
-          console.warn('Could not send push notification. The user may not have granted permission.', functionError);
+          // Este erro é esperado se o usuário não tiver permissão para notificações
+          console.warn('Não foi possível enviar a notificação push. O usuário pode não ter concedido permissão ou não ter uma subscrição ativa.', functionError);
       }
 
       toast({
@@ -72,7 +74,7 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
       setOpen(false);
 
     } catch (error) {
-      console.error('Error sending nudge:', error);
+      console.error('Erro ao enviar cutucão:', error);
       toast({ title: 'Erro ao enviar cutucão', variant: 'destructive' });
     } finally {
       setLoading(false);
