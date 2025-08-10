@@ -50,21 +50,13 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
         related_id: user.id,
       });
       
-      // (A CORREÇÃO) "Dispare e esqueça" - Não esperamos (await) pela função.
-      // O código do navegador continua imediatamente, proporcionando uma resposta rápida ao usuário.
-      // A função executará em segundo plano no servidor.
-      supabase.functions.invoke('send-push-notification', {
-        body: { 
-          targetUserId: friendId,
-          title: notificationTitle,
-          body: message,
-          tag: `nudge-${user.id}-${friendId}` 
-        },
-      }).then(({ error: functionError }) => {
-        // Lidamos com o erro em um bloco .then() para não pausar a execução.
-        if (functionError) {
-          console.error('Erro de segundo plano ao invocar a Função Edge:', functionError);
-        }
+      // TODO: Reativar push notifications quando função Edge estiver funcionando
+      // Temporariamente desabilitado para evitar erro 500
+      console.log('Push notification desabilitada temporariamente:', {
+        targetUserId: friendId,
+        title: notificationTitle,
+        body: message,
+        tag: `nudge-${user.id}-${friendId}`
       });
 
       // Como não estamos mais esperando, o toast de sucesso é mostrado imediatamente.
