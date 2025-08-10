@@ -50,13 +50,22 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
         related_id: user.id,
       });
       
-      // TODO: Reativar push notifications quando função Edge estiver funcionando
-      // Temporariamente desabilitado para evitar erro 500
-      console.log('Push notification desabilitada temporariamente:', {
-        targetUserId: friendId,
-        title: notificationTitle,
-        body: message,
-        tag: `nudge-${user.id}-${friendId}`
+      // Push notifications reativadas com função Edge v2
+      supabase.functions.invoke('send-push-notification-v2', {
+        body: {
+          targetUserId: friendId,
+          title: notificationTitle,
+          body: message,
+          tag: `nudge-${user.id}-${friendId}`
+        },
+      }).then(({ data, error: functionError }) => {
+        if (functionError) {
+          console.error('Erro ao enviar push notification:', functionError);
+        } else {
+          console.log('Push notification enviada com sucesso:', data);
+        }
+      }).catch(err => {
+        console.error('Erro na função push notification:', err);
       });
 
       // Como não estamos mais esperando, o toast de sucesso é mostrado imediatamente.
