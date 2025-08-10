@@ -1,0 +1,9 @@
+{
+  "name": "send-nudge-notification-node",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "dependencies": {
+    "web-push": "^3.6.7",
+    "@supabase/supabase-js": "^2.0.0"
+  }
+}

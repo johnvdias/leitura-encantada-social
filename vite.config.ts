@@ -14,7 +14,25 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt'],
+      devOptions: {
+        enabled: true // Enable PWA in development
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // The service worker will listen for push events
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
+      },
       manifest: {
         name: 'Leitura Encantada Social',
         short_name: 'Leitura Encantada',
@@ -31,14 +49,14 @@ export default defineConfig(({ mode }) => ({
             type: 'image/x-icon',
           },
           {
-            src: 'public/placeholder.svg', // You should replace this with a real 192x192 icon
+            src: '/pwa-192x192.png', // Placeholder icon
             sizes: '192x192',
-            type: 'image/svg+xml',
+            type: 'image/png',
           },
           {
-            src: 'public/placeholder.svg', // You should replace this with a real 512x512 icon
+            src: '/pwa-512x512.png', // Placeholder icon
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
           },
         ],
       },

@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Target, Trophy, Users, Calendar, TrendingUp } from "lucide-react";
+import { BookOpen, Target, Trophy, Users, Calendar, TrendingUp, Bell, BellOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAchievements } from "@/hooks/useAchievements";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { FriendsSection } from "@/components/FriendsSection";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { formatDistanceToNow } from "date-fns";
@@ -28,6 +29,7 @@ interface RecentActivity {
 const Perfil = () => {
   const { user, profile } = useAuth();
   const { achievements, checkAndUnlockAchievements } = useAchievements();
+  const { isSubscribed, subscribe, unsubscribe, error: pushError } = usePushNotifications();
   const [stats, setStats] = useState({
     totalBooks: 0,
     completedBooks: 0,
@@ -130,12 +132,17 @@ const Perfil = () => {
                 </div>
               </div>
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <Button onClick={() => isSubscribed ? unsubscribe() : subscribe()} variant="outline" size="icon">
+                  {isSubscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+              </Button>
               <EditProfileDialog />
             </div>
           </div>
         </CardContent>
       </Card>
+      
+      {pushError && <p className="text-red-500 text-center mb-4">{pushError}</p>}
 
       <Tabs defaultValue="estatisticas" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
@@ -164,7 +171,7 @@ const Perfil = () => {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Livros Concluídos</CardTitle>
                 <Trophy className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
+              </-cardheader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.completedBooks}</div>
                 <p className="text-xs text-muted-foreground">

@@ -18,17 +18,17 @@ const nudgeOptions = [
 ];
 
 export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
   const handleNudge = async (type: string, message: string) => {
-    if (!user) return;
+    if (!user || !profile) return;
 
     setLoading(true);
     try {
-      // 1. Create the nudge entry
+      // 1. Create the nudge entry (internal tracking)
       const { error: nudgeError } = await supabase
         .from('nudges')
         .insert({
@@ -40,14 +40,30 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
       
       if (nudgeError) throw nudgeError;
 
-      // 2. Create a notification for the receiver
+      const notificationTitle = `${profile.display_name} te cutucou! 👋`;
+
+      // 2. Create a notification in the app's notification system
       await supabase.from('notifications').insert({
         user_id: friendId,
         type: 'nudge',
-        title: 'Você recebeu um cutucão! 👋',
+        title: notificationTitle,
         content: message,
         related_id: user.id, // Link back to the sender's profile
       });
+      
+      // 3. Trigger the push notification via the Edge Function
+      const { error: functionError } = await supabase.functions.invoke('send-push-notification', {
+        body: { 
+          targetUserId: friendId,
+          title: notificationTitle,
+          body: message,
+          tag: `nudge-${user.id}` // A tag prevents stacking notifications from the same user
+        },
+      });
+
+      if (functionError) {
+          console.warn('Could not send push notification. The user may not have granted permission.', functionError);
+      }
 
       toast({
         title: 'Cutucão enviado!',
