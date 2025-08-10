@@ -50,8 +50,8 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
         related_id: user.id,
       });
       
-      // Push notifications reativadas com função Edge v2
-      supabase.functions.invoke('send-push-notification-v2', {
+      // Push notifications reativadas com função Edge atualizada
+      supabase.functions.invoke('send-push-notification', {
         body: {
           targetUserId: friendId,
           title: notificationTitle,
