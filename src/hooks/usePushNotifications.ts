@@ -3,7 +3,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 
-const VAPID_PUBLIC_KEY = "BPQgv9sXBsmA0r6uR__4CZhAJL22o37CXBC2EeOrNQAjAg21VysA8Vikf9LRHqp8hWRmpcIenPGuHVKkeNpGUNg";
+// A chave VAPID pública agora é carregada das variáveis de ambiente do Vite.
+// Isso garante que a mesma chave usada no PWA build é usada aqui.
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -57,6 +59,10 @@ export const usePushNotifications = () => {
           return;
       }
       
+      if (!VAPID_PUBLIC_KEY) {
+        throw new Error('VITE_VAPID_PUBLIC_KEY não está definida no arquivo .env');
+      }
+
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
@@ -83,7 +89,8 @@ export const usePushNotifications = () => {
     
     try {
       await subscription.unsubscribe();
-      await supabase.from('push_subscriptions').delete().eq('subscription', subscription.toJSON());
+      // Remove a subscrição do banco de dados pelo endpoint, que é um identificador único
+      await supabase.from('push_subscriptions').delete().eq('subscription->>endpoint', subscription.endpoint);
       
       setIsSubscribed(false);
       setSubscription(null);

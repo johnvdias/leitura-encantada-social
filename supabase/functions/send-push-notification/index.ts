@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
 
     if (!vapidPublicKey || !vapidPrivateKey) {
+      console.error('ERRO: As chaves VAPID não foram encontradas nas variáveis de ambiente. Verifique a configuração do Vault e do functions.config.json.');
       throw new Error('As chaves VAPID não foram encontradas nas variáveis de ambiente.');
     }
 
@@ -55,32 +56,26 @@ Deno.serve(async (req) => {
     }
 
     const notificationPayload = JSON.stringify({ title, body, tag, data: { url: '/' } });
-    
-    // **A CORREÇÃO FINAL PARA A APPLE (APNs)**
-    // As opções precisam ser formatadas como cabeçalhos (headers).
-    const options = {
-      TTL: 86400, // 1 dia em segundos
-      headers: {
-        'Urgency': 'high', // Prioridade da notificação
-        'Topic': 'default' // REQUISITO OBRIGATÓRIO PARA O APNs
-      }
-    };
+    const options = { TTL: 86400 };
 
     const sendPromises = subscriptions.map(({ subscription }) =>
-      webpush.sendNotification(subscription, notificationPayload, options)
-        .catch(err => {
-          console.error(`Falha ao enviar notificação para ${subscription.endpoint}. Erro: ${err.message}`);
+      webpush.sendNotification(subscription, notificationPayload, options).catch(err => {
+          console.error(`Falha ao enviar notificação. Endpoint: ${err.endpoint}. StatusCode: ${err.statusCode}. Body: ${err.body}.`);
+          throw err;
         })
     );
 
     await Promise.all(sendPromises);
 
+    console.log(`Notificações enviadas com sucesso para o usuário ${targetUserId}.`);
     return new Response(JSON.stringify({ success: true, sent: subscriptions.length }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { 
+    const errorMessage = err.body || err.message || 'Erro desconhecido';
+    console.error(`Erro geral no bloco catch: ${errorMessage}`);
+    return new Response(JSON.stringify({ error: errorMessage }), { 
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
