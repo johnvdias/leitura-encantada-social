@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
+import { useToast } from './use-toast';
 
-const VAPID_PUBLIC_KEY = 'BAkcwpzo8-CkdZfIFMNiwMpbtPq6g92r-S6Bp6MmVaQBYy3FyEaZrD1WuayvNp1oBDRQ23481JhXkozwrPbRUMY'; // Replace with your actual VAPID public key
+const VAPID_PUBLIC_KEY = "BPQgv9sXBsmA0r6uR__4CZhAJL22o37CXBC2EeOrNQAjAg21VysA8Vikf9LRHqp8hWRmpcIenPGuHVKkeNpGUNg";
 
 function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
@@ -15,85 +16,85 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-export function usePushNotifications() {
+export const usePushNotifications = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-      return;
-    }
+  const isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
 
-    const checkSubscription = async () => {
-      const swRegistration = await navigator.serviceWorker.ready;
-      const sub = await swRegistration.pushManager.getSubscription();
-      if (sub) {
-        setIsSubscribed(true);
-        setSubscription(sub);
-      }
-    };
-
-    checkSubscription();
-  }, [user]);
-
-  const subscribe = async () => {
-    if (!user) {
-      setError('User not authenticated.');
-      return;
-    }
-    if (!('serviceWorker' in navigator)) {
-        setError('Service Worker not supported');
-        return;
-    }
-
+  const getSubscriptionState = useCallback(async () => {
+    if (!isSupported) return;
     try {
-      const swRegistration = await navigator.serviceWorker.ready;
-      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-      const sub = await swRegistration.pushManager.subscribe({
+      const registration = await navigator.serviceWorker.ready;
+      const sub = await registration.pushManager.getSubscription();
+      setIsSubscribed(!!sub);
+      setSubscription(sub);
+    } catch (err) {
+      console.error('Error getting subscription state:', err);
+      setError('Não foi possível verificar o status da sua inscrição de notificação.');
+    }
+  }, [isSupported]);
+  
+  useEffect(() => {
+    getSubscriptionState();
+  }, [getSubscriptionState]);
+
+  const subscribe = useCallback(async () => {
+    if (!isSupported || !user) {
+      setError('Notificações push não são suportadas ou você não está logado.');
+      return;
+    }
+    
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const permission = await window.Notification.requestPermission();
+      
+      if (permission !== 'granted') {
+          toast({ title: "Permissão negada", description: "Você precisa permitir notificações nas configurações do seu navegador.", variant: "destructive" });
+          return;
+      }
+      
+      const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
-      const { error: dbError } = await supabase
-        .from('push_subscriptions')
-        .insert({ user_id: user.id, subscription: sub.toJSON() });
-        
-      if (dbError) throw dbError;
+      await supabase.from('push_subscriptions').insert({
+        user_id: user.id,
+        subscription: sub.toJSON(),
+      });
 
-      setSubscription(sub);
       setIsSubscribed(true);
+      setSubscription(sub);
+      toast({ title: 'Inscrito com sucesso!', description: 'Você receberá notificações push.' });
       setError(null);
-    } catch (err: any) {
-      console.error('Failed to subscribe the user: ', err);
-      setError(err.message || 'Failed to subscribe.');
+    } catch (err) {
+      console.error('Error subscribing to push notifications:', err);
+      setError('Falha ao se inscrever para notificações.');
+      toast({ title: "Erro ao se inscrever", variant: "destructive" });
     }
-  };
-  
-  const unsubscribe = async () => {
-      if (!subscription) return;
+  }, [isSupported, user, toast]);
+
+  const unsubscribe = useCallback(async () => {
+    if (!subscription || !user) return;
+    
+    try {
+      await subscription.unsubscribe();
+      await supabase.from('push_subscriptions').delete().eq('subscription', subscription.toJSON());
       
-      try {
-        await subscription.unsubscribe();
-        
-        // Find the specific subscription to delete
-        const { error: dbError } = await supabase
-          .from('push_subscriptions')
-          .delete()
-          .eq('subscription->>endpoint', subscription.endpoint);
-        
-        if (dbError) throw dbError;
+      setIsSubscribed(false);
+      setSubscription(null);
+      toast({ title: 'Inscrição cancelada', description: 'Você não receberá mais notificações push.' });
+      setError(null);
+    } catch (err) {
+      console.error('Error unsubscribing from push notifications:', err);
+      setError('Falha ao cancelar a inscrição.');
+      toast({ title: "Erro ao cancelar inscrição", variant: "destructive" });
+    }
+  }, [subscription, user, toast]);
 
-        setIsSubscribed(false);
-        setSubscription(null);
-        setError(null);
-
-      } catch(err: any) {
-          console.error("Failed to unsubscribe: ", err);
-          setError(err.message || 'Failed to unsubscribe.');
-      }
-  };
-
-  return { isSubscribed, subscribe, unsubscribe, error };
-}
+  return { isSubscribed, subscribe, unsubscribe, isSupported, error };
+};
