@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, Trash2, Play, Loader2 } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
+import { Star, Trash2, Play, Loader2 } from "lucide-react";
 import { EditBookDialog } from "@/components/EditBookDialog";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
@@ -20,24 +20,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tables } from "@/integrations/supabase/types";
 
-// Definindo a interface para o objeto Book
-interface Book {
-    id: string;
-    title: string;
-    author: string;
-    cover_url: string | null;
-    pages: number | null;
-    reading_status: 'reading' | 'completed' | 'want_to_read';
-    reading_progress: number;
-    description: string | null;
-    genre: string | null;
-    rating: number | null;
-    personal_notes: string | null;
-    tags: string[] | null;
-}
+// Usando o tipo 'books' gerado a partir das definições da tabela
+type Book = Tables<'books'>;
 
-// A prop do componente agora é o objeto book e o callback onUpdate
 interface BookCardProps {
   book: Book;
   onUpdate: () => void;
@@ -47,7 +34,7 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
   const { toast } = useToast();
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string | null) => {
     if (status === 'reading') return 'Lendo';
     if (status === 'completed') return 'Lido';
     return 'Quero Ler';
@@ -71,7 +58,7 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
     try {
       const { error } = await supabase
         .from('books')
-        .update({ reading_status: 'reading' })
+        .update({ reading_status: 'reading', last_read_at: new Date().toISOString() })
         .eq('id', book.id);
 
       if (error) throw error;
@@ -89,59 +76,76 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
   };
 
   return (
-    <Card className="flex flex-col h-full">
-      <CardContent className="p-4 flex-grow">
-        <div className="flex gap-4">
+    <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      <CardContent className="p-4 flex-grow flex flex-col">
+        <div className="flex gap-4 mb-4">
             <div className="w-24 flex-shrink-0">
-                <img src={book.cover_url || '/placeholder.svg'} alt={book.title} className="w-full h-36 object-cover rounded-md" />
+                <img 
+                  src={book.cover_url || '/placeholder.svg'} 
+                  alt={book.title} 
+                  className="w-full h-36 object-cover rounded-md shadow-md" 
+                />
             </div>
-            <div className="flex flex-col min-w-0">
-                <Badge variant={book.reading_status === 'reading' ? 'default' : 'outline'} className="self-start mb-1">{getStatusLabel(book.reading_status)}</Badge>
-                <h3 className="font-bold truncate" title={book.title}>{book.title}</h3>
+            <div className="flex flex-col min-w-0 flex-grow">
+                <Badge 
+                  variant={book.reading_status === 'reading' ? 'default' : (book.reading_status === 'completed' ? 'secondary' : 'outline')} 
+                  className="self-start mb-1"
+                >
+                  {getStatusLabel(book.reading_status)}
+                </Badge>
+                <h3 className="font-bold truncate text-lg" title={book.title}>{book.title}</h3>
                 <p className="text-sm text-muted-foreground truncate">{book.author}</p>
                 {book.rating && (
-                    <div className="flex items-center mt-1">
-                        {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < book.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />)}
+                    <div className="flex items-center mt-2">
+                        {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < (book.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />)}
                     </div>
                 )}
             </div>
         </div>
 
         {book.reading_status === 'reading' && book.pages && book.pages > 0 && (
-            <div className="mt-4">
+            <div className="mt-auto space-y-2">
                 <Progress value={book.reading_progress || 0} className="h-2" />
-                <p className="text-xs text-muted-foreground mt-1 text-right">{book.reading_progress || 0}%</p>
+                <p className="text-xs text-muted-foreground text-right">{book.reading_progress || 0}%</p>
             </div>
         )}
       </CardContent>
       
-      <div className="p-4 pt-0 mt-auto">
-        <div className="flex flex-wrap gap-2 justify-end">
+      <div className="p-4 pt-0">
+        <div className="flex flex-wrap gap-2 justify-end items-center">
             {book.reading_status === 'want_to_read' && (
-              <Button onClick={handleStartReading} disabled={isUpdatingStatus} size="sm" className="flex-grow sm:flex-grow-0">
+              <Button onClick={handleStartReading} disabled={isUpdatingStatus} size="sm" className="flex-grow">
                 {isUpdatingStatus ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Play className="mr-2 h-4 w-4" /> // Corrigido: Trocado BookPlay por Play
+                  <Play className="mr-2 h-4 w-4" />
                 )}
                 Começar a Ler
               </Button>
             )}
 
             {book.reading_status === 'reading' && (
-                <UpdateProgressDialog book={book} onProgressUpdate={onUpdate}>
-                    <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Atualizar</Button>
+                <UpdateProgressDialog 
+                  bookId={book.id}
+                  title={book.title}
+                  currentPage={book.current_page}
+                  totalPages={book.pages}
+                  currentProgress={book.reading_progress || 0}
+                  onProgressUpdate={onUpdate}
+                >
+                    <Button variant="default" size="sm" className="flex-grow">Atualizar</Button>
                 </UpdateProgressDialog>
             )}
             
-            {/* O botão de compartilhar agora só aparece para livros sendo lidos ou já lidos */}
             {(book.reading_status === 'reading' || book.reading_status === 'completed') && (
               <CreatePostDialog bookId={book.id} onPostCreated={onUpdate}>
-                  <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Compartilhar</Button>
+                  <Button variant="outline" size="sm" className="flex-grow">Compartilhar</Button>
               </CreatePostDialog>
             )}
             
-            <EditBookDialog book={book} onBookUpdated={onUpdate} />
+            <EditBookDialog book={book} onBookUpdated={onUpdate}>
+              <Button variant="ghost" size="sm" className="text-muted-foreground">Editar</Button>
+            </EditBookDialog>
             
             <AlertDialog>
                 <AlertDialogTrigger asChild>
