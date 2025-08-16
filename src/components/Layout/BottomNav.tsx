@@ -1,42 +1,43 @@
+import { Home, BookOpen, Users, User, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, BookOpen, Users, MessageSquare, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 const BottomNav = () => {
-  const { user } = useAuth();
   const location = useLocation();
+  const { user } = useAuth();
+
   const isActive = (path: string) => location.pathname === path;
 
   if (!user) {
-    return null; // Não mostra a barra de navegação se o usuário não estiver logado
+    return null;
   }
 
-  const navLinks = [
-    { href: "/feed", label: "Feed", icon: MessageSquare },
-    { href: "/clubes", label: "Clubes", icon: Users },
-    { href: "/estante", label: "Estante", icon: BookOpen },
-    { href: "/perfil", label: "Perfil", icon: User },
-  ];
-
   return (
-    <div className="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-background/95 backdrop-blur border-t">
-      <div className="grid h-full max-w-lg grid-cols-4 mx-auto font-medium">
-        {navLinks.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={label}
-            to={href}
-            className={cn(
-              "inline-flex flex-col items-center justify-center px-5 hover:bg-muted",
-              isActive(href) ? "text-primary" : "text-muted-foreground"
-            )}
-          >
-            <Icon className="w-5 h-5 mb-1" />
-            <span className="text-xs">{label}</span>
-          </Link>
-        ))}
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t z-50">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-around">
+        <Link to="/" className={cn("flex flex-col items-center gap-1 p-2 rounded-md", isActive("/") ? "text-primary" : "text-muted-foreground")}>
+          <Home className="h-6 w-6" />
+          <span className="text-xs">Início</span>
+        </Link>
+        <Link to="/estante" className={cn("flex flex-col items-center gap-1 p-2 rounded-md", isActive("/estante") ? "text-primary" : "text-muted-foreground")}>
+          <BookOpen className="h-6 w-6" />
+          <span className="text-xs">Estante</span>
+        </Link>
+        <Link to="/feed" className={cn("flex flex-col items-center gap-1 p-2 rounded-md", isActive("/feed") ? "text-primary" : "text-muted-foreground")}>
+          <MessageSquare className="h-6 w-6" />
+          <span className="text-xs">Feed</span>
+        </Link>
+        <Link to="/clubes" className={cn("flex flex-col items-center gap-1 p-2 rounded-md", isActive("/clubes") ? "text-primary" : "text-muted-foreground")}>
+          <Users className="h-6 w-6" />
+          <span className="text-xs">Clubes</span>
+        </Link>
+        <Link to="/perfil" className={cn("flex flex-col items-center gap-1 p-2 rounded-md", isActive("/perfil") ? "text-primary" : "text-muted-foreground")}>
+          <User className="h-6 w-6" />
+          <span className="text-xs">Perfil</span>
+        </Link>
       </div>
-    </div>
+    </nav>
   );
 };
 

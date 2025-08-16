@@ -1,10 +1,11 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, Home, User, MessageSquare, Search } from "lucide-react";
+import { BookOpen, Users, Home, User, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { ModeToggle } from "@/components/ThemeToggle";
 
 const Header = () => {
   const location = useLocation();
@@ -84,6 +85,7 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center space-x-2">
+          <ModeToggle />
           {user && (
             <>
               <div className="hidden md:block">
