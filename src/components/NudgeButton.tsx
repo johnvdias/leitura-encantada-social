@@ -29,7 +29,7 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
     setLoading(true);
     
     try {
-      // Estas operações são rápidas e podemos esperar por elas.
+      // Estas operações são r��pidas e podemos esperar por elas.
       const { error: nudgeError } = await supabase
         .from('nudges')
         .insert({
@@ -50,21 +50,24 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
         related_id: user.id,
       });
       
-      // (A CORREÇÃO) "Dispare e esqueça" - Não esperamos (await) pela função.
-      // O código do navegador continua imediatamente, proporcionando uma resposta rápida ao usuário.
-      // A função executará em segundo plano no servidor.
+      // Push notifications com tratamento robusto de erros
       supabase.functions.invoke('send-push-notification', {
-        body: { 
+        body: {
           targetUserId: friendId,
           title: notificationTitle,
           body: message,
-          tag: `nudge-${user.id}-${friendId}` 
+          tag: `nudge-${user.id}-${friendId}`
         },
-      }).then(({ error: functionError }) => {
-        // Lidamos com o erro em um bloco .then() para não pausar a execução.
+      }).then(({ data, error: functionError }) => {
         if (functionError) {
-          console.error('Erro de segundo plano ao invocar a Função Edge:', functionError);
+          console.log('Push notification não disponível (normal se não configurado):', functionError.message);
+          // Não é um erro crítico - as notificações in-app funcionam
+        } else {
+          console.log('Push notification enviada com sucesso:', data);
         }
+      }).catch(err => {
+        console.log('Push notification indisponível (funcionamento normal mantido):', err.message);
+        // A funcionalidade principal da cutucação continua funcionando
       });
 
       // Como não estamos mais esperando, o toast de sucesso é mostrado imediatamente.
@@ -74,8 +77,15 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
       });
 
     } catch (error) {
-      console.error('Erro ao registrar o cutucão:', error);
-      toast({ title: 'Erro ao enviar cutucão', variant: 'destructive' });
+      const errorMessage = error instanceof Error
+        ? error.message
+        : (error as any)?.message || 'Erro desconhecido';
+      console.error('Erro ao registrar o cutucão:', errorMessage);
+      toast({
+        title: 'Erro ao enviar cutucão',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
       setOpen(false); // Fecha o pop-up imediatamente.
