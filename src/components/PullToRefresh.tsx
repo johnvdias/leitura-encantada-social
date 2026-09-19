@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { APP_UPDATED_FLAG_KEY } from "@/lib/pwaUpdate";
 
 const PULL_THRESHOLD = 70;
 const MAX_PULL = 110;
-const REFRESH_FLAG_KEY = "pull-to-refresh-pending";
 
 interface PullToRefreshProps {
   children: React.ReactNode;
@@ -25,8 +25,8 @@ export function PullToRefresh({ children }: PullToRefreshProps) {
   // pra dar pra comparar visualmente se o código realmente mudou).
   useEffect(() => {
     try {
-      if (sessionStorage.getItem(REFRESH_FLAG_KEY)) {
-        sessionStorage.removeItem(REFRESH_FLAG_KEY);
+      if (sessionStorage.getItem(APP_UPDATED_FLAG_KEY)) {
+        sessionStorage.removeItem(APP_UPDATED_FLAG_KEY);
         toast({
           title: "Atualizado! ✨",
           description: `Versão ${__APP_VERSION__}`,
@@ -64,7 +64,7 @@ export function PullToRefresh({ children }: PullToRefreshProps) {
         if (current >= PULL_THRESHOLD) {
           setRefreshing(true);
           try {
-            sessionStorage.setItem(REFRESH_FLAG_KEY, "1");
+            sessionStorage.setItem(APP_UPDATED_FLAG_KEY, "1");
           } catch {
             // sessionStorage indisponível; o reload ainda funciona normalmente.
           }
