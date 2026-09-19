@@ -109,7 +109,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
           Adicionar Livro
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
@@ -118,13 +118,13 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 min-w-0">
             <Input
               placeholder="Digite o título do livro..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && searchBooks()}
-              className="flex-1"
+              className="flex-1 min-w-0"
             />
             <Button onClick={searchBooks} disabled={isSearching || !query.trim()}>
               {isSearching ? (
@@ -174,7 +174,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                                 <span>{book.pages} pág.</span>
                               </div>
                             )}
-                            <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                            <Badge variant="secondary" className="text-xs px-2 py-0.5 max-w-[160px] truncate">
                               {book.genre}
                             </Badge>
                           </div>
