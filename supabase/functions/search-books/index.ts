@@ -6,23 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface Book {
-  id: string;
-  volumeInfo: {
-    title: string;
-    authors: string[];
-    description: string;
-    pageCount: number;
-    categories: string[];
-    imageLinks: {
-      thumbnail: string;
-    };
-    industryIdentifiers: {
-      type: string;
-      identifier: string;
-    }[];
-    language?: string;
-  };
+interface OpenLibraryDoc {
+  key: string;
+  title?: string;
+  author_name?: string[];
+  cover_i?: number;
+  number_of_pages_median?: number;
+  subject?: string[];
+  isbn?: string[];
+  language?: string[];
 }
 
 serve(async (req: Request) => {
@@ -40,41 +32,41 @@ serve(async (req: Request) => {
       });
     }
 
-    // Search using Google Books API. Não restringimos por idioma: muitas
-    // edições não têm a marcação de idioma preenchida no Google Books, e
-    // isso fazia buscas legítimas voltarem vazias.
-    const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=20&fields=items(id,volumeInfo(title,authors,description,pageCount,categories,imageLinks,industryIdentifiers,language))`;
+    // Busca na Open Library: gratuita e sem necessidade de chave de API
+    // (o Google Books exige uma chave de API do Google Cloud para ter
+    // qualquer cota de uso - sem ela, toda chamada falha com "quota
+    // exceeded", mesmo sendo a primeira do dia).
+    const openLibraryUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=20&fields=key,title,author_name,cover_i,number_of_pages_median,subject,isbn,language`;
 
-    const response = await fetch(googleBooksUrl);
+    const response = await fetch(openLibraryUrl, {
+      headers: { 'User-Agent': 'LeituraEncantada/1.0 (contato@leituraencantada.app)' },
+    });
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Google Books API error:', response.status, data);
-      return new Response(JSON.stringify({ error: 'Falha ao consultar o Google Books', books: [] }), {
+      console.error('Open Library API error:', response.status, data);
+      return new Response(JSON.stringify({ error: 'Falha ao consultar a Open Library', books: [] }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    if (!data.items) {
-      return new Response(JSON.stringify({ books: [] }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const docs: OpenLibraryDoc[] = data.docs || [];
 
-    const books = data.items
-      .map((item: Book) => {
-        const volumeInfo = item.volumeInfo;
+    const books = docs
+      .filter((doc) => doc.title)
+      .map((doc) => {
+        const isPortuguese = doc.language?.includes('por') ?? false;
         return {
-          id: item.id,
-          title: volumeInfo.title || 'Título não encontrado',
-          author: volumeInfo.authors ? volumeInfo.authors.join(', ') : 'Autor desconhecido',
-          description: volumeInfo.description || 'Descrição não disponível',
-          pages: volumeInfo.pageCount || null,
-          genre: volumeInfo.categories ? volumeInfo.categories[0] : 'Gênero não especificado',
-          cover_url: volumeInfo.imageLinks?.thumbnail?.replace('http://', 'https://') || null,
-          isbn: volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_13')?.identifier || null,
-          language: volumeInfo.language || null,
+          id: doc.key,
+          title: doc.title || 'Título não encontrado',
+          author: doc.author_name?.length ? doc.author_name.join(', ') : 'Autor desconhecido',
+          description: 'Descrição não disponível',
+          pages: doc.number_of_pages_median || null,
+          genre: doc.subject?.[0] || 'Gênero não especificado',
+          cover_url: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : null,
+          isbn: doc.isbn?.[0] || null,
+          language: isPortuguese ? 'pt' : null,
         };
       })
       // Prioriza edições em português sem excluir as demais.
