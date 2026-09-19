@@ -111,6 +111,32 @@ export const useComments = (postId: string) => {
     fetchComments();
   }, [fetchComments]);
 
+  // Comentários de outros usuários no mesmo post aparecem sozinhos, sem
+  // precisar recarregar a página.
+  useEffect(() => {
+    if (!postId) return;
+
+    const channel = supabase
+      .channel(`comments-${postId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'post_comments',
+          filter: `post_id=eq.${postId}`
+        },
+        () => {
+          fetchComments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [postId, fetchComments]);
+
   return {
     comments,
     loading,

@@ -101,6 +101,32 @@ export const useLikes = (postId: string) => {
     fetchLikes();
   }, [fetchLikes]);
 
+  // Curtidas de outros usuários no mesmo post atualizam a contagem sozinhas,
+  // sem precisar recarregar a página.
+  useEffect(() => {
+    if (!postId) return;
+
+    const channel = supabase
+      .channel(`likes-${postId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'post_likes',
+          filter: `post_id=eq.${postId}`
+        },
+        () => {
+          fetchLikes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [postId, fetchLikes]);
+
   return {
     likes,
     isLiked,

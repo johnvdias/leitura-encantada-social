@@ -85,6 +85,32 @@ export function ClubDiscussions({ clubId, isCreator }: ClubDiscussionsProps) {
     fetchDiscussions();
   }, [fetchDiscussions]);
 
+  // Discussões criadas por outros membros do clube aparecem sozinhas, sem
+  // precisar recarregar a página.
+  useEffect(() => {
+    if (!clubId) return;
+
+    const channel = supabase
+      .channel(`club-discussions-${clubId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'club_discussions',
+          filter: `club_id=eq.${clubId}`
+        },
+        () => {
+          fetchDiscussions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [clubId, fetchDiscussions]);
+
   const createDiscussion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !title.trim() || !content.trim()) return;
