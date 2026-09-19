@@ -16,10 +16,15 @@ const Header = () => {
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
+        <Link to="/" className="flex items-center gap-2">
           <BookOpen className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Leitura Encantada
+          <span className="flex items-baseline gap-1.5">
+            <span className="font-bold text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Leitura Encantada
+            </span>
+            <span className="hidden sm:inline text-[10px] text-muted-foreground/60">
+              v{__APP_VERSION__}
+            </span>
           </span>
         </Link>
 

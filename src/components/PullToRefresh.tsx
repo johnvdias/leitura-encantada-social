@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const PULL_THRESHOLD = 70;
 const MAX_PULL = 110;
+const REFRESH_FLAG_KEY = "pull-to-refresh-pending";
 
 interface PullToRefreshProps {
   children: React.ReactNode;
@@ -16,6 +18,25 @@ export function PullToRefresh({ children }: PullToRefreshProps) {
   const [pullDistance, setPullDistance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const startY = useRef<number | null>(null);
+  const { toast } = useToast();
+
+  // Se essa página carregou por causa de um reload disparado pelo pull,
+  // confirma pro usuário que a atualização aconteceu (e mostra a versão,
+  // pra dar pra comparar visualmente se o código realmente mudou).
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(REFRESH_FLAG_KEY)) {
+        sessionStorage.removeItem(REFRESH_FLAG_KEY);
+        toast({
+          title: "Atualizado! ✨",
+          description: `Versão ${__APP_VERSION__}`,
+        });
+      }
+    } catch {
+      // sessionStorage indisponível (ex: navegação privada); sem problema.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const isStandalone =
@@ -42,6 +63,11 @@ export function PullToRefresh({ children }: PullToRefreshProps) {
       setPullDistance((current) => {
         if (current >= PULL_THRESHOLD) {
           setRefreshing(true);
+          try {
+            sessionStorage.setItem(REFRESH_FLAG_KEY, "1");
+          } catch {
+            // sessionStorage indisponível; o reload ainda funciona normalmente.
+          }
           window.location.reload();
         }
         return 0;
