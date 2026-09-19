@@ -36,7 +36,10 @@ serve(async (req: Request) => {
     // (o Google Books exige uma chave de API do Google Cloud para ter
     // qualquer cota de uso - sem ela, toda chamada falha com "quota
     // exceeded", mesmo sendo a primeira do dia).
-    const openLibraryUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=20&fields=key,title,author_name,cover_i,number_of_pages_median,subject,isbn,language`;
+    // Limitado a 12: cada resultado dispara uma 2ª chamada (works/{id}.json)
+    // pra buscar a sinopse, em paralelo - 20 deixaria a busca mais lenta
+    // sem ganho real, já que o usuário só vê poucos resultados por vez.
+    const openLibraryUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=12&fields=key,title,author_name,cover_i,number_of_pages_median,subject,isbn,language`;
 
     const response = await fetch(openLibraryUrl, {
       headers: { 'User-Agent': 'LeituraEncantada/1.0 (contato@leituraencantada.app)' },
@@ -51,17 +54,39 @@ serve(async (req: Request) => {
       });
     }
 
-    const docs: OpenLibraryDoc[] = data.docs || [];
+    const docs: OpenLibraryDoc[] = (data.docs || []).filter((doc) => doc.title);
 
-    const books = docs
-      .filter((doc) => doc.title)
-      .map((doc) => {
+    // A busca (search.json) não traz sinopse - só a página da "obra"
+    // (works/{id}.json) tem isso. Busca os detalhes de cada resultado em
+    // paralelo; se uma falhar, cai no placeholder só pra aquele item.
+    const books = await Promise.all(
+      docs.map(async (doc) => {
         const isPortuguese = doc.language?.includes('por') ?? false;
+        let description = 'Descrição não disponível';
+
+        if (doc.key) {
+          try {
+            const workResponse = await fetch(`https://openlibrary.org${doc.key}.json`, {
+              headers: { 'User-Agent': 'LeituraEncantada/1.0 (contato@leituraencantada.app)' },
+            });
+            if (workResponse.ok) {
+              const workData = await workResponse.json();
+              if (typeof workData.description === 'string') {
+                description = workData.description;
+              } else if (typeof workData.description?.value === 'string') {
+                description = workData.description.value;
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching work details for', doc.key, error);
+          }
+        }
+
         return {
           id: doc.key,
           title: doc.title || 'Título não encontrado',
           author: doc.author_name?.length ? doc.author_name.join(', ') : 'Autor desconhecido',
-          description: 'Descrição não disponível',
+          description,
           pages: doc.number_of_pages_median || null,
           genre: doc.subject?.[0] || 'Gênero não especificado',
           cover_url: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : null,
@@ -69,8 +94,10 @@ serve(async (req: Request) => {
           language: isPortuguese ? 'pt' : null,
         };
       })
-      // Prioriza edições em português sem excluir as demais.
-      .sort((a, b) => (a.language === 'pt' ? 0 : 1) - (b.language === 'pt' ? 0 : 1));
+    );
+
+    // Prioriza edições em português sem excluir as demais.
+    books.sort((a, b) => (a.language === 'pt' ? 0 : 1) - (b.language === 'pt' ? 0 : 1));
 
     return new Response(JSON.stringify({ books }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
