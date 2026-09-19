@@ -58,14 +58,19 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
           f.requester_id === user?.id ? f.addressee_id : f.requester_id
         );
 
-        if (friendIds.length === 0) {
+        // Inclui o próprio usuário: sem isso, a aba "Amigos" mostrava os
+        // posts dos amigos mas escondia os posts "Apenas Amigas" do
+        // próprio autor.
+        const authorIds = user?.id ? [...friendIds, user.id] : friendIds;
+
+        if (authorIds.length === 0) {
           setPosts([]);
           setHasMore(false);
           setLoading(false);
           return;
         }
 
-        query = query.in('user_id', friendIds).in('visibility', ['public', 'friends']);
+        query = query.in('user_id', authorIds).in('visibility', ['public', 'friends']);
       } else if (filter === 'clubs') {
         // Show public posts from members of clubs the user belongs to
         const { data: myMemberships } = await supabase
@@ -93,8 +98,12 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
 
         query = query.in('user_id', memberIds).eq('visibility', 'public');
       } else {
-        // Show all public posts
-        query = query.eq('visibility', 'public');
+        // Mostra os posts públicos de todo mundo, mais os próprios posts do
+        // usuário logado mesmo quando não são públicos - sem isso, o autor
+        // de um post "Apenas Amigas" não o via na própria aba "Todas".
+        query = user?.id
+          ? query.or(`visibility.eq.public,user_id.eq.${user.id}`)
+          : query.eq('visibility', 'public');
       }
 
       const currentPage = loadMore ? page : 0;
