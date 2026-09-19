@@ -44,7 +44,7 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
         .from("profiles")
         .select("reading_goal, annual_books_goal")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
 

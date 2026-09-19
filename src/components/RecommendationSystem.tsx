@@ -121,7 +121,7 @@ export function RecommendationSystem() {
             .from('profiles')
             .select('display_name, avatar_url, user_id')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
           if (profile) {
             userRecommendations.push({

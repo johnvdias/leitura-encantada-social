@@ -69,9 +69,9 @@ const UserProfile = () => {
         .from('profiles')
         .select('user_id, display_name, bio, avatar_url, created_at')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (profileError) throw new Error("Perfil não encontrado.");
+      if (profileError || !profileData) throw new Error("Perfil não encontrado.");
       setProfile(profileData as Profile);
 
       const { data: booksData, error: booksError } = await supabase

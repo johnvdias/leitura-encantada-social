@@ -33,8 +33,8 @@ interface Club {
     cover_url: string;
   } | null;
   profiles: {
-    display_name: string;
-    avatar_url: string;
+    display_name: string | null;
+    avatar_url: string | null;
   };
 }
 
@@ -80,7 +80,7 @@ const ClubePage = () => {
             .from('profiles')
             .select('display_name, avatar_url')
             .eq('user_id', clubData.creator_id)
-            .single();
+            .maybeSingle();
         if (profileError) throw new Error("Não foi possível carregar o perfil do criador.");
         
         // Etapa 3: Buscar o livro atual (se existir).
@@ -98,7 +98,7 @@ const ClubePage = () => {
         // Etapa 4: Combinar os dados.
         const formattedClubData = {
           ...clubData,
-          profiles: creatorProfile,
+          profiles: creatorProfile || { display_name: null, avatar_url: null },
           books: bookData
         };
         setClub(formattedClubData as unknown as Club);
