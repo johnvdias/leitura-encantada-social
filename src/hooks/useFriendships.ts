@@ -131,7 +131,7 @@ export const useFriendships = () => {
       const { data: existingFriendship, error: existingError } = await supabase
         .from('friendships')
         .select('id, status')
-        .or(`(requester_id.eq.${user.id},and(addressee_id.eq.${addresseeId})),(requester_id.eq.${addresseeId},and(addressee_id.eq.${user.id}))`)
+        .or(`and(requester_id.eq.${user.id},addressee_id.eq.${addresseeId}),and(requester_id.eq.${addresseeId},addressee_id.eq.${user.id})`)
         .maybeSingle();
       
       if (existingError) throw existingError;

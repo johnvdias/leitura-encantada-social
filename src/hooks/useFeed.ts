@@ -47,22 +47,51 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
         `);
 
       if (filter === 'friends') {
-        // Show only posts from friends (accepted friendships)
-        query = query.or(`visibility.eq.public,and(visibility.eq.friends,user_id.in.(
-          SELECT CASE 
-            WHEN requester_id = '${user?.id}' THEN addressee_id 
-            ELSE requester_id 
-          END 
-          FROM friendships 
-          WHERE (requester_id = '${user?.id}' OR addressee_id = '${user?.id}') 
-          AND status = 'accepted'
-        ))`);
+        // Show posts (public or friends-only) authored by accepted friends
+        const { data: friendships } = await supabase
+          .from('friendships')
+          .select('requester_id, addressee_id')
+          .eq('status', 'accepted')
+          .or(`requester_id.eq.${user?.id},addressee_id.eq.${user?.id}`);
+
+        const friendIds = (friendships || []).map(f =>
+          f.requester_id === user?.id ? f.addressee_id : f.requester_id
+        );
+
+        if (friendIds.length === 0) {
+          setPosts([]);
+          setHasMore(false);
+          setLoading(false);
+          return;
+        }
+
+        query = query.in('user_id', friendIds).in('visibility', ['public', 'friends']);
       } else if (filter === 'clubs') {
-        // Show posts from club members (clubs the user is part of)
-        query = query.in('user_id', [
-          // This is a simplified version - in a real app you'd need a proper subquery
-          // For now, just show public posts
-        ]).eq('visibility', 'public');
+        // Show public posts from members of clubs the user belongs to
+        const { data: myMemberships } = await supabase
+          .from('club_members')
+          .select('club_id')
+          .eq('user_id', user?.id ?? '')
+          .eq('status', 'approved');
+
+        const clubIds = (myMemberships || []).map(m => m.club_id);
+
+        if (clubIds.length === 0) {
+          setPosts([]);
+          setHasMore(false);
+          setLoading(false);
+          return;
+        }
+
+        const { data: clubMembers } = await supabase
+          .from('club_members')
+          .select('user_id')
+          .in('club_id', clubIds)
+          .eq('status', 'approved');
+
+        const memberIds = Array.from(new Set((clubMembers || []).map(m => m.user_id)));
+
+        query = query.in('user_id', memberIds).eq('visibility', 'public');
       } else {
         // Show all public posts
         query = query.eq('visibility', 'public');
