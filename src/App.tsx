@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Header from "@/components/Layout/Header";
 import BottomNav from "@/components/Layout/BottomNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Estante from "./pages/Estante";
@@ -28,46 +29,48 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <div className="min-h-screen bg-gradient-soft pb-16 md:pb-0">
-              <Header />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/estante" element={
-                  <ProtectedRoute>
-                    <Estante />
-                  </ProtectedRoute>
-                } />
-                <Route path="/feed" element={
-                  <ProtectedRoute>
-                    <Feed />
-                  </ProtectedRoute>
-                } />
-                <Route path="/clubes" element={
-                  <ProtectedRoute>
-                    <Clubes />
-                  </ProtectedRoute>
-                } />
-                <Route path="/perfil" element={
-                  <ProtectedRoute>
-                    <Perfil />
-                  </ProtectedRoute>
-                } />
-                <Route path="/perfil/:userId" element={
-                  <ProtectedRoute>
-                    <UserProfile />
-                  </ProtectedRoute>
-                } />
-                <Route path="/clubes/:clubId" element={
-                  <ProtectedRoute>
-                    <ClubePage />
-                  </ProtectedRoute>
-                } />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <BottomNav />
-            </div>
+            <PullToRefresh>
+              <div className="min-h-screen bg-gradient-soft pb-16 md:pb-0">
+                <Header />
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/estante" element={
+                    <ProtectedRoute>
+                      <Estante />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/feed" element={
+                    <ProtectedRoute>
+                      <Feed />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/clubes" element={
+                    <ProtectedRoute>
+                      <Clubes />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/perfil" element={
+                    <ProtectedRoute>
+                      <Perfil />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/perfil/:userId" element={
+                    <ProtectedRoute>
+                      <UserProfile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/clubes/:clubId" element={
+                    <ProtectedRoute>
+                      <ClubePage />
+                    </ProtectedRoute>
+                  } />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <BottomNav />
+              </div>
+            </PullToRefresh>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
