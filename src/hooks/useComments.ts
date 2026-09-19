@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -9,14 +9,19 @@ type Comment = Tables<'post_comments'> & {
   profiles: {
     display_name: string | null;
     avatar_url: string | null;
+    username: string | null;
   } | null;
 };
+
+export type CommentWithReplies = Comment & { replies: Comment[] };
+
+const MENTION_REGEX = /@([a-zA-Z0-9_.]+)/g;
 
 export const useComments = (postId: string) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
   const fetchComments = useCallback(async () => {
@@ -30,7 +35,8 @@ export const useComments = (postId: string) => {
           *,
           profiles (
             display_name,
-            avatar_url
+            avatar_url,
+            username
           )
         `)
         .eq('post_id', postId)
@@ -45,7 +51,43 @@ export const useComments = (postId: string) => {
     }
   }, [postId]);
 
-  const addComment = async (content: string) => {
+  // Agrupa em nível único (como Instagram): comentários de topo com suas
+  // respostas diretas. Uma resposta a uma resposta é anexada ao comentário
+  // de topo original (menção em texto indica pra quem é a resposta).
+  const threadedComments = useMemo<CommentWithReplies[]>(() => {
+    const topLevel = comments.filter((c) => !c.parent_comment_id);
+    return topLevel.map((comment) => ({
+      ...comment,
+      replies: comments.filter((c) => c.parent_comment_id === comment.id),
+    }));
+  }, [comments]);
+
+  const notifyMentions = useCallback(async (content: string, excludeUserId: string) => {
+    const handles = Array.from(
+      new Set(Array.from(content.matchAll(MENTION_REGEX), (m) => m[1]))
+    );
+    if (handles.length === 0) return;
+
+    const { data: mentionedProfiles } = await supabase
+      .from('profiles')
+      .select('user_id, username')
+      .in('username', handles);
+
+    const targets = (mentionedProfiles || []).filter((p) => p.user_id !== excludeUserId);
+    if (targets.length === 0) return;
+
+    await supabase.from('notifications').insert(
+      targets.map((target) => ({
+        user_id: target.user_id,
+        type: 'mention',
+        title: 'Você foi mencionado! 📣',
+        content: `${profile?.display_name || 'Alguém'} mencionou você em um comentário`,
+        related_id: postId
+      }))
+    );
+  }, [postId, profile?.display_name]);
+
+  const addComment = async (content: string, parentCommentId?: string) => {
     if (!user || !content.trim()) return;
 
     setSubmitting(true);
@@ -55,13 +97,15 @@ export const useComments = (postId: string) => {
         .insert({
           post_id: postId,
           user_id: user.id,
-          content: content.trim()
+          content: content.trim(),
+          parent_comment_id: parentCommentId ?? null
         })
         .select(`
           *,
           profiles (
             display_name,
-            avatar_url
+            avatar_url,
+            username
           )
         `)
         .single();
@@ -90,6 +134,8 @@ export const useComments = (postId: string) => {
             related_id: postId
           });
       }
+
+      await notifyMentions(content, user.id);
 
       toast({
         title: "Comentário adicionado! 💬",
@@ -138,7 +184,7 @@ export const useComments = (postId: string) => {
   }, [postId, fetchComments]);
 
   return {
-    comments,
+    comments: threadedComments,
     loading,
     submitting,
     addComment,
