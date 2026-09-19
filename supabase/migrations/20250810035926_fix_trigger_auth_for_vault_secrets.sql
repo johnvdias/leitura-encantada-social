@@ -31,7 +31,7 @@ BEGIN
   -- Call the Edge Function using the ANONYMOUS KEY for authorization.
   -- This is crucial for the function to be able to access secrets from the Vault.
   PERFORM net.http_post(
-    url := 'https://qsqshakcihzsvxjrpzsc.supabase.co/functions/v1/send-push-notification',
+    url := 'https://bvhkqcuhdpbtjvwmebcq.supabase.co/functions/v1/send-push-notification',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || anon_key, -- Use the anon key here

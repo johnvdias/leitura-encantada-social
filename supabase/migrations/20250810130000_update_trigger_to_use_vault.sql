@@ -21,7 +21,7 @@ BEGIN
     -- Invoca a Função Edge 'send-push-notification' de forma assíncrona,
     -- usando a chave de serviço para autorização.
     PERFORM net.http_post(
-        url := 'https://qsqshakcihzsvxjrpzsc.supabase.co/functions/v1/send-push-notification',
+        url := 'https://bvhkqcuhdpbtjvwmebcq.supabase.co/functions/v1/send-push-notification',
         headers := jsonb_build_object(
             'Content-Type', 'application/json',
             'apikey', service_key, -- Usa a chave de serviço como apikey
