@@ -24,10 +24,11 @@ interface PostCardProps {
   };
   created_at: string;
   post_type: string;
+  visibility?: string;
   onPostDeleted?: () => void;
 }
 
-const PostCard = ({ id, content, user, book, created_at, post_type, onPostDeleted }: PostCardProps) => {
+const PostCard = ({ id, content, user, book, created_at, post_type, visibility, onPostDeleted }: PostCardProps) => {
   const { user: currentUser } = useAuth();
   const isOwnPost = currentUser?.id === user.user_id;
   const getPostTypeLabel = (type: string) => {
@@ -48,6 +49,15 @@ const PostCard = ({ id, content, user, book, created_at, post_type, onPostDelete
     }
   };
 
+  const getVisibilityInfo = (v?: string) => {
+    switch (v) {
+      case 'friends': return { emoji: '👥', label: 'Apenas Amigas' };
+      case 'private': return { emoji: '🔒', label: 'Privado (só eu)' };
+      default: return { emoji: '🌍', label: 'Público' };
+    }
+  };
+  const visibilityInfo = getVisibilityInfo(visibility);
+
   return (
     <Card className="card-enchanted hover-float">
       <CardHeader className="pb-3">
@@ -59,10 +69,14 @@ const PostCard = ({ id, content, user, book, created_at, post_type, onPostDelete
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold">{user.display_name}</span>
               <Badge className={getPostTypeColor(post_type)}>
                 {getPostTypeLabel(post_type)}
+              </Badge>
+              <Badge variant="outline" className="gap-1">
+                <span>{visibilityInfo.emoji}</span>
+                {visibilityInfo.label}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
