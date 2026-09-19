@@ -21,6 +21,7 @@ interface Book {
       type: string;
       identifier: string;
     }[];
+    language?: string;
   };
 }
 
@@ -39,11 +40,21 @@ serve(async (req: Request) => {
       });
     }
 
-    // Search using Google Books API
-    const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&langRestrict=pt&fields=items(id,volumeInfo(title,authors,description,pageCount,categories,imageLinks,industryIdentifiers))`;
-    
+    // Search using Google Books API. Não restringimos por idioma: muitas
+    // edições não têm a marcação de idioma preenchida no Google Books, e
+    // isso fazia buscas legítimas voltarem vazias.
+    const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=20&fields=items(id,volumeInfo(title,authors,description,pageCount,categories,imageLinks,industryIdentifiers,language))`;
+
     const response = await fetch(googleBooksUrl);
     const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Google Books API error:', response.status, data);
+      return new Response(JSON.stringify({ error: 'Falha ao consultar o Google Books', books: [] }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (!data.items) {
       return new Response(JSON.stringify({ books: [] }), {
@@ -51,19 +62,23 @@ serve(async (req: Request) => {
       });
     }
 
-    const books = data.items.map((item: Book) => {
-      const volumeInfo = item.volumeInfo;
-      return {
-        id: item.id,
-        title: volumeInfo.title || 'Título não encontrado',
-        author: volumeInfo.authors ? volumeInfo.authors.join(', ') : 'Autor desconhecido',
-        description: volumeInfo.description || 'Descrição não disponível',
-        pages: volumeInfo.pageCount || null,
-        genre: volumeInfo.categories ? volumeInfo.categories[0] : 'Gênero não especificado',
-        cover_url: volumeInfo.imageLinks?.thumbnail?.replace('http://', 'https://') || null,
-        isbn: volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_13')?.identifier || null
-      };
-    });
+    const books = data.items
+      .map((item: Book) => {
+        const volumeInfo = item.volumeInfo;
+        return {
+          id: item.id,
+          title: volumeInfo.title || 'Título não encontrado',
+          author: volumeInfo.authors ? volumeInfo.authors.join(', ') : 'Autor desconhecido',
+          description: volumeInfo.description || 'Descrição não disponível',
+          pages: volumeInfo.pageCount || null,
+          genre: volumeInfo.categories ? volumeInfo.categories[0] : 'Gênero não especificado',
+          cover_url: volumeInfo.imageLinks?.thumbnail?.replace('http://', 'https://') || null,
+          isbn: volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_13')?.identifier || null,
+          language: volumeInfo.language || null,
+        };
+      })
+      // Prioriza edições em português sem excluir as demais.
+      .sort((a, b) => (a.language === 'pt' ? 0 : 1) - (b.language === 'pt' ? 0 : 1));
 
     return new Response(JSON.stringify({ books }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
