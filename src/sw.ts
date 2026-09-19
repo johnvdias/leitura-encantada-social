@@ -8,6 +8,15 @@ declare let self: ServiceWorkerGlobalScope;
 // O Workbox pegará a lista de arquivos do self.__WB_MANIFEST e configurará o pré-cache.
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Sem isso, um Service Worker novo fica "esperando" indefinidamente e só
+// assume o controle quando todas as abas da versão antiga forem fechadas -
+// na prática, o app nunca atualiza sozinho para quem deixa a aba aberta.
+self.skipWaiting();
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 // Escuta por notificações push.
 self.addEventListener('push', (event) => {
   const data = event.data?.json();
