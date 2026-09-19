@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Header from "@/components/Layout/Header";
+import BottomNav from "@/components/Layout/BottomNav";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Estante from "./pages/Estante";
@@ -27,7 +28,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <div className="min-h-screen bg-gradient-soft">
+            <div className="min-h-screen bg-gradient-soft pb-16 md:pb-0">
               <Header />
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -65,6 +66,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <BottomNav />
             </div>
           </BrowserRouter>
         </TooltipProvider>
