@@ -118,20 +118,25 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex gap-2 min-w-0">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
               placeholder="Digite o título do livro..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && searchBooks()}
-              className="flex-1 min-w-0"
+              className="w-full"
             />
-            <Button onClick={searchBooks} disabled={isSearching || !query.trim()}>
+            <Button
+              onClick={searchBooks}
+              disabled={isSearching || !query.trim()}
+              className="w-full sm:w-auto shrink-0 gap-2"
+            >
               {isSearching ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Search className="h-4 w-4" />
               )}
+              <span className="sm:hidden">Buscar</span>
             </Button>
           </div>
 
