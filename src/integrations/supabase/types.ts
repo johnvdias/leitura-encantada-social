@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -107,6 +107,99 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_participants: {
+        Row: {
+          challenge_id: string
+          joined_at: string | null
+          progress: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          joined_at?: string | null
+          progress?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          joined_at?: string | null
+          progress?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          book_id: string | null
+          created_at: string
+          creator_id: string | null
+          description: string | null
+          end_date: string
+          goal_type: string
+          goal_value: number
+          id: string
+          name: string
+          start_date: string
+        }
+        Insert: {
+          book_id?: string | null
+          created_at?: string
+          creator_id?: string | null
+          description?: string | null
+          end_date: string
+          goal_type: string
+          goal_value: number
+          id?: string
+          name: string
+          start_date: string
+        }
+        Update: {
+          book_id?: string | null
+          created_at?: string
+          creator_id?: string | null
+          description?: string | null
+          end_date?: string
+          goal_type?: string
+          goal_value?: number
+          id?: string
+          name?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       club_discussions: {
         Row: {
           club_id: string
@@ -154,6 +247,7 @@ export type Database = {
           id: string
           joined_at: string
           role: string
+          status: string
           user_id: string
         }
         Insert: {
@@ -161,6 +255,7 @@ export type Database = {
           id?: string
           joined_at?: string
           role?: string
+          status?: string
           user_id: string
         }
         Update: {
@@ -168,6 +263,7 @@ export type Database = {
           id?: string
           joined_at?: string
           role?: string
+          status?: string
           user_id?: string
         }
         Relationships: [
@@ -177,6 +273,100 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clubs"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_reading_schedules: {
+        Row: {
+          book_id: string | null
+          club_id: string | null
+          created_at: string
+          creator_id: string | null
+          end_date: string
+          id: string
+          name: string
+          reading_goal: Json | null
+          start_date: string
+        }
+        Insert: {
+          book_id?: string | null
+          club_id?: string | null
+          created_at?: string
+          creator_id?: string | null
+          end_date: string
+          id?: string
+          name: string
+          reading_goal?: Json | null
+          start_date: string
+        }
+        Update: {
+          book_id?: string | null
+          club_id?: string | null
+          created_at?: string
+          creator_id?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          reading_goal?: Json | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_reading_schedules_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_reading_schedules_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_reading_schedules_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      club_schedule_participants: {
+        Row: {
+          club_schedule_id: string
+          joined_at: string
+          progress: number
+          user_id: string
+        }
+        Insert: {
+          club_schedule_id: string
+          joined_at?: string
+          progress?: number
+          user_id: string
+        }
+        Update: {
+          club_schedule_id?: string
+          joined_at?: string
+          progress?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_schedule_participants_club_schedule_id_fkey"
+            columns: ["club_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "club_reading_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_schedule_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -249,7 +439,70 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "friendships_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      group_reading_schedules: {
+        Row: {
+          book_id: string | null
+          created_at: string
+          creator_id: string | null
+          end_date: string
+          id: string
+          name: string
+          reading_goal: Json | null
+          start_date: string
+        }
+        Insert: {
+          book_id?: string | null
+          created_at?: string
+          creator_id?: string | null
+          end_date: string
+          id?: string
+          name: string
+          reading_goal?: Json | null
+          start_date: string
+        }
+        Update: {
+          book_id?: string | null
+          created_at?: string
+          creator_id?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          reading_goal?: Json | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_reading_schedules_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_reading_schedules_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -284,6 +537,51 @@ export type Database = {
         }
         Relationships: []
       }
+      nudges: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string | null
+          receiver_id: string | null
+          sender_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nudges_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "nudges_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       post_comments: {
         Row: {
           content: string
@@ -316,6 +614,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "posts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -398,6 +703,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          annual_books_goal: number | null
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -409,6 +715,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          annual_books_goal?: number | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -420,6 +727,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          annual_books_goal?: number | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -431,6 +739,35 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          subscription: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          subscription: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          subscription?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       reading_history: {
         Row: {
@@ -476,12 +813,52 @@ export type Database = {
           },
         ]
       }
+      schedule_participants: {
+        Row: {
+          joined_at: string | null
+          schedule_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string | null
+          schedule_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string | null
+          schedule_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_participants_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "group_reading_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      ensure_creator_is_approved: { Args: never; Returns: undefined }
+      remove_club_member: {
+        Args: { p_club_id: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
@@ -500,12 +877,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -529,11 +906,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -554,11 +931,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -579,11 +956,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -596,11 +973,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

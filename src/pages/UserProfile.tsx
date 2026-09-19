@@ -99,9 +99,10 @@ const UserProfile = () => {
       if (achievementsError) console.error("Erro ao buscar conquistas:", achievementsError);
       else setAchievements(achievementsData as Achievement[]);
 
-    } catch (err: any) {
-      setError(err.message);
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao carregar o perfil.";
+      setError(message);
+      toast({ title: "Erro", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

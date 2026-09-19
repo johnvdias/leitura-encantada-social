@@ -34,6 +34,12 @@ interface Participant {
   }
 }
 
+interface ParticipantRow {
+  user_id: string;
+  progress: number;
+  status: string;
+}
+
 export function ChallengesSection() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -67,7 +73,7 @@ export function ChallengesSection() {
 
       const allParticipantUserIds = new Set<string>();
       challengesData.forEach(c => {
-        (c.challenge_participants as any[]).forEach(p => allParticipantUserIds.add(p.user_id));
+        (c.challenge_participants as ParticipantRow[]).forEach(p => allParticipantUserIds.add(p.user_id));
       });
       
       const { data: profilesData, error: profilesError } = await supabase
@@ -80,7 +86,7 @@ export function ChallengesSection() {
       const profilesMap = new Map(profilesData.map(p => [p.user_id, p]));
 
       const mappedChallenges = challengesData.map(c => {
-        const participants = (c.challenge_participants as any[])
+        const participants = (c.challenge_participants as ParticipantRow[])
           .map(p => ({ ...p, profile: profilesMap.get(p.user_id) }))
           .filter(p => p.profile)
           .sort((a, b) => b.progress - a.progress);

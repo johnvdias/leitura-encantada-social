@@ -115,8 +115,9 @@ const ClubePage = () => {
         setIsMember(currentUserMembership?.status === 'approved');
         setHasPendingRequest(currentUserMembership?.status === 'pending');
 
-    } catch (err: any) {
-        toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Erro ao carregar o clube.";
+        toast({ title: "Erro", description: message, variant: "destructive" });
         setClub(null);
         setMembers([]);
     } finally {

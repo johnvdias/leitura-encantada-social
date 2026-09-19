@@ -77,9 +77,7 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
       });
 
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : (error as any)?.message || 'Erro desconhecido';
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       console.error('Erro ao registrar o cutucão:', errorMessage);
       toast({
         title: 'Erro ao enviar cutucão',

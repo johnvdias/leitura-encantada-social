@@ -15,7 +15,7 @@ interface Schedule {
   id: string;
   name: string;
   reading_goal: string;
-  due_date: string;
+  end_date: string;
   books: {
     title: string;
     author: string;
@@ -57,7 +57,7 @@ export function SchedulesSection() {
       const { data: schedulesData, error: schedulesError } = await supabase
         .from('group_reading_schedules')
         .select(`
-          id, name, reading_goal, due_date,
+          id, name, reading_goal, end_date,
           books (title, author, cover_url),
           schedule_participants (
             user_id, status,
@@ -114,7 +114,7 @@ export function SchedulesSection() {
                         <CardDescription>Para ler: <span className="font-semibold">{schedule.books.title}</span></CardDescription>
                         <Badge variant="outline" className="mt-2">
                             <CalendarClock className="h-3 w-3 mr-1" />
-                            Termina {formatDistanceToNow(new Date(schedule.due_date), { addSuffix: true, locale: ptBR })}
+                            Termina {formatDistanceToNow(new Date(schedule.end_date), { addSuffix: true, locale: ptBR })}
                         </Badge>
                     </div>
                 </div>

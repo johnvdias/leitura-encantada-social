@@ -45,7 +45,7 @@ export function CreateScheduleDialog({ onScheduleCreated }: CreateScheduleDialog
     name: "",
     book_id: "",
     reading_goal: "",
-    due_date: new Date(new Date().setDate(new Date().getDate() + 7)),
+    end_date: new Date(new Date().setDate(new Date().getDate() + 7)),
   });
 
   useEffect(() => {
@@ -83,7 +83,8 @@ export function CreateScheduleDialog({ onScheduleCreated }: CreateScheduleDialog
           name: formData.name,
           book_id: formData.book_id,
           reading_goal: formData.reading_goal,
-          due_date: formData.due_date.toISOString(),
+          start_date: new Date().toISOString(),
+          end_date: formData.end_date.toISOString(),
           creator_id: user.id,
         })
         .select()
@@ -113,7 +114,7 @@ export function CreateScheduleDialog({ onScheduleCreated }: CreateScheduleDialog
       setOpen(false);
       onScheduleCreated();
       // Reset form
-      setFormData({ name: "", book_id: "", reading_goal: "", due_date: new Date(new Date().setDate(new Date().getDate() + 7)) });
+      setFormData({ name: "", book_id: "", reading_goal: "", end_date: new Date(new Date().setDate(new Date().getDate() + 7)) });
       setSelectedFriends([]);
 
     } catch (error) {
@@ -168,10 +169,10 @@ export function CreateScheduleDialog({ onScheduleCreated }: CreateScheduleDialog
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(formData.due_date, "PPP", { locale: ptBR })}
+                    {format(formData.end_date, "PPP", { locale: ptBR })}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formData.due_date} onSelect={(date) => date && setFormData({ ...formData, due_date: date })} /></PopoverContent>
+                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formData.end_date} onSelect={(date) => date && setFormData({ ...formData, end_date: date })} /></PopoverContent>
             </Popover>
           </div>
 

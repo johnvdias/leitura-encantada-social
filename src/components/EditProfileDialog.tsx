@@ -23,9 +23,9 @@ import { TablesUpdate } from "@/integrations/supabase/types";
 import { ImageCropperDialog } from './ImageCropperDialog';
 
 // Debounce function
-const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
+const debounce = <Args extends unknown[]>(func: (...args: Args) => void, waitFor: number) => {
   let timeout: ReturnType<typeof setTimeout> | null = null;
-  return (...args: Parameters<F>): void => {
+  return (...args: Args): void => {
     if (timeout) {
       clearTimeout(timeout);
     }
@@ -155,10 +155,11 @@ export function EditProfileDialog() {
         description: "Suas informações foram salvas.",
       });
 
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Não foi possível salvar as alterações.";
       toast({
         title: "Erro ao atualizar",
-        description: error.message || "Não foi possível salvar as alterações.",
+        description: message,
         variant: "destructive",
       });
     } finally {
