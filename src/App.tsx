@@ -29,8 +29,12 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <PullToRefresh>
-              <div className="min-h-screen bg-gradient-soft pb-16 md:pb-0">
+            <div className="min-h-screen bg-gradient-soft pb-16 md:pb-0">
+              {/* BottomNav fica fora do PullToRefresh: um ancestral com
+                  transform vira o "containing block" de elementos com
+                  position: fixed, o que quebrava o posicionamento fixo
+                  da barra inferior. */}
+              <PullToRefresh>
                 <Header />
                 <Routes>
                   <Route path="/" element={<Index />} />
@@ -68,9 +72,9 @@ const App = () => (
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-                <BottomNav />
-              </div>
-            </PullToRefresh>
+              </PullToRefresh>
+              <BottomNav />
+            </div>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
