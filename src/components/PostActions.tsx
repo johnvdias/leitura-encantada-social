@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Trash2, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,11 +22,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface PostActionsProps {
   postId: string;
-  onPostUpdated?: () => void;
   onPostDeleted?: () => void;
 }
 
-export function PostActions({ postId, onPostUpdated, onPostDeleted }: PostActionsProps) {
+export function PostActions({ postId, onPostDeleted }: PostActionsProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
@@ -69,11 +68,7 @@ export function PostActions({ postId, onPostUpdated, onPostDeleted }: PostAction
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onPostUpdated?.()}>
-            <Edit className="h-4 w-4 mr-2" />
-            Editar
-          </DropdownMenuItem>
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onClick={() => setShowDeleteDialog(true)}
             className="text-destructive"
           >

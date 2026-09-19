@@ -168,6 +168,8 @@ const Clubes = () => {
                           Membro
                         </Badge>
                       </Link>
+                    ) : club.isPending ? (
+                      <Badge variant="outline">Pendente</Badge>
                     ) : (
                       <Button
                         size="sm"

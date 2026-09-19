@@ -14,6 +14,7 @@ type Club = Tables<'clubs'> & {
   }[];
   memberCount: number;
   isJoined: boolean;
+  isPending: boolean;
   moderator: string;
 };
 
@@ -49,7 +50,7 @@ export const useClubs = () => {
       // Fetch user's club memberships
       const { data: membershipsData, error: membershipsError } = await supabase
         .from('club_members')
-        .select('club_id')
+        .select('club_id, status')
         .eq('user_id', user.id);
 
       if (membershipsError) throw membershipsError;
@@ -66,15 +67,21 @@ export const useClubs = () => {
         // Continue without profile data if profiles table doesn't exist
       }
 
-      const memberClubIds = new Set(membershipsData?.map(m => m.club_id) || []);
+      const approvedClubIds = new Set(
+        membershipsData?.filter(m => m.status === 'approved').map(m => m.club_id) || []
+      );
+      const pendingClubIds = new Set(
+        membershipsData?.filter(m => m.status === 'pending').map(m => m.club_id) || []
+      );
       const profilesMap = new Map(
         profilesData?.map(p => [p.user_id, p.display_name]) || []
       );
-      
+
       const processedClubs = (clubsData || []).map(club => ({
         ...club,
         memberCount: club.club_members?.length || 0,
-        isJoined: memberClubIds.has(club.id),
+        isJoined: approvedClubIds.has(club.id),
+        isPending: pendingClubIds.has(club.id),
         moderator: profilesMap.get(club.creator_id) || "Moderador"
       }));
 

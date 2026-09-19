@@ -4,41 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BookHeart, Library, Users, Heart, Sparkles, BookOpen, Trophy, Calendar } from "lucide-react";
 import heroImage from "@/assets/hero-enchanted-library.jpg";
 import { useAuth } from "@/contexts/AuthContext";
-import { createSamplePosts, createSampleBooks } from "@/utils/seedData";
-import { useToast } from "@/hooks/use-toast";
 import { RecommendationSystem } from "@/components/RecommendationSystem";
 
 const Index = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
 
-  const handleCreateSampleData = async () => {
-    if (!user) return;
-
-    try {
-      const { error: booksError } = await createSampleBooks(user.id);
-      const { error: postsError } = await createSamplePosts(user.id);
-
-      if (booksError || postsError) {
-        toast({
-          title: "Erro",
-          description: "Não foi possível criar dados de exemplo",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Dados criados! ✨",
-          description: "Vá para sua estante e feed para ver os exemplos"
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao criar dados",
-        variant: "destructive"
-      });
-    }
-  };
   const features = [
     {
       icon: <BookOpen className="w-8 h-8 text-primary" />,
