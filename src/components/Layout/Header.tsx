@@ -5,6 +5,7 @@ import { BookOpen, Users, Home, User, MessageSquare, Search } from "lucide-react
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Header = () => {
   const location = useLocation();
@@ -93,15 +94,19 @@ const Header = () => {
                 <GlobalSearch />
               </div>
               <NotificationDropdown />
+              <ThemeToggle />
               <Button onClick={signOut} variant="outline" size="sm">
                 Sair
               </Button>
             </>
           )}
           {!user && (
-            <Link to="/auth">
-              <Button size="sm">Entrar</Button>
-            </Link>
+            <>
+              <ThemeToggle />
+              <Link to="/auth">
+                <Button size="sm">Entrar</Button>
+              </Link>
+            </>
           )}
         </div>
       </div>

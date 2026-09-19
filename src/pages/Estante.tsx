@@ -11,23 +11,7 @@ import { SchedulesSection } from "@/components/SchedulesSection";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  cover_url: string | null;
-  pages: number | null;
-  genre: string;
-  reading_status: 'reading' | 'completed' | 'want_to_read';
-  reading_progress: number;
-  description: string;
-  current_page?: number;
-  last_read_at?: string;
-  rating?: number;
-  personal_notes?: string;
-  tags?: string[];
-}
+import type { Book } from "@/types/book";
 
 const Estante = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -93,10 +77,8 @@ const Estante = () => {
               />
           </div>
           <div className="flex gap-2">
-            <AddBookDialog onBookAdded={fetchBooks}>
-                <Button>Adicionar Livro</Button>
-            </AddBookDialog>
-            <ManualBookDialog onBookAdded={fetchBooks} /> 
+            <AddBookDialog onBookAdded={fetchBooks} />
+            <ManualBookDialog onBookAdded={fetchBooks} />
           </div>
       </div>
 

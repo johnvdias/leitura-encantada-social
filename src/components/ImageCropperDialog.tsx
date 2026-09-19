@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css'; // The correct path based on the actual file location
-import { Point, Area } from 'react-easy-crop/types';
+import type { Point, Area } from 'react-easy-crop';
 import {
   Dialog,
   DialogContent,

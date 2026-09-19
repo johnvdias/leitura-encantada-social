@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Trophy, Calendar, TrendingUp } from "lucide-react";
+import { BookOpen, Trophy, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAchievements } from "@/hooks/useAchievements";
 import { FriendsSection } from "@/components/FriendsSection";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
+import { AdvancedStats } from "@/components/AdvancedStats";
+import { AchievementBadges } from "@/components/AchievementBadges";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -118,7 +120,7 @@ const Perfil = () => {
               <p className="text-muted-foreground mb-4">
                 {profile?.bio || 'Apaixonado por livros e aventuras literárias'}
               </p>
-              <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-6 text-sm mb-4">
                 <div className="flex items-center gap-1">
                   <BookOpen className="h-4 w-4" />
                   <span>{stats.completedBooks} livros lidos</span>
@@ -128,6 +130,7 @@ const Perfil = () => {
                   <span>{achievements.length} conquistas</span>
                 </div>
               </div>
+              <AchievementBadges />
             </div>
             <div className="ml-auto flex items-center gap-2">
               <EditProfileDialog />
@@ -145,46 +148,7 @@ const Perfil = () => {
         </TabsList>
 
         <TabsContent value="estatisticas" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="card-enchanted">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Livros</CardTitle>
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalBooks}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.currentlyReading} lendo atualmente
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="card-enchanted">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Livros Concluídos</CardTitle>
-                <Trophy className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.completedBooks}</div>
-                <p className="text-xs text-muted-foreground">
-                  Este ano
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="card-enchanted">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Conquistas</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{achievements.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  Desbloqueadas
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <AdvancedStats />
         </TabsContent>
 
         <TabsContent value="conquistas" className="space-y-6">

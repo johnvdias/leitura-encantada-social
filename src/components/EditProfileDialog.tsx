@@ -73,7 +73,27 @@ export function EditProfileDialog() {
   }, [profile, open]);
 
   const checkUsernameAvailability = async (username: string) => {
-    // Logic remains the same
+    if (!username || username === profile?.username) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    setCheckingUsername(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (error) throw error;
+      setUsernameAvailable(!data);
+    } catch (error) {
+      console.error('Error checking username availability:', error);
+      setUsernameAvailable(null);
+    } finally {
+      setCheckingUsername(false);
+    }
   };
   
   const debouncedCheck = debounce(checkUsernameAvailability, 500);
@@ -107,8 +127,18 @@ export function EditProfileDialog() {
       setCropperOpen(false);
   };
 
-  const uploadAvatar = async () => {
-    // Logic remains the same
+  const uploadAvatar = async (): Promise<string | null> => {
+    if (!avatarFile || !user) return profile?.avatar_url ?? null;
+
+    const filePath = `${user.id}/avatar.jpeg`;
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, avatarFile, { upsert: true, contentType: avatarFile.type });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    return data.publicUrl;
   };
 
   const handleNotificationToggle = (checked: boolean) => {
@@ -223,7 +253,15 @@ export function EditProfileDialog() {
                   placeholder="ex: leitor_voraz"
                   className={`pr-10 ${usernameAvailable === false ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {checkingUsername && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  {!checkingUsername && usernameAvailable === true && <Check className="h-4 w-4 text-green-600" />}
+                  {!checkingUsername && usernameAvailable === false && <X className="h-4 w-4 text-destructive" />}
+                </div>
               </div>
+              {usernameAvailable === false && (
+                <p className="text-xs text-destructive">Este nome de usuário já está em uso.</p>
+              )}
             </div>
               
             <div className="space-y-2">
@@ -261,7 +299,7 @@ export function EditProfileDialog() {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || usernameAvailable === false}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar
               </Button>

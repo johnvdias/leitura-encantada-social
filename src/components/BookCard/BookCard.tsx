@@ -20,22 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-// Definindo a interface para o objeto Book
-interface Book {
-    id: string;
-    title: string;
-    author: string;
-    cover_url: string | null;
-    pages: number | null;
-    reading_status: 'reading' | 'completed' | 'want_to_read';
-    reading_progress: number;
-    description: string | null;
-    genre: string | null;
-    rating: number | null;
-    personal_notes: string | null;
-    tags: string[] | null;
-}
+import type { Book } from "@/types/book";
 
 // A prop do componente agora é o objeto book e o callback onUpdate
 interface BookCardProps {
@@ -129,7 +114,14 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
             )}
 
             {book.reading_status === 'reading' && (
-                <UpdateProgressDialog book={book} onProgressUpdate={onUpdate}>
+                <UpdateProgressDialog
+                    bookId={book.id}
+                    title={book.title}
+                    currentPage={book.current_page}
+                    totalPages={book.pages}
+                    currentProgress={book.reading_progress}
+                    onProgressUpdate={onUpdate}
+                >
                     <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Atualizar</Button>
                 </UpdateProgressDialog>
             )}
@@ -141,7 +133,16 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
               </CreatePostDialog>
             )}
             
-            <EditBookDialog book={book} onBookUpdated={onUpdate} />
+            <EditBookDialog
+                bookId={book.id}
+                title={book.title}
+                author={book.author}
+                pages={book.pages}
+                genre={book.genre ?? ''}
+                description={book.description ?? undefined}
+                status={book.reading_status}
+                onBookUpdated={onUpdate}
+            />
             
             <AlertDialog>
                 <AlertDialogTrigger asChild>

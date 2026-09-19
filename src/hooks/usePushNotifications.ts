@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useToast } from './use-toast';
 
 // A chave VAPID pública agora é carregada das variáveis de ambiente do Vite.
@@ -70,7 +71,7 @@ export const usePushNotifications = () => {
 
       await supabase.from('push_subscriptions').insert({
         user_id: user.id,
-        subscription: sub.toJSON(),
+        subscription: sub.toJSON() as unknown as Json,
       });
 
       setIsSubscribed(true);

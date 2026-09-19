@@ -68,6 +68,7 @@ export function CreateClubScheduleDialog({ clubId, currentBook, onScheduleCreate
           club_id: clubId,
           book_id: currentBook.id,
           reading_goal: formData.reading_goal,
+          start_date: new Date().toISOString(),
           end_date: formData.end_date.toISOString(),
           creator_id: user.id,
         })
@@ -85,9 +86,9 @@ export function CreateClubScheduleDialog({ clubId, currentBook, onScheduleCreate
       if (membersError) throw membersError;
 
       const participants = members.map(member => ({
-        schedule_id: schedule.id,
+        club_schedule_id: schedule.id,
         user_id: member.user_id,
-        status: 'accepted' // Auto-accepted for club members
+        progress: 0
       }));
 
       const { error: participantsError } = await supabase

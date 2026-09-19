@@ -23,6 +23,7 @@ interface Club {
   description: string;
   created_at: string;
   is_private: boolean;
+  max_members: number;
   creator_id: string;
   current_book_id?: string | null;
   books?: {
@@ -178,7 +179,7 @@ const ClubePage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2 self-start sm:self-end shrink-0">
-                {isCreator && (<><EditClubDialog club={club} onUpdate={fetchClubData} /> <DeleteClubDialog clubId={club.id} clubName={club.name} memberCount={members.length} /></>)}
+                {isCreator && (<><EditClubDialog club={club} onUpdate={fetchClubData} /> <DeleteClubDialog clubId={club.id} clubName={club.name} /></>)}
                 {isMember && !isCreator && <Button variant="outline" onClick={handleLeaveClub}><UserMinus className="h-4 w-4 mr-2" /> Sair</Button>}
                 {!isMember && !hasPendingRequest && <Button onClick={handleJoinClub}>Entrar no Clube</Button>}
                 {hasPendingRequest && <Button variant="outline" disabled><Hourglass className="h-4 w-4 mr-2 animate-spin" /> Pendente</Button>}

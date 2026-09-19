@@ -3,10 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Header from "@/components/Layout/Header";
-import { NotificationPermissionManager } from "@/components/NotificationPermissionManager";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Estante from "./pages/Estante";
@@ -19,25 +19,14 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Component to render notification manager for logged-in users
-const MainApp = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-  return (
-    <>
-      {user && <NotificationPermissionManager />}
-      {children}
-    </>
-  );
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <MainApp>
+    <ThemeProvider defaultTheme="system" storageKey="estante-theme">
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
             <div className="min-h-screen bg-gradient-soft">
               <Header />
               <Routes>
@@ -77,10 +66,10 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
-          </MainApp>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

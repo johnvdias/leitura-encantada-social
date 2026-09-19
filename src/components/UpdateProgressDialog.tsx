@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BookOpen, Clock } from "lucide-react";
+import { ReadingStats } from "@/components/ReadingStats";
 
 interface UpdateProgressDialogProps {
   bookId: string;
@@ -161,6 +162,8 @@ export function UpdateProgressDialog({
             <Label className="text-sm font-medium text-muted-foreground">Livro</Label>
             <p className="font-medium truncate">{title}</p>
           </div>
+
+          {open && <ReadingStats bookId={bookId} />}
 
           <div className="space-y-2">
             <Label htmlFor="page">Página atual</Label>

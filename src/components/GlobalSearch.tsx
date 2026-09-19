@@ -67,14 +67,14 @@ export function GlobalSearch() {
       // Buscar usuários
       const { data: users } = await supabase
         .from('profiles')
-        .select('id, display_name, bio, avatar_url')
+        .select('user_id, display_name, bio, avatar_url')
         .ilike('display_name', `%${searchQuery}%`)
         .limit(5);
 
       if (users) {
         searchResults.push(...users.map(user => ({
           type: 'user' as const,
-          id: user.id,
+          id: user.user_id,
           title: user.display_name || 'Usuário',
           subtitle: user.bio,
           avatar: user.avatar_url,
@@ -119,7 +119,7 @@ export function GlobalSearch() {
         navigate(`/perfil/${result.id}`);
         break;
       case 'club':
-        navigate(`/clube/${result.id}`);
+        navigate(`/clubes/${result.id}`);
         break;
     }
   };
