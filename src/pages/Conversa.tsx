@@ -69,21 +69,30 @@ const Conversa = () => {
         ) : messages.length === 0 ? (
           <p className="text-center text-muted-foreground py-10">Nenhuma mensagem ainda. Diga oi! 👋</p>
         ) : (
-          messages.map((msg) => {
+          messages.map((msg, index) => {
             const isMine = msg.sender_id === user?.id;
+            const isLastMineRead =
+              isMine &&
+              !!msg.read_at &&
+              messages.slice(index + 1).every((m) => m.sender_id !== user?.id);
             return (
-              <div key={msg.id} className={cn("flex", isMine ? "justify-end" : "justify-start")}>
-                <div
-                  className={cn(
-                    "max-w-[75%] rounded-2xl px-4 py-2 break-words",
-                    isMine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted rounded-bl-sm"
-                  )}
-                >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
-                  <p className={cn("text-[10px] mt-1", isMine ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                    {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
-                  </p>
+              <div key={msg.id} className="flex flex-col">
+                <div className={cn("flex", isMine ? "justify-end" : "justify-start")}>
+                  <div
+                    className={cn(
+                      "max-w-[75%] rounded-2xl px-4 py-2 break-words",
+                      isMine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted rounded-bl-sm"
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <p className={cn("text-[10px] mt-1", isMine ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                      {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
+                    </p>
+                  </div>
                 </div>
+                {isLastMineRead && (
+                  <p className="text-[10px] text-muted-foreground text-right mt-0.5 mr-1">Visto</p>
+                )}
               </div>
             );
           })
