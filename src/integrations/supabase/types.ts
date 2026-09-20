@@ -1038,6 +1038,7 @@ export type Database = {
       posts: {
         Row: {
           book_id: string | null
+          club_id: string | null
           content: string
           created_at: string
           id: string
@@ -1048,6 +1049,7 @@ export type Database = {
         }
         Insert: {
           book_id?: string | null
+          club_id?: string | null
           content: string
           created_at?: string
           id?: string
@@ -1058,6 +1060,7 @@ export type Database = {
         }
         Update: {
           book_id?: string | null
+          club_id?: string | null
           content?: string
           created_at?: string
           id?: string
@@ -1079,6 +1082,13 @@ export type Database = {
             columns: ["book_id"]
             isOneToOne: false
             referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
             referencedColumns: ["id"]
           },
         ]

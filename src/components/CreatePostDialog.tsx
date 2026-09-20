@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +29,13 @@ interface CreatePostDialogProps {
   children: React.ReactNode;
 }
 
+interface MyClub {
+  id: string;
+  name: string;
+}
+
+const NO_CLUB_VALUE = "none";
+
 type PostType = "general" | "progress" | "review" | "recommendation";
 type Visibility = "public" | "friends" | "private";
 
@@ -41,9 +48,27 @@ export const CreatePostDialog = ({
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState<PostType>("general");
   const [visibility, setVisibility] = useState<Visibility>("public");
+  const [clubId, setClubId] = useState<string>(NO_CLUB_VALUE);
+  const [myClubs, setMyClubs] = useState<MyClub[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!open || !user) return;
+
+    supabase
+      .from('club_members')
+      .select('club_id, status, clubs(id, name)')
+      .eq('user_id', user.id)
+      .eq('status', 'approved')
+      .then(({ data }) => {
+        const clubs = (data || [])
+          .map((row) => row.clubs)
+          .filter((c): c is MyClub => !!c);
+        setMyClubs(clubs);
+      });
+  }, [open, user]);
 
   const handleSubmit = async () => {
     if (!user || !content.trim()) return;
@@ -53,6 +78,7 @@ export const CreatePostDialog = ({
       const { error } = await supabase.from("posts").insert({
         user_id: user.id,
         book_id: bookId,
+        club_id: clubId === NO_CLUB_VALUE ? null : clubId,
         content: content.trim(),
         post_type: postType,
         visibility,
@@ -68,6 +94,7 @@ export const CreatePostDialog = ({
       setContent("");
       setPostType("general");
       setVisibility("public");
+      setClubId(NO_CLUB_VALUE);
       setOpen(false);
       onPostCreated?.();
     } catch (error) {
@@ -147,6 +174,23 @@ export const CreatePostDialog = ({
               </SelectContent>
             </Select>
           </div>
+
+          {myClubs.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="club">Marcar pro clube (opcional)</Label>
+              <Select value={clubId} onValueChange={setClubId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum clube" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_CLUB_VALUE}>Nenhum</SelectItem>
+                  {myClubs.map((club) => (
+                    <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="content">Compartilhe sua experiência</Label>

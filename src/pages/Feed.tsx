@@ -80,6 +80,7 @@ const Feed = () => {
                   key={post.id}
                   {...post}
                   book={post.books ? { title: post.books.title ?? '', author: post.books.author ?? '' } : undefined}
+                  club={post.clubs?.name ? { name: post.clubs.name } : undefined}
                   onPostDeleted={refetch}
                 />
               ))

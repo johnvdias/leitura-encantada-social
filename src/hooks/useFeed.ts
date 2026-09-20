@@ -12,12 +12,17 @@ type Post = Tables<'posts'> & {
     title: string | null;
     author: string | null;
   } | null;
+  clubs: {
+    name: string | null;
+  } | null;
   user: {
     display_name: string;
     avatar_url: string | null;
     user_id: string;
   };
 };
+
+const normalizeBookKey = (title: string, author: string) => `${title.trim().toLowerCase()}|${author.trim().toLowerCase()}`;
 
 export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -43,6 +48,9 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
           books (
             title,
             author
+          ),
+          clubs (
+            name
           )
         `);
 
@@ -72,7 +80,10 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
 
         query = query.in('user_id', authorIds).in('visibility', ['public', 'friends']);
       } else if (filter === 'clubs') {
-        // Show public posts from members of clubs the user belongs to
+        // Mostra só o que é realmente sobre o clube: posts marcados
+        // manualmente pra ele, ou posts (de qualquer membro) sobre o livro
+        // que o clube está lendo no momento - não qualquer post público de
+        // quem por acaso é membro de um clube com o usuário.
         const { data: myMemberships } = await supabase
           .from('club_members')
           .select('club_id')
@@ -96,7 +107,38 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
 
         const memberIds = Array.from(new Set((clubMembers || []).map(m => m.user_id)));
 
-        query = query.in('user_id', memberIds).eq('visibility', 'public');
+        // Livro atual de cada clube (dono + título/autora), pra achar posts
+        // sobre a mesma leitura feitos por qualquer membro.
+        const { data: clubsData } = await supabase
+          .from('clubs')
+          .select('id, current_book:books!clubs_current_book_id_fkey(title, author)')
+          .in('id', clubIds);
+
+        const currentReadKeys = new Set(
+          (clubsData || [])
+            .map((c) => c.current_book)
+            .filter((b): b is { title: string; author: string } => !!b?.title && !!b?.author)
+            .map((b) => normalizeBookKey(b.title, b.author))
+        );
+
+        let matchingBookIds: string[] = [];
+        if (currentReadKeys.size > 0 && memberIds.length > 0) {
+          const { data: memberBooks } = await supabase
+            .from('books')
+            .select('id, title, author')
+            .in('user_id', memberIds);
+
+          matchingBookIds = (memberBooks || [])
+            .filter((b) => currentReadKeys.has(normalizeBookKey(b.title, b.author)))
+            .map((b) => b.id);
+        }
+
+        const orParts = [`club_id.in.(${clubIds.join(',')})`];
+        if (matchingBookIds.length > 0) {
+          orParts.push(`book_id.in.(${matchingBookIds.join(',')})`);
+        }
+
+        query = query.in('user_id', memberIds).eq('visibility', 'public').or(orParts.join(','));
       } else {
         // Mostra os posts públicos de todo mundo, mais os próprios posts do
         // usuário logado mesmo quando não são públicos - sem isso, o autor

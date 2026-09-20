@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LikeButton } from "@/components/LikeButton";
@@ -22,13 +22,16 @@ interface PostCardProps {
     title: string;
     author: string;
   };
+  club?: {
+    name: string;
+  };
   created_at: string;
   post_type: string;
   visibility?: string;
   onPostDeleted?: () => void;
 }
 
-const PostCard = ({ id, content, user, book, created_at, post_type, visibility, onPostDeleted }: PostCardProps) => {
+const PostCard = ({ id, content, user, book, club, created_at, post_type, visibility, onPostDeleted }: PostCardProps) => {
   const { user: currentUser } = useAuth();
   const isOwnPost = currentUser?.id === user.user_id;
   const getPostTypeLabel = (type: string) => {
@@ -96,6 +99,13 @@ const PostCard = ({ id, content, user, book, created_at, post_type, visibility, 
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {club && (
+          <div className="flex items-center gap-2 text-sm text-primary">
+            <Users className="w-4 h-4" />
+            <span className="font-medium">{club.name}</span>
+          </div>
+        )}
+
         {book && (
           <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
             <BookOpen className="w-4 h-4 text-primary" />
