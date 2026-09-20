@@ -35,10 +35,6 @@ export function BibliotecaEncantada() {
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-enchanted text-enchanted">Biblioteca Encantada</h2>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Livros de domínio público e autorais prontos pra baixar em EPUB e levar pro seu Kindle
-          (use o "Enviar para Kindle" da Amazon depois de baixar).
-        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
