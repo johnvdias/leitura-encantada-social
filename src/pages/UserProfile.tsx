@@ -60,8 +60,8 @@ const UserProfile = () => {
   const isOwnProfile = user?.id === userId;
 
   const fetchUserData = useCallback(async () => {
-    if (!userId) return;
-    
+    if (!userId || isOwnProfile) return;
+
     setLoading(true);
     setError(null);
     
@@ -107,11 +107,15 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
-  }, [userId, toast]);
+  }, [userId, toast, isOwnProfile]);
 
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  if (isOwnProfile) {
+    return <Navigate to="/perfil" replace />;
+  }
 
   const renderFriendshipButton = () => {
     if (isOwnProfile) return null;
