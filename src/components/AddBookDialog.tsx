@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Search, Loader2, BookOpen, User, FileText, Hash } from "lucide-react";
+import { Plus, Search, Loader2, BookOpen, User, FileText, Hash, ScanLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { isValidIsbn } from "@/lib/isbn";
+import { ManualBookDialog } from "@/components/ManualBookDialog";
 
 interface BookResult {
   id: string;
@@ -18,11 +20,26 @@ interface BookResult {
   genre: string;
   cover_url: string | null;
   isbn: string | null;
+  isbn_10: string | null;
+  isbn_13: string | null;
+  publisher: string | null;
+  published_date: string | null;
+  language: string | null;
+  source: 'catalog' | 'google_books' | 'open_library';
+  catalog_id: string | null;
+  google_books_id: string | null;
+  open_library_id: string | null;
 }
 
 interface AddBookDialogProps {
   onBookAdded: () => void;
 }
+
+const SOURCE_LABEL: Record<BookResult['source'], string> = {
+  catalog: 'Catálogo Leitura Encantada',
+  google_books: 'Google Books',
+  open_library: 'Open Library',
+};
 
 export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
   const [open, setOpen] = useState(false);
@@ -30,8 +47,13 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
   const [searchResults, setSearchResults] = useState<BookResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // "978..." já dá pra reconhecer como provável ISBN antes de buscar - só
+  // um aviso visual, a detecção de verdade acontece no backend.
+  const looksLikeIsbn = useMemo(() => isValidIsbn(query.trim()), [query]);
 
   const searchBooks = async () => {
     if (!query.trim()) return;
@@ -47,6 +69,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
       }
 
       setSearchResults(response.data.books || []);
+      setHasSearched(true);
     } catch (error) {
       console.error('Error searching books:', error);
       toast({
@@ -64,6 +87,29 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
 
     setIsAdding(true);
     try {
+      // Livro achado numa API externa passa a existir no catálogo próprio -
+      // a próxima busca por ele (de qualquer usuária) não precisa mais
+      // consultar Google Books/Open Library. Livro que já veio do catálogo
+      // não precisa passar por aqui de novo.
+      if (book.source !== 'catalog') {
+        await supabase.rpc('upsert_book_catalog', {
+          p_title: book.title,
+          p_authors: book.author,
+          p_isbn_10: book.isbn_10,
+          p_isbn_13: book.isbn_13,
+          p_publisher: book.publisher,
+          p_published_date: book.published_date,
+          p_page_count: book.pages,
+          p_language: book.language,
+          p_description: book.description,
+          p_cover_url: book.cover_url,
+          p_source: book.source,
+          p_google_books_id: book.google_books_id,
+          p_open_library_id: book.open_library_id,
+          p_genre: book.genre,
+        });
+      }
+
       const { error } = await supabase
         .from('books')
         .insert({
@@ -88,6 +134,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
       setOpen(false);
       setQuery("");
       setSearchResults([]);
+      setHasSearched(false);
       onBookAdded();
     } catch (error) {
       console.error('Error adding book:', error);
@@ -99,6 +146,14 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
     } finally {
       setIsAdding(false);
     }
+  };
+
+  const handleManualBookAdded = () => {
+    setOpen(false);
+    setQuery("");
+    setSearchResults([]);
+    setHasSearched(false);
+    onBookAdded();
   };
 
   return (
@@ -120,9 +175,12 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-2">
             <Input
-              placeholder="Digite o título do livro..."
+              placeholder="Digite título, autora ou ISBN..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setHasSearched(false);
+              }}
               onKeyDown={(e) => e.key === 'Enter' && searchBooks()}
               className="w-full"
             />
@@ -139,6 +197,13 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
               <span className="sm:hidden">Buscar</span>
             </Button>
           </div>
+
+          {looksLikeIsbn && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <ScanLine className="h-3 w-3" />
+              Buscando pelo ISBN
+            </p>
+          )}
 
           {searchResults.length > 0 && (
             <div className="space-y-3">
@@ -161,18 +226,18 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                             <BookOpen className="h-6 w-6 text-muted-foreground" />
                           </div>
                         )}
-                        
+
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-sm leading-tight mb-1 truncate">
                             {book.title}
                           </h4>
-                          
+
                           <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
                             <User className="h-3 w-3" />
                             <span className="truncate">{book.author}</span>
                           </div>
 
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2 flex-wrap">
                             {book.pages && (
                               <div className="flex items-center gap-1">
                                 <Hash className="h-3 w-3" />
@@ -182,6 +247,9 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                             <Badge variant="secondary" className="text-xs px-2 py-0.5 max-w-[160px] truncate">
                               {book.genre}
                             </Badge>
+                            <span className="text-[10px] text-muted-foreground/70">
+                              {SOURCE_LABEL[book.source]}
+                            </span>
                           </div>
 
                           {book.description && (
@@ -228,11 +296,22 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
             </div>
           )}
 
-          {!isSearching && searchResults.length === 0 && query && (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Nenhum livro encontrado para "{query}"</p>
-              <p className="text-sm">Tente usar palavras-chave diferentes</p>
+          {!isSearching && hasSearched && searchResults.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground space-y-4">
+              <div>
+                <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>
+                  {looksLikeIsbn
+                    ? "Não encontramos esse ISBN nas nossas fontes."
+                    : "Não encontramos esse livro no nosso catálogo."}
+                </p>
+                {!looksLikeIsbn && (
+                  <p className="text-sm">Tente buscar pelo ISBN ou cadastre o livro você mesma</p>
+                )}
+              </div>
+              <div className="flex justify-center">
+                <ManualBookDialog onBookAdded={handleManualBookAdded} />
+              </div>
             </div>
           )}
         </div>

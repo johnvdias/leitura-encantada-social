@@ -47,6 +47,135 @@ export type Database = {
         }
         Relationships: []
       }
+      book_catalog: {
+        Row: {
+          authors: string | null
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          genre: string | null
+          google_books_id: string | null
+          id: string
+          isbn_10: string | null
+          isbn_13: string | null
+          language: string | null
+          open_library_id: string | null
+          page_count: number | null
+          published_date: string | null
+          publisher: string | null
+          source: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          authors?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          genre?: string | null
+          google_books_id?: string | null
+          id?: string
+          isbn_10?: string | null
+          isbn_13?: string | null
+          language?: string | null
+          open_library_id?: string | null
+          page_count?: number | null
+          published_date?: string | null
+          publisher?: string | null
+          source?: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          authors?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          genre?: string | null
+          google_books_id?: string | null
+          id?: string
+          isbn_10?: string | null
+          isbn_13?: string | null
+          language?: string | null
+          open_library_id?: string | null
+          page_count?: number | null
+          published_date?: string | null
+          publisher?: string | null
+          source?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      book_search_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          external_id: string | null
+          id: string
+          isbn: string | null
+          normalized_query: string | null
+          provider: string
+          response_data: Json
+          search_query: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          external_id?: string | null
+          id?: string
+          isbn?: string | null
+          normalized_query?: string | null
+          provider: string
+          response_data: Json
+          search_query: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          external_id?: string | null
+          id?: string
+          isbn?: string | null
+          normalized_query?: string | null
+          provider?: string
+          response_data?: Json
+          search_query?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      book_search_log: {
+        Row: {
+          created_at: string
+          id: string
+          query: string
+          resolved_by: string
+          search_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          query: string
+          resolved_by: string
+          search_type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          query?: string
+          resolved_by?: string
+          search_type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       books: {
         Row: {
           author: string | null
@@ -875,6 +1004,28 @@ export type Database = {
       remove_club_member: {
         Args: { p_club_id: string; p_user_id: string }
         Returns: undefined
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      upsert_book_catalog: {
+        Args: {
+          p_authors?: string
+          p_cover_url?: string
+          p_description?: string
+          p_genre?: string
+          p_google_books_id?: string
+          p_isbn_10?: string
+          p_isbn_13?: string
+          p_language?: string
+          p_open_library_id?: string
+          p_page_count?: number
+          p_published_date?: string
+          p_publisher?: string
+          p_source?: string
+          p_subtitle?: string
+          p_title: string
+        }
+        Returns: string
       }
     }
     Enums: {
