@@ -17,6 +17,7 @@ interface EditBookDialogProps {
   pages: number | null;
   genre: string;
   description?: string;
+  coverUrl?: string | null;
   status: 'reading' | 'completed' | 'want_to_read';
   onBookUpdated: () => void;
   children?: React.ReactNode;
@@ -29,6 +30,7 @@ export function EditBookDialog({
   pages,
   genre,
   description,
+  coverUrl,
   status,
   onBookUpdated,
   children,
@@ -39,6 +41,7 @@ export function EditBookDialog({
     pages: pages || 0,
     genre,
     description: description || "",
+    coverUrl: coverUrl || "",
     status,
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -56,6 +59,7 @@ export function EditBookDialog({
           pages: formData.pages > 0 ? formData.pages : null,
           genre: formData.genre,
           description: formData.description || null,
+          cover_url: formData.coverUrl || null,
           reading_status: formData.status,
           updated_at: new Date().toISOString(),
         })
@@ -151,6 +155,27 @@ export function EditBookDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cover_url">URL da Capa</Label>
+            <Input
+              id="cover_url"
+              value={formData.coverUrl}
+              onChange={(e) => setFormData(prev => ({ ...prev, coverUrl: e.target.value }))}
+              placeholder="https://exemplo.com/capa.jpg"
+            />
+            {formData.coverUrl && (
+              <div className="flex justify-center pt-1">
+                <img
+                  src={formData.coverUrl}
+                  alt="Pré-visualização da capa"
+                  className="h-32 w-20 object-cover rounded-md border"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  onLoad={(e) => { e.currentTarget.style.display = 'block'; }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

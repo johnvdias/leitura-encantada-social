@@ -140,6 +140,7 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
                 pages={book.pages}
                 genre={book.genre ?? ''}
                 description={book.description ?? undefined}
+                coverUrl={book.cover_url}
                 status={book.reading_status}
                 onBookUpdated={onUpdate}
             />
