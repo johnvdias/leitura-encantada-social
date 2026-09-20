@@ -1,5 +1,6 @@
 
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,9 +31,14 @@ interface RecentActivity {
   };
 }
 
+const VALID_TABS = ['estatisticas', 'conquistas', 'amigos', 'emprestimos', 'citacoes', 'atividade'];
+
 const Perfil = () => {
   const { user, profile } = useAuth();
   const { achievements, checkAndUnlockAchievements } = useAchievements();
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const initialTab = tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : 'estatisticas';
   const [stats, setStats] = useState({
     totalBooks: 0,
     completedBooks: 0,
@@ -146,7 +152,7 @@ const Perfil = () => {
         </CardContent>
       </Card>
       
-      <Tabs defaultValue="estatisticas" className="space-y-6">
+      <Tabs defaultValue={initialTab} className="space-y-6">
         <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-6 gap-1">
           <TabsTrigger value="estatisticas" className="shrink-0">Estatísticas</TabsTrigger>
           <TabsTrigger value="conquistas" className="shrink-0">Conquistas</TabsTrigger>

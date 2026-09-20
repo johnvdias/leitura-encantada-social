@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,15 +13,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
+import { getNotificationLink } from "@/lib/notificationLinks";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export function NotificationDropdown() {
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const handleMarkAsRead = async (notificationId: string) => {
-    await markAsRead(notificationId);
+  const handleNotificationClick = async (notification: (typeof notifications)[number]) => {
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
+    }
+    setOpen(false);
+    const link = getNotificationLink(notification);
+    if (link) navigate(link);
   };
 
   const handleMarkAllAsRead = async () => {
@@ -74,7 +82,7 @@ export function NotificationDropdown() {
                 className={`flex items-start gap-2 p-3 cursor-pointer ${
                   !notification.is_read ? 'bg-primary/5' : ''
                 }`}
-                onClick={() => handleMarkAsRead(notification.id)}
+                onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
