@@ -1,13 +1,26 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookHeart, Library, Users, Heart, Sparkles, BookOpen, Trophy, Calendar } from "lucide-react";
 import heroImage from "@/assets/hero-enchanted-library.jpg";
 import { useAuth } from "@/contexts/AuthContext";
-import { RecommendationSystem } from "@/components/RecommendationSystem";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Essa tela é só a vitrine pra quem ainda não entrou - depois do login o
+  // ponto de partida passa a ser o feed, não essa página de novo.
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/feed" replace />;
+  }
 
   const features = [
     {
@@ -48,13 +61,6 @@ const Index = () => {
     }
   ];
 
-  const stats = [
-    { number: "10k+", label: "Leitoras Ativas" },
-    { number: "50k+", label: "Livros Registrados" },
-    { number: "200+", label: "Clubes de Leitura" },
-    { number: "1M+", label: "Páginas Lidas" }
-  ];
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -79,51 +85,20 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              {user ? (
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link to="/estante">
-                    <Button size="lg" className="btn-enchanted text-lg w-full sm:w-auto">
-                      <Library className="w-5 h-5 mr-2" />
-                      Minha Estante
-                    </Button>
-                  </Link>
-                  <Link to="/feed">
-                    <Button size="lg" variant="outline" className="hover-glow w-full sm:w-auto">
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Ver Feed
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link to="/auth">
-                    <Button size="lg" className="btn-enchanted text-lg w-full sm:w-auto">
-                      <BookHeart className="w-5 h-5 mr-2" />
-                      Começar Minha Jornada
-                    </Button>
-                  </Link>
-                  <Link to="/feed">
-                    <Button size="lg" variant="outline" className="hover-glow w-full sm:w-auto">
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Descobrir Comunidade
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-2xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-primary mb-1">
-                    {stat.number}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to="/auth">
+                  <Button size="lg" className="btn-enchanted text-lg w-full sm:w-auto">
+                    <BookHeart className="w-5 h-5 mr-2" />
+                    Começar Minha Jornada
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button size="lg" variant="outline" className="hover-glow w-full sm:w-auto">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Descobrir Comunidade
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -164,25 +139,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Recommendations Section for logged in users */}
-      {user && (
-        <section className="py-16 md:py-20 bg-muted/30">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12 md:mb-16">
-              <h2 className="text-3xl md:text-4xl font-enchanted text-enchanted mb-4">
-                Recomendações Personalizadas
-              </h2>
-              <p className="text-md md:text-lg text-muted-foreground max-w-2xl mx-auto">
-                Descobrimos livros, pessoas e clubes especiais que podem encantar sua jornada literária
-              </p>
-            </div>
-            <div className="max-w-4xl mx-auto">
-              <RecommendationSystem />
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* CTA Section */}
       <section className="py-16 md:py-20 bg-gradient-dreamy">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -196,16 +152,10 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to={user ? "/estante" : "/auth"}>
+              <Link to="/auth">
                 <Button size="lg" className="bg-white text-primary hover:bg-white/90 text-lg w-full sm:w-auto">
                   <Library className="w-5 h-5 mr-2" />
-                  {user ? "Explorar Minha Estante" : "Começar Agora"}
-                </Button>
-              </Link>
-              <Link to="/feed">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg w-full sm:w-auto">
-                  <Heart className="w-5 h-5 mr-2" />
-                  Ver Feed da Comunidade
+                  Começar Agora
                 </Button>
               </Link>
             </div>

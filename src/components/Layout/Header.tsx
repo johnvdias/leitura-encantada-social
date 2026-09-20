@@ -19,7 +19,7 @@ const Header = () => {
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to={user ? "/feed" : "/"} className="flex items-center gap-2">
           <BookOpen className="h-6 w-6 text-primary" />
           <span className="flex items-baseline gap-1.5">
             <span className="font-bold text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
