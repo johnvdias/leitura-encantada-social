@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { UserMinus, Hourglass } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,6 +62,7 @@ const ClubePage = () => {
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
+  const [readProgress, setReadProgress] = useState<{ completed: number; total: number } | null>(null);
   
   const isCreator = club?.creator_id === user?.id;
 
@@ -112,11 +114,38 @@ const ClubePage = () => {
             .eq('club_id', clubId);
 
         if (membersError) throw new Error("Erro ao carregar membros.");
-        
+
         setMembers(membersData as Member[]);
         const currentUserMembership = membersData.find(m => m.user_id === user.id);
         setIsMember(currentUserMembership?.status === 'approved');
         setHasPendingRequest(currentUserMembership?.status === 'pending');
+
+        // Etapa 6: Calcular o progresso de leitura do clube.
+        // Não existe um catalog_id compartilhado entre os livros pessoais dos
+        // membros, então a comparação é aproximada por título+autor normalizados.
+        const approvedIds = membersData
+            .filter(m => m.status === 'approved')
+            .map(m => m.user_id);
+
+        if (bookData && approvedIds.length > 0) {
+            const { data: memberBooksData } = await supabase
+                .from('books')
+                .select('user_id, title, author')
+                .in('user_id', approvedIds)
+                .eq('reading_status', 'completed');
+
+            const normalize = (s: string) => s.trim().toLowerCase();
+            const targetTitle = normalize(bookData.title);
+            const targetAuthor = normalize(bookData.author);
+            const completedUserIds = new Set(
+                (memberBooksData || [])
+                    .filter(b => normalize(b.title) === targetTitle && normalize(b.author) === targetAuthor)
+                    .map(b => b.user_id)
+            );
+            setReadProgress({ completed: completedUserIds.size, total: approvedIds.length });
+        } else {
+            setReadProgress(null);
+        }
 
     } catch (err) {
         const message = err instanceof Error ? err.message : "Erro ao carregar o clube.";
@@ -203,11 +232,20 @@ const ClubePage = () => {
                 <p className="font-semibold text-sm text-muted-foreground">Leitura Atual</p>
                 <div className="flex items-center gap-4 mt-2">
                     <img src={club.books.cover_url || '/placeholder.svg'} alt={club.books.title} className="h-24 w-16 object-cover rounded"/>
-                    <div>
+                    <div className="flex-1 min-w-0">
                         <p className="font-bold">{club.books.title}</p>
                         <p className="text-sm text-muted-foreground">{club.books.author}</p>
                     </div>
                 </div>
+                {readProgress && readProgress.total > 0 && (
+                    <div className="mt-4">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <span>Progresso do clube</span>
+                            <span>{readProgress.completed} de {readProgress.total} concluíram</span>
+                        </div>
+                        <Progress value={(readProgress.completed / readProgress.total) * 100} className="h-2" />
+                    </div>
+                )}
             </CardContent>
         )}
       </Card>
