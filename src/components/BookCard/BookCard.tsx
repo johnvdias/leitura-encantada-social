@@ -51,6 +51,20 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
     }
   };
 
+  const handleRate = async (rating: number) => {
+    try {
+      const { error } = await supabase
+        .from('books')
+        .update({ rating: rating === book.rating ? null : rating })
+        .eq('id', book.id);
+
+      if (error) throw error;
+      onUpdate();
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Não foi possível salvar sua avaliação.', variant: 'destructive' });
+    }
+  };
+
   const handleStartReading = async () => {
     setIsUpdatingStatus(true);
     try {
@@ -84,11 +98,24 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
                 <Badge variant={book.reading_status === 'reading' ? 'default' : 'outline'} className="self-start mb-1">{getStatusLabel(book.reading_status)}</Badge>
                 <h3 className="font-bold truncate" title={book.title}>{book.title}</h3>
                 <p className="text-sm text-muted-foreground truncate">{book.author}</p>
-                {book.rating && (
+                {book.reading_status === 'completed' ? (
+                    <div className="flex items-center mt-1" aria-label="Avaliar livro">
+                        {[...Array(5)].map((_, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => handleRate(i + 1)}
+                            className="p-0.5 -m-0.5"
+                          >
+                            <Star className={`h-4 w-4 ${i < (book.rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
+                          </button>
+                        ))}
+                    </div>
+                ) : book.rating ? (
                     <div className="flex items-center mt-1">
                         {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < book.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />)}
                     </div>
-                )}
+                ) : null}
             </div>
         </div>
 
