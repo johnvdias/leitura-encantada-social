@@ -12,6 +12,7 @@ import { FriendsSection } from "@/components/FriendsSection";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { AdvancedStats } from "@/components/AdvancedStats";
 import { AchievementBadges } from "@/components/AchievementBadges";
+import { BookLoansSection } from "@/components/BookLoansSection";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -140,10 +141,11 @@ const Perfil = () => {
       </Card>
       
       <Tabs defaultValue="estatisticas" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
           <TabsTrigger value="conquistas">Conquistas</TabsTrigger>
           <TabsTrigger value="amigos">Amigos</TabsTrigger>
+          <TabsTrigger value="emprestimos">Empréstimos</TabsTrigger>
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
         </TabsList>
 
@@ -189,6 +191,10 @@ const Perfil = () => {
 
         <TabsContent value="amigos">
           <FriendsSection />
+        </TabsContent>
+
+        <TabsContent value="emprestimos" className="space-y-6">
+          <BookLoansSection />
         </TabsContent>
 
         <TabsContent value="atividade" className="space-y-6">

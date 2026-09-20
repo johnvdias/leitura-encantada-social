@@ -33,6 +33,7 @@ const NOTIFICATION_CATEGORY_LABELS: Record<NotificationCategory, string> = {
   friends: 'Solicitações de amizade',
   nudges: 'Cutucões',
   achievements: 'Conquistas',
+  loans: 'Empréstimos de livros',
 };
 
 // Debounce function
@@ -91,6 +92,7 @@ export function EditProfileDialog() {
         friends: isCategoryEnabled(profile.notification_preferences, 'friends'),
         nudges: isCategoryEnabled(profile.notification_preferences, 'nudges'),
         achievements: isCategoryEnabled(profile.notification_preferences, 'achievements'),
+        loans: isCategoryEnabled(profile.notification_preferences, 'loans'),
       });
     }
   }, [profile, open]);
