@@ -99,7 +99,7 @@ const Header = () => {
                 <GlobalSearch />
               </div>
               <div className="md:hidden">
-                <GlobalSearch />
+                <GlobalSearch iconOnly />
               </div>
               <Link to="/mensagens">
                 <Button variant="ghost" size="icon" className="relative">

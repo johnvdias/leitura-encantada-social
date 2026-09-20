@@ -72,14 +72,14 @@ export function FriendsSection() {
 
   return (
     <Tabs defaultValue="friends" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="friends"><Users className="mr-2 h-4 w-4"/>Amigos</TabsTrigger>
-        <TabsTrigger value="requests">
+      <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-4 gap-1">
+        <TabsTrigger value="friends" className="shrink-0"><Users className="mr-2 h-4 w-4"/>Amigos</TabsTrigger>
+        <TabsTrigger value="requests" className="shrink-0">
           <span className="mr-2">Solicitações</span>
           {(friendRequests.length > 0) && <Badge>{friendRequests.length}</Badge>}
         </TabsTrigger>
-        <TabsTrigger value="challenges"><Trophy className="mr-2 h-4 w-4"/>Desafios</TabsTrigger>
-        <TabsTrigger value="schedules"><Calendar className="mr-2 h-4 w-4"/>Cronogramas</TabsTrigger>
+        <TabsTrigger value="challenges" className="shrink-0"><Trophy className="mr-2 h-4 w-4"/>Desafios</TabsTrigger>
+        <TabsTrigger value="schedules" className="shrink-0"><Calendar className="mr-2 h-4 w-4"/>Cronogramas</TabsTrigger>
       </TabsList>
 
       {/* Friends Tab */}

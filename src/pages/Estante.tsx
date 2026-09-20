@@ -127,10 +127,10 @@ const Estante = () => {
       </div>
 
       <Tabs defaultValue="lendo" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto mb-8">
-          <TabsTrigger value="lendo">Lendo ({readingBooks.length})</TabsTrigger>
-          <TabsTrigger value="lidos">Lidos ({completedBooks.length})</TabsTrigger>
-          <TabsTrigger value="quero-ler">Quero Ler ({wantToReadBooks.length})</TabsTrigger>
+        <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-3 gap-1 max-w-md mx-auto mb-8">
+          <TabsTrigger value="lendo" className="shrink-0">Lendo ({readingBooks.length})</TabsTrigger>
+          <TabsTrigger value="lidos" className="shrink-0">Lidos ({completedBooks.length})</TabsTrigger>
+          <TabsTrigger value="quero-ler" className="shrink-0">Quero Ler ({wantToReadBooks.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="lendo">

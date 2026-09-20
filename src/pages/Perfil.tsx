@@ -145,13 +145,13 @@ const Perfil = () => {
       </Card>
       
       <Tabs defaultValue="estatisticas" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
-          <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
-          <TabsTrigger value="conquistas">Conquistas</TabsTrigger>
-          <TabsTrigger value="amigos">Amigos</TabsTrigger>
-          <TabsTrigger value="emprestimos">Empréstimos</TabsTrigger>
-          <TabsTrigger value="citacoes">Citações</TabsTrigger>
-          <TabsTrigger value="atividade">Atividade</TabsTrigger>
+        <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-6 gap-1">
+          <TabsTrigger value="estatisticas" className="shrink-0">Estatísticas</TabsTrigger>
+          <TabsTrigger value="conquistas" className="shrink-0">Conquistas</TabsTrigger>
+          <TabsTrigger value="amigos" className="shrink-0">Amigos</TabsTrigger>
+          <TabsTrigger value="emprestimos" className="shrink-0">Empréstimos</TabsTrigger>
+          <TabsTrigger value="citacoes" className="shrink-0">Citações</TabsTrigger>
+          <TabsTrigger value="atividade" className="shrink-0">Atividade</TabsTrigger>
         </TabsList>
 
         <TabsContent value="estatisticas" className="space-y-6">

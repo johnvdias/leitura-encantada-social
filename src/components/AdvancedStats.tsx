@@ -173,10 +173,10 @@ export function AdvancedStats() {
       </div>
 
       <Tabs defaultValue="status" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="status">Status dos Livros</TabsTrigger>
-          <TabsTrigger value="genres">Gêneros Favoritos</TabsTrigger>
-          <TabsTrigger value="progress">Progresso Mensal</TabsTrigger>
+        <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-3 gap-1">
+          <TabsTrigger value="status" className="shrink-0">Status dos Livros</TabsTrigger>
+          <TabsTrigger value="genres" className="shrink-0">Gêneros Favoritos</TabsTrigger>
+          <TabsTrigger value="progress" className="shrink-0">Progresso Mensal</TabsTrigger>
         </TabsList>
 
         <TabsContent value="status" className="space-y-4">

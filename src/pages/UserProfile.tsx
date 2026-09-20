@@ -187,7 +187,7 @@ const UserProfile = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 self-start sm:self-end">
+            <div className="flex items-center flex-wrap gap-2 self-start sm:self-end">
               {!isOwnProfile && friends.some(f => f.friend.user_id === userId) && (
                 <>
                   <Link to={`/mensagens/${userId}`}>

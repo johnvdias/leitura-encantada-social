@@ -23,7 +23,11 @@ interface SearchResult {
   description?: string;
 }
 
-export function GlobalSearch() {
+interface GlobalSearchProps {
+  iconOnly?: boolean;
+}
+
+export function GlobalSearch({ iconOnly = false }: GlobalSearchProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -145,10 +149,17 @@ export function GlobalSearch() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full md:w-auto">
-          <Search className="h-4 w-4 mr-2" />
-          Buscar...
-        </Button>
+        {iconOnly ? (
+          <Button variant="ghost" size="icon">
+            <Search className="h-5 w-5" />
+            <span className="sr-only">Buscar</span>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className="w-full md:w-auto">
+            <Search className="h-4 w-4 mr-2" />
+            Buscar...
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] max-h-[600px]">
         <DialogHeader>

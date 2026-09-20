@@ -210,7 +210,7 @@ const ClubePage = () => {
                   <p className="text-muted-foreground max-w-prose">{club.description}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 self-start sm:self-end shrink-0">
+              <div className="flex items-center flex-wrap gap-2 self-start sm:self-end shrink-0">
                 {isCreator && (
                   <>
                     <ClubInviteDialog
@@ -253,11 +253,11 @@ const ClubePage = () => {
 
       {isMember ? (
         <Tabs defaultValue="discussions">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="discussions">Discussões</TabsTrigger>
-            <TabsTrigger value="schedules">Cronogramas</TabsTrigger>
-            <TabsTrigger value="votacao">Votação</TabsTrigger>
-            <TabsTrigger value="members">Membros ({approvedMembers.length})</TabsTrigger>
+          <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-4 gap-1">
+            <TabsTrigger value="discussions" className="shrink-0">Discussões</TabsTrigger>
+            <TabsTrigger value="schedules" className="shrink-0">Cronogramas</TabsTrigger>
+            <TabsTrigger value="votacao" className="shrink-0">Votação</TabsTrigger>
+            <TabsTrigger value="members" className="shrink-0">Membros ({approvedMembers.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="discussions" className="mt-6">

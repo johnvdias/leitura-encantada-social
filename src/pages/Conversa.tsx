@@ -50,17 +50,17 @@ const Conversa = () => {
 
   return (
     <div className="container mx-auto px-4 py-4 max-w-2xl flex flex-col h-[calc(100vh-4rem)]">
-      <div className="flex items-center gap-3 pb-4 border-b">
-        <Link to="/mensagens">
+      <div className="flex items-center gap-3 pb-4 border-b min-w-0">
+        <Link to="/mensagens" className="shrink-0">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <Avatar className="h-9 w-9">
+        <Avatar className="h-9 w-9 shrink-0">
           <AvatarImage src={otherProfile?.avatar_url || undefined} />
           <AvatarFallback>{otherProfile?.display_name?.charAt(0) || '?'}</AvatarFallback>
         </Avatar>
-        <p className="font-semibold">{otherProfile?.display_name || 'Usuária'}</p>
+        <p className="font-semibold truncate min-w-0">{otherProfile?.display_name || 'Usuária'}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto py-4 space-y-3">

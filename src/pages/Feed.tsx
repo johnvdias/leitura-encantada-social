@@ -67,10 +67,10 @@ const Feed = () => {
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-8">
-            <TabsTrigger value="todas">Todas</TabsTrigger>
-            <TabsTrigger value="amigas">Amigos</TabsTrigger>
-            <TabsTrigger value="clubes">Clubes</TabsTrigger>
+          <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-3 gap-1 mb-8">
+            <TabsTrigger value="todas" className="shrink-0">Todas</TabsTrigger>
+            <TabsTrigger value="amigas" className="shrink-0">Amigos</TabsTrigger>
+            <TabsTrigger value="clubes" className="shrink-0">Clubes</TabsTrigger>
           </TabsList>
 
           <div className="space-y-6">
