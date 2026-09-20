@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Search, Loader2, BookOpen, User, FileText, Hash, ScanLine } from "lucide-react";
+import { Plus, Search, Loader2, BookOpen, User, FileText, Hash, ScanLine, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { isValidIsbn } from "@/lib/isbn";
 import { ManualBookDialog } from "@/components/ManualBookDialog";
+import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 
 interface BookResult {
   id: string;
@@ -48,6 +49,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -56,13 +58,14 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
   const looksLikeIsbn = useMemo(() => isValidIsbn(query.trim()), [query]);
   const looksLikeAmazonLink = useMemo(() => /^https?:\/\/(www\.)?(amazon\.[a-z.]+|a\.co)\//i.test(query.trim()), [query]);
 
-  const searchBooks = async () => {
-    if (!query.trim()) return;
+  const searchBooks = async (overrideQuery?: string) => {
+    const searchQuery = overrideQuery ?? query;
+    if (!searchQuery.trim()) return;
 
     setIsSearching(true);
     try {
       const response = await supabase.functions.invoke('search-books', {
-        body: { query }
+        body: { query: searchQuery }
       });
 
       if (response.error) {
@@ -149,6 +152,12 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
     }
   };
 
+  const handleBarcodeDetected = (code: string) => {
+    setQuery(code);
+    setHasSearched(false);
+    searchBooks(code);
+  };
+
   const handleManualBookAdded = () => {
     setOpen(false);
     setQuery("");
@@ -158,6 +167,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2">
@@ -186,7 +196,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
               className="w-full"
             />
             <Button
-              onClick={searchBooks}
+              onClick={() => searchBooks()}
               disabled={isSearching || !query.trim()}
               className="w-full sm:w-auto shrink-0 gap-2"
             >
@@ -196,6 +206,16 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                 <Search className="h-4 w-4" />
               )}
               <span className="sm:hidden">Buscar</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setScannerOpen(true)}
+              className="w-full sm:w-auto shrink-0 gap-2"
+              title="Escanear código de barras"
+            >
+              <Camera className="h-4 w-4" />
+              <span className="sm:hidden">Escanear</span>
             </Button>
           </div>
 
@@ -320,5 +340,12 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
         </div>
       </DialogContent>
     </Dialog>
+
+    <BarcodeScannerDialog
+      open={scannerOpen}
+      onOpenChange={setScannerOpen}
+      onDetected={handleBarcodeDetected}
+    />
+    </>
   );
 }
