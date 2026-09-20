@@ -1,4 +1,5 @@
 
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -65,15 +66,32 @@ const PostCard = ({ id, content, user, book, club, created_at, post_type, visibi
     <Card className="card-enchanted hover-float">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={user.avatar_url} />
-            <AvatarFallback>
-              {user.display_name?.[0] || '?'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
+          {user.user_id ? (
+            <Link to={`/perfil/${user.user_id}`} className="shrink-0">
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={user.avatar_url} />
+                <AvatarFallback>
+                  {user.display_name?.[0] || '?'}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+          ) : (
+            <Avatar className="w-10 h-10 shrink-0">
+              <AvatarImage src={user.avatar_url} />
+              <AvatarFallback>
+                {user.display_name?.[0] || '?'}
+              </AvatarFallback>
+            </Avatar>
+          )}
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold">{user.display_name}</span>
+              {user.user_id ? (
+                <Link to={`/perfil/${user.user_id}`} className="font-semibold hover:underline">
+                  {user.display_name}
+                </Link>
+              ) : (
+                <span className="font-semibold">{user.display_name}</span>
+              )}
               <Badge className={getPostTypeColor(post_type)}>
                 {getPostTypeLabel(post_type)}
               </Badge>
