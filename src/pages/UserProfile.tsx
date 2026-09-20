@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Target, Award, Calendar, UserPlus, UserCheck, UserX, AlertCircle } from "lucide-react";
+import { BookOpen, Target, Award, Calendar, UserPlus, UserCheck, UserX, AlertCircle, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -189,7 +189,12 @@ const UserProfile = () => {
             </div>
             <div className="flex items-center gap-2 self-start sm:self-end">
               {!isOwnProfile && friends.some(f => f.friend.user_id === userId) && (
-                <NudgeButton friendId={userId!} friendName={profile.display_name} />
+                <>
+                  <Link to={`/mensagens/${userId}`}>
+                    <Button variant="outline"><MessageCircle className="h-4 w-4 mr-2" />Mensagem</Button>
+                  </Link>
+                  <NudgeButton friendId={userId!} friendName={profile.display_name} />
+                </>
               )}
               {renderFriendshipButton()}
             </div>

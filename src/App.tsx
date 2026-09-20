@@ -18,6 +18,8 @@ import Perfil from "./pages/Perfil";
 import ClubePage from "./pages/ClubePage";
 import UserProfile from "./pages/UserProfile";
 import InviteJoin from "./pages/InviteJoin";
+import Mensagens from "./pages/Mensagens";
+import Conversa from "./pages/Conversa";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +70,16 @@ const App = () => (
                   <Route path="/clubes/:clubId" element={
                     <ProtectedRoute>
                       <ClubePage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/mensagens" element={
+                    <ProtectedRoute>
+                      <Mensagens />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/mensagens/:userId" element={
+                    <ProtectedRoute>
+                      <Conversa />
                     </ProtectedRoute>
                   } />
                   {/* Sem ProtectedRoute de propósito: essa página trata os

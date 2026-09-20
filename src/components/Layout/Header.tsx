@@ -1,15 +1,18 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, Home, User, MessageSquare, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, Users, Home, User, MessageSquare, MessageCircle, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useConversations } from "@/hooks/useConversations";
 
 const Header = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { totalUnread } = useConversations();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -98,6 +101,19 @@ const Header = () => {
               <div className="md:hidden">
                 <GlobalSearch />
               </div>
+              <Link to="/mensagens">
+                <Button variant="ghost" size="icon" className="relative">
+                  <MessageCircle className="h-5 w-5" />
+                  {totalUnread > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {totalUnread > 9 ? '9+' : totalUnread}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
               <NotificationDropdown />
               <ThemeToggle />
               <Button onClick={signOut} variant="outline" size="sm">
