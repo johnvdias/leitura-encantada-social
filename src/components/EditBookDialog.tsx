@@ -67,6 +67,21 @@ export function EditBookDialog({
 
       if (error) throw error;
 
+      // Também completa o catálogo compartilhado com o que estava faltando
+      // (ex: a capa) - assim a próxima busca (de qualquer usuária) já vem
+      // corrigida. Só preenche campos vazios, nunca sobrescreve um dado que
+      // já existia (mesmo que esteja errado), pra uma edição não estragar
+      // informação que já estava certa pra todo mundo.
+      await supabase.rpc('upsert_book_catalog', {
+        p_title: formData.title,
+        p_authors: formData.author,
+        p_page_count: formData.pages > 0 ? formData.pages : null,
+        p_genre: formData.genre || null,
+        p_description: formData.description || null,
+        p_cover_url: formData.coverUrl || null,
+        p_source: 'manual',
+      });
+
       toast({
         title: "Livro atualizado!",
         description: "As informações do livro foram atualizadas com sucesso.",
