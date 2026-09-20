@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Sparkles, BookOpen, Trophy, Flame, Hash, Share2, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { shareText } from "@/lib/share";
+import { shareImageBlob } from "@/lib/share";
+import { generateWrappedImageBlob } from "@/lib/generateWrappedImage";
 import { useToast } from "@/hooks/use-toast";
 
 interface WrappedStats {
@@ -34,10 +35,11 @@ const computeLongestStreak = (isoDates: string[]): number => {
 };
 
 export function YearlyWrapped() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [stats, setStats] = useState<WrappedStats | null>(null);
   const year = new Date().getFullYear();
 
@@ -99,20 +101,20 @@ export function YearlyWrapped() {
 
   const handleShare = async () => {
     if (!stats) return;
-    const lines = [
-      `📚 Minha retrospectiva de leitura ${year}`,
-      `${stats.completedCount} livro(s) lido(s)`,
-      stats.topGenre ? `Gênero favorito: ${stats.topGenre}` : null,
-      stats.topAuthor ? `Autora mais lida: ${stats.topAuthor}` : null,
-      stats.totalPages > 0 ? `${stats.totalPages} páginas viradas` : null,
-      stats.longestStreak > 1 ? `Sequência de ${stats.longestStreak} dias seguidos lendo` : null,
-    ].filter(Boolean);
+    setSharing(true);
+    try {
+      const blob = await generateWrappedImageBlob(stats, year, profile?.display_name);
+      if (!blob) {
+        toast({ title: 'Não foi possível gerar a imagem', variant: 'destructive' });
+        return;
+      }
 
-    const result = await shareText(lines.join('\n'), `Retrospectiva ${year}`);
-    if (result === 'copied') {
-      toast({ title: 'Copiado!', description: 'Cole onde quiser compartilhar sua retrospectiva.' });
-    } else if (result === 'failed') {
-      toast({ title: 'Não foi possível compartilhar', variant: 'destructive' });
+      const result = await shareImageBlob(blob, `retrospectiva-${year}.png`, `Retrospectiva ${year}`);
+      if (result === 'downloaded') {
+        toast({ title: 'Imagem baixada!', description: 'Agora é só compartilhar onde quiser.' });
+      }
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -166,9 +168,9 @@ export function YearlyWrapped() {
               </div>
             </div>
 
-            <Button onClick={handleShare} className="w-full">
-              <Share2 className="h-4 w-4 mr-2" />
-              Compartilhar
+            <Button onClick={handleShare} disabled={sharing} className="w-full">
+              {sharing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Share2 className="h-4 w-4 mr-2" />}
+              Compartilhar como imagem
             </Button>
           </div>
         ) : (
