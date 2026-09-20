@@ -120,6 +120,83 @@ export const useAchievements = () => {
         });
       }
 
+      // First club achievement
+      if (!existingTypes.has('first_club')) {
+        const { count: clubCount } = await supabase
+          .from('club_members')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'approved');
+
+        if ((clubCount || 0) >= 1) {
+          achievementsToUnlock.push({
+            user_id: user.id,
+            achievement_type: 'first_club',
+            achievement_name: 'Clube da Leitura',
+            description: 'Você entrou no seu primeiro clube',
+            emoji: '👯'
+          });
+        }
+      }
+
+      // First review achievement
+      if (!existingTypes.has('first_review')) {
+        const { count: reviewCount } = await supabase
+          .from('posts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('post_type', 'review');
+
+        if ((reviewCount || 0) >= 1) {
+          achievementsToUnlock.push({
+            user_id: user.id,
+            achievement_type: 'first_review',
+            achievement_name: 'Crítica Literária',
+            description: 'Você escreveu sua primeira resenha',
+            emoji: '✍️'
+          });
+        }
+      }
+
+      // 10 comments achievement
+      if (!existingTypes.has('ten_comments')) {
+        const { count: commentCount } = await supabase
+          .from('post_comments')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if ((commentCount || 0) >= 10) {
+          achievementsToUnlock.push({
+            user_id: user.id,
+            achievement_type: 'ten_comments',
+            achievement_name: 'Voz Ativa',
+            description: 'Fez 10 comentários na comunidade',
+            emoji: '💬'
+          });
+        }
+      }
+
+      // Genre explorer achievement (3+ different genres among completed books)
+      if (!existingTypes.has('genre_explorer')) {
+        const { data: genreBooks } = await supabase
+          .from('books')
+          .select('genre')
+          .eq('user_id', user.id)
+          .eq('reading_status', 'completed')
+          .not('genre', 'is', null);
+
+        const distinctGenres = new Set((genreBooks || []).map(b => b.genre));
+        if (distinctGenres.size >= 3) {
+          achievementsToUnlock.push({
+            user_id: user.id,
+            achievement_type: 'genre_explorer',
+            achievement_name: 'Exploradora de Gêneros',
+            description: 'Leu livros de 3 gêneros diferentes',
+            emoji: '🧭'
+          });
+        }
+      }
+
       // Unlock new achievements
       if (achievementsToUnlock.length > 0) {
         const { error } = await supabase
