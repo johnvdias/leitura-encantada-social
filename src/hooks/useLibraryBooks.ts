@@ -36,11 +36,11 @@ export const useLibraryBooks = () => {
     fetchBooks();
   }, [fetchBooks]);
 
-  const addBook = async (
+  const uploadAndInsert = async (
     file: File,
     details: { title: string; author: string; description?: string; genre?: string; cover_url?: string }
   ) => {
-    if (!user) return;
+    if (!user) throw new Error('Não autenticado');
 
     const filePath = `${crypto.randomUUID()}-${file.name}`;
     const { error: uploadError } = await supabase.storage.from(BUCKET).upload(filePath, file, {
@@ -63,7 +63,29 @@ export const useLibraryBooks = () => {
       await supabase.storage.from(BUCKET).remove([filePath]);
       throw insertError;
     }
+  };
 
+  const addBook = async (
+    file: File,
+    details: { title: string; author: string; description?: string; genre?: string; cover_url?: string }
+  ) => {
+    await uploadAndInsert(file, details);
+    await fetchBooks();
+  };
+
+  const addBooksBulk = async (
+    items: { file: File; title: string; author: string }[],
+    onItemDone?: (index: number, result: { success: boolean; error?: string }) => void
+  ) => {
+    for (let i = 0; i < items.length; i++) {
+      try {
+        await uploadAndInsert(items[i].file, { title: items[i].title, author: items[i].author });
+        onItemDone?.(i, { success: true });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Erro desconhecido';
+        onItemDone?.(i, { success: false, error: message });
+      }
+    }
     await fetchBooks();
   };
 
@@ -100,5 +122,5 @@ export const useLibraryBooks = () => {
     }
   };
 
-  return { books, loading, downloadingId, addBook, removeBook, downloadBook, refetch: fetchBooks };
+  return { books, loading, downloadingId, addBook, addBooksBulk, removeBook, downloadBook, refetch: fetchBooks };
 };

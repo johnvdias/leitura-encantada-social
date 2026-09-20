@@ -7,6 +7,7 @@ import { Search, Download, Loader2, Trash2, LibraryBig } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLibraryBooks } from "@/hooks/useLibraryBooks";
 import { AddLibraryBookDialog } from "@/components/AddLibraryBookDialog";
+import { BulkAddLibraryBooksDialog } from "@/components/BulkAddLibraryBooksDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,7 +51,12 @@ export function BibliotecaEncantada() {
             className="pl-10"
           />
         </div>
-        {profile?.is_admin && <AddLibraryBookDialog />}
+        {profile?.is_admin && (
+          <div className="flex gap-2 shrink-0">
+            <AddLibraryBookDialog />
+            <BulkAddLibraryBooksDialog />
+          </div>
+        )}
       </div>
 
       {loading ? (
