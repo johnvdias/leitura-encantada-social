@@ -66,6 +66,33 @@ function isbn10ToIsbn13(isbn10: string): string | null {
   return core + checkDigit;
 }
 
+// --- Link da Amazon: pra livro impresso, o ASIN da Amazon é o próprio
+// ISBN-10 - não precisamos ler/raspar a página (isso violaria os termos de
+// uso deles), só seguir os redirecionamentos até a URL final do produto e
+// extrair o código de 10 caracteres de lá. Um link curto do app da Amazon
+// (a.co/d/...) funciona igual, só passa por um redirecionamento a mais.
+
+function isAmazonUrl(input: string): boolean {
+  try {
+    const url = new URL(input);
+    return url.hostname === 'a.co' || /(^|\.)amazon\.[a-z.]+$/i.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+async function resolveAmazonAsin(amazonUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(amazonUrl, { redirect: 'follow', headers: { 'User-Agent': USER_AGENT } });
+    await response.body?.cancel();
+    const match = response.url.match(/\/(?:dp|gp\/product|ASIN)\/([A-Z0-9]{10})/i);
+    return match ? match[1].toUpperCase() : null;
+  } catch (error) {
+    console.error('Error resolving Amazon link:', error);
+    return null;
+  }
+}
+
 // --- Catálogo próprio ---
 
 async function findCatalogByIsbn(admin: ReturnType<typeof createClient>, isbn13: string | null, isbn10: string | null): Promise<Book | null> {
@@ -420,11 +447,33 @@ serve(async (req: Request) => {
     const googleApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
 
     const trimmedQuery = query.trim();
-    const normalizedIsbn = normalizeIsbn(trimmedQuery);
-    const isIsbnSearch = isValidIsbn(normalizedIsbn);
 
     let books: Book[] = [];
     let resolvedBy = 'not_found';
+
+    // Link da Amazon vira busca por ISBN (o ASIN de um livro impresso é o
+    // próprio ISBN-10). Se não conseguir extrair, não há o que buscar.
+    let searchTarget = trimmedQuery;
+    const cameFromAmazonLink = isAmazonUrl(trimmedQuery);
+    if (cameFromAmazonLink) {
+      const asin = await resolveAmazonAsin(trimmedQuery);
+      searchTarget = asin ?? '';
+    }
+
+    const normalizedIsbn = normalizeIsbn(searchTarget);
+    const isIsbnSearch = isValidIsbn(normalizedIsbn);
+
+    if (cameFromAmazonLink && !isIsbnSearch) {
+      await logSearch(admin, {
+        userId: await getUserId(req, admin),
+        searchType: 'isbn',
+        query: trimmedQuery,
+        resolvedBy: 'not_found',
+      });
+      return new Response(JSON.stringify({ books: [], resolved_by: 'not_found' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (isIsbnSearch) {
       const isbn13 = isValidIsbn13(normalizedIsbn) ? normalizedIsbn : isbn10ToIsbn13(normalizedIsbn);

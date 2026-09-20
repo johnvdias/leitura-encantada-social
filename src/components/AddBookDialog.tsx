@@ -54,6 +54,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
   // "978..." já dá pra reconhecer como provável ISBN antes de buscar - só
   // um aviso visual, a detecção de verdade acontece no backend.
   const looksLikeIsbn = useMemo(() => isValidIsbn(query.trim()), [query]);
+  const looksLikeAmazonLink = useMemo(() => /^https?:\/\/(www\.)?(amazon\.[a-z.]+|a\.co)\//i.test(query.trim()), [query]);
 
   const searchBooks = async () => {
     if (!query.trim()) return;
@@ -198,10 +199,10 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
             </Button>
           </div>
 
-          {looksLikeIsbn && (
+          {(looksLikeIsbn || looksLikeAmazonLink) && (
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <ScanLine className="h-3 w-3" />
-              Buscando pelo ISBN
+              {looksLikeAmazonLink ? "Buscando pelo link da Amazon" : "Buscando pelo ISBN"}
             </p>
           )}
 
@@ -301,11 +302,13 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
               <div>
                 <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>
-                  {looksLikeIsbn
-                    ? "Não encontramos esse ISBN nas nossas fontes."
-                    : "Não encontramos esse livro no nosso catálogo."}
+                  {looksLikeAmazonLink
+                    ? "Não conseguimos identificar esse livro pelo link da Amazon."
+                    : looksLikeIsbn
+                      ? "Não encontramos esse ISBN nas nossas fontes."
+                      : "Não encontramos esse livro no nosso catálogo."}
                 </p>
-                {!looksLikeIsbn && (
+                {!looksLikeIsbn && !looksLikeAmazonLink && (
                   <p className="text-sm">Tente buscar pelo ISBN ou cadastre o livro você mesma</p>
                 )}
               </div>
