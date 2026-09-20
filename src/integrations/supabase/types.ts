@@ -169,6 +169,41 @@ export type Database = {
           }
         ]
       }
+      book_quotes: {
+        Row: {
+          book_id: string
+          content: string
+          created_at: string
+          id: string
+          page_number: number | null
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          content: string
+          created_at?: string
+          id?: string
+          page_number?: number | null
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          page_number?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_quotes_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       book_search_cache: {
         Row: {
           created_at: string

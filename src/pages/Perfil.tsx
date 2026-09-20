@@ -13,6 +13,8 @@ import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { AdvancedStats } from "@/components/AdvancedStats";
 import { AchievementBadges } from "@/components/AchievementBadges";
 import { BookLoansSection } from "@/components/BookLoansSection";
+import { ReadingHeatmap } from "@/components/ReadingHeatmap";
+import { QuotesGallery } from "@/components/QuotesGallery";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -141,16 +143,18 @@ const Perfil = () => {
       </Card>
       
       <Tabs defaultValue="estatisticas" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
           <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
           <TabsTrigger value="conquistas">Conquistas</TabsTrigger>
           <TabsTrigger value="amigos">Amigos</TabsTrigger>
           <TabsTrigger value="emprestimos">Empréstimos</TabsTrigger>
+          <TabsTrigger value="citacoes">Citações</TabsTrigger>
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
         </TabsList>
 
         <TabsContent value="estatisticas" className="space-y-6">
           <AdvancedStats />
+          <ReadingHeatmap />
         </TabsContent>
 
         <TabsContent value="conquistas" className="space-y-6">
@@ -195,6 +199,10 @@ const Perfil = () => {
 
         <TabsContent value="emprestimos" className="space-y-6">
           <BookLoansSection />
+        </TabsContent>
+
+        <TabsContent value="citacoes" className="space-y-6">
+          <QuotesGallery />
         </TabsContent>
 
         <TabsContent value="atividade" className="space-y-6">

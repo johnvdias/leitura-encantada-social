@@ -2,22 +2,35 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Search, Dices, Loader2 } from "lucide-react";
 import BookCard from "@/components/BookCard/BookCard";
 import { AddBookDialog } from "@/components/AddBookDialog";
 import { ManualBookDialog } from "@/components/ManualBookDialog";
 import { ReadingGoals } from "@/components/ReadingGoals";
 import { SchedulesSection } from "@/components/SchedulesSection";
+import { FriendRecommendations } from "@/components/FriendRecommendations";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import type { Book } from "@/types/book";
 
 const Estante = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pickedBook, setPickedBook] = useState<Book | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [startingPicked, setStartingPicked] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const fetchBooks = useCallback(async () => {
     if (!user) return;
@@ -52,6 +65,35 @@ const Estante = () => {
   const completedBooks = filteredBooks.filter(book => book.reading_status === "completed");
   const wantToReadBooks = filteredBooks.filter(book => book.reading_status === "want_to_read");
 
+  const handleDrawRandomBook = () => {
+    if (wantToReadBooks.length === 0) return;
+    const randomBook = wantToReadBooks[Math.floor(Math.random() * wantToReadBooks.length)];
+    setPickedBook(randomBook);
+    setPickerOpen(true);
+  };
+
+  const handleStartPickedBook = async () => {
+    if (!pickedBook) return;
+    setStartingPicked(true);
+    try {
+      const { error } = await supabase
+        .from('books')
+        .update({ reading_status: 'reading' })
+        .eq('id', pickedBook.id);
+      if (error) throw error;
+      toast({
+        title: "Boa leitura! 📖",
+        description: `Você começou a ler "${pickedBook.title}".`,
+      });
+      setPickerOpen(false);
+      await fetchBooks();
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Não foi possível atualizar o status do livro.', variant: 'destructive' });
+    } finally {
+      setStartingPicked(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="text-center mb-8">
@@ -63,6 +105,8 @@ const Estante = () => {
         <ReadingGoals />
         <SchedulesSection />
       </section>
+
+      <FriendRecommendations />
 
       <Separator className="my-8" />
 
@@ -107,12 +151,52 @@ const Estante = () => {
 
         <TabsContent value="quero-ler">
           {wantToReadBooks.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {wantToReadBooks.map((book) => <BookCard key={book.id} book={book} onUpdate={fetchBooks} />)}
-            </div>
+            <>
+              <div className="flex justify-center mb-6">
+                <Button variant="outline" onClick={handleDrawRandomBook}>
+                  <Dices className="h-4 w-4 mr-2" />
+                  Sortear meu próximo livro
+                </Button>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {wantToReadBooks.map((book) => <BookCard key={book.id} book={book} onUpdate={fetchBooks} />)}
+              </div>
+            </>
           ) : <p className="text-center text-muted-foreground py-10">Sua lista de desejos está vazia.</p>}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>O sorteio escolheu... 🎲</DialogTitle>
+            <DialogDescription>Que tal começar por esse?</DialogDescription>
+          </DialogHeader>
+          {pickedBook && (
+            <div className="flex flex-col items-center text-center gap-4 py-2">
+              <img
+                src={pickedBook.cover_url || '/placeholder.svg'}
+                alt={pickedBook.title}
+                className="h-48 w-32 object-cover rounded-md shadow-md"
+              />
+              <div>
+                <p className="font-bold text-lg">{pickedBook.title}</p>
+                <p className="text-sm text-muted-foreground">{pickedBook.author}</p>
+              </div>
+              <div className="flex gap-2 w-full">
+                <Button variant="outline" onClick={handleDrawRandomBook} className="flex-1">
+                  <Dices className="h-4 w-4 mr-2" />
+                  Sortear outro
+                </Button>
+                <Button onClick={handleStartPickedBook} disabled={startingPicked} className="flex-1">
+                  {startingPicked && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Começar a ler
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

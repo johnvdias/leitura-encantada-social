@@ -7,6 +7,7 @@ import { Star, Trash2, Play, Loader2 } from "lucide-react"; // Corrigido: Trocad
 import { EditBookDialog } from "@/components/EditBookDialog";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { QuotesDialog } from "@/components/QuotesDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -171,7 +172,9 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
                 status={book.reading_status}
                 onBookUpdated={onUpdate}
             />
-            
+
+            <QuotesDialog bookId={book.id} bookTitle={book.title} bookAuthor={book.author} />
+
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive">
