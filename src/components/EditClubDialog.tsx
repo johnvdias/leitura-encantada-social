@@ -81,7 +81,7 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
           name: name.trim(),
           description: description.trim() || null,
           is_private: isPrivate,
-          max_members: maxMembers,
+          max_members: maxMembers || 1,
           current_book_id: currentBookId,
         })
         .eq('id', club.id);
@@ -149,7 +149,15 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor="maxMembers">Máximo de Membros</Label>
-            <Input id="maxMembers" type="number" min={1} max={1000} value={maxMembers} onChange={(e) => setMaxMembers(Number(e.target.value))} required />
+            <Input
+              id="maxMembers"
+              type="number"
+              min={1}
+              max={1000}
+              value={maxMembers === 0 ? "" : maxMembers}
+              onChange={(e) => setMaxMembers(e.target.value === "" ? 0 : Number(e.target.value))}
+              required
+            />
           </div>
 
           <div className="flex items-center justify-between">

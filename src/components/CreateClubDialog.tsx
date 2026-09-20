@@ -44,7 +44,7 @@ export function CreateClubDialog({ onClubCreated }: CreateClubDialogProps) {
           name: name.trim(),
           description: description.trim() || null,
           is_private: isPrivate,
-          max_members: maxMembers,
+          max_members: maxMembers || 2,
           creator_id: user.id
         });
 
@@ -132,8 +132,8 @@ export function CreateClubDialog({ onClubCreated }: CreateClubDialogProps) {
               type="number"
               min={2}
               max={1000}
-              value={maxMembers}
-              onChange={(e) => setMaxMembers(Number(e.target.value))}
+              value={maxMembers === 0 ? "" : maxMembers}
+              onChange={(e) => setMaxMembers(e.target.value === "" ? 0 : Number(e.target.value))}
             />
           </div>
 

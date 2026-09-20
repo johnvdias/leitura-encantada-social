@@ -173,8 +173,8 @@ export function UpdateProgressDialog({
                 type="number"
                 min={0}
                 max={safeTotalPages > 0 ? safeTotalPages : undefined}
-                value={newPage}
-                onChange={(e) => setNewPage(Number(e.target.value) || 0)}
+                value={newPage === 0 ? "" : newPage}
+                onChange={(e) => setNewPage(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="flex-1"
                 placeholder="0"
               />
@@ -209,8 +209,8 @@ export function UpdateProgressDialog({
               id="minutes"
               type="number"
               min={0}
-              value={readingMinutes}
-              onChange={(e) => setReadingMinutes(Number(e.target.value))}
+              value={readingMinutes === 0 ? "" : readingMinutes}
+              onChange={(e) => setReadingMinutes(e.target.value === "" ? 0 : Number(e.target.value))}
               placeholder="Opcional"
             />
           </div>

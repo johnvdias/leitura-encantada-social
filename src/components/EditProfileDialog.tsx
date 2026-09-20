@@ -192,7 +192,7 @@ export function EditProfileDialog() {
         display_name: formData.display_name,
         username: formData.username,
         bio: formData.bio,
-        reading_goal: formData.reading_goal,
+        reading_goal: formData.reading_goal || 1,
         avatar_url: avatar_url,
         notification_preferences: notificationPreferences,
       };
@@ -299,7 +299,13 @@ export function EditProfileDialog() {
               
             <div className="space-y-2">
               <Label htmlFor="reading_goal">Meta de Leitura (Anual)</Label>
-              <Input id="reading_goal" type="number" min="1" value={formData.reading_goal} onChange={(e) => setFormData({ ...formData, reading_goal: parseInt(e.target.value) || 1 })} />
+              <Input
+                id="reading_goal"
+                type="number"
+                min="1"
+                value={formData.reading_goal === 0 ? "" : formData.reading_goal}
+                onChange={(e) => setFormData({ ...formData, reading_goal: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 })}
+              />
             </div>
 
             <div className="space-y-4">

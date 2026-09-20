@@ -105,8 +105,8 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
       const { error } = await supabase
         .from("profiles")
         .update({ 
-          reading_goal: dailyGoal, 
-          annual_books_goal: annualBooksGoal 
+          reading_goal: dailyGoal || 1,
+          annual_books_goal: annualBooksGoal || 1
         })
         .eq("user_id", user.id);
 
@@ -156,8 +156,8 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
                 id="daily"
                 type="number"
                 min={1}
-                value={dailyGoal}
-                onChange={(e) => setDailyGoal(Number(e.target.value) || 1)}
+                value={dailyGoal === 0 ? "" : dailyGoal}
+                onChange={(e) => setDailyGoal(e.target.value === "" ? 0 : Number(e.target.value))}
               />
             </div>
             <div className="space-y-2">
@@ -166,8 +166,8 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
                 id="annual"
                 type="number"
                 min={1}
-                value={annualBooksGoal}
-                onChange={(e) => setAnnualBooksGoal(Number(e.target.value) || 1)}
+                value={annualBooksGoal === 0 ? "" : annualBooksGoal}
+                onChange={(e) => setAnnualBooksGoal(e.target.value === "" ? 0 : Number(e.target.value))}
               />
             </div>
             <Button onClick={updateGoals} className="w-full">

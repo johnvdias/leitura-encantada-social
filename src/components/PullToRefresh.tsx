@@ -45,12 +45,29 @@ export function PullToRefresh({ children }: PullToRefreshProps) {
 
     if (!isStandalone) return;
 
+    // Se o toque faz parte de uma seleção de texto (ex: arrastando pra
+    // selecionar um link), não pode mexer a página - o conteúdo se
+    // deslocando embaixo do dedo trava o gesto nativo de seleção.
+    const hasTextSelection = () => {
+      const selection = window.getSelection();
+      return !!selection && selection.toString().length > 0;
+    };
+
     const onTouchStart = (e: TouchEvent) => {
+      if (hasTextSelection()) {
+        startY.current = null;
+        return;
+      }
       startY.current = window.scrollY === 0 ? e.touches[0].clientY : null;
     };
 
     const onTouchMove = (e: TouchEvent) => {
       if (startY.current === null) return;
+      if (hasTextSelection()) {
+        startY.current = null;
+        setPullDistance(0);
+        return;
+      }
       const delta = e.touches[0].clientY - startY.current;
       if (delta > 0 && window.scrollY === 0) {
         setPullDistance(Math.min(delta * 0.5, MAX_PULL));

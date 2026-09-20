@@ -146,8 +146,8 @@ export function EditBookDialog({
                 id="pages"
                 type="number"
                 min={0}
-                value={formData.pages}
-                onChange={(e) => setFormData(prev => ({ ...prev, pages: Number(e.target.value) || 0 }))}
+                value={formData.pages === 0 ? "" : formData.pages}
+                onChange={(e) => setFormData(prev => ({ ...prev, pages: e.target.value === "" ? 0 : Number(e.target.value) || 0 }))}
                 placeholder="0"
               />
             </div>
