@@ -16,7 +16,6 @@ import { ManualBookDialog } from "@/components/ManualBookDialog";
 import { ReadingGoals } from "@/components/ReadingGoals";
 import { SchedulesSection } from "@/components/SchedulesSection";
 import { FriendRecommendations } from "@/components/FriendRecommendations";
-import { BibliotecaEncantada } from "@/components/BibliotecaEncantada";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -128,11 +127,10 @@ const Estante = () => {
       </div>
 
       <Tabs defaultValue="lendo" className="w-full">
-        <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-4 gap-1 max-w-2xl mx-auto mb-8">
+        <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-3 gap-1 max-w-md mx-auto mb-8">
           <TabsTrigger value="lendo" className="shrink-0">Lendo ({readingBooks.length})</TabsTrigger>
           <TabsTrigger value="lidos" className="shrink-0">Lidos ({completedBooks.length})</TabsTrigger>
           <TabsTrigger value="quero-ler" className="shrink-0">Quero Ler ({wantToReadBooks.length})</TabsTrigger>
-          <TabsTrigger value="biblioteca" className="shrink-0">Biblioteca Encantada</TabsTrigger>
         </TabsList>
 
         <TabsContent value="lendo">
@@ -165,10 +163,6 @@ const Estante = () => {
               </div>
             </>
           ) : <p className="text-center text-muted-foreground py-10">Sua lista de desejos está vazia.</p>}
-        </TabsContent>
-
-        <TabsContent value="biblioteca">
-          <BibliotecaEncantada />
         </TabsContent>
       </Tabs>
 

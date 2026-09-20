@@ -876,45 +876,6 @@ export type Database = {
           },
         ]
       }
-      library_books: {
-        Row: {
-          added_by: string | null
-          author: string
-          cover_url: string | null
-          created_at: string
-          description: string | null
-          file_path: string
-          file_size_bytes: number | null
-          genre: string | null
-          id: string
-          title: string
-        }
-        Insert: {
-          added_by?: string | null
-          author: string
-          cover_url?: string | null
-          created_at?: string
-          description?: string | null
-          file_path: string
-          file_size_bytes?: number | null
-          genre?: string | null
-          id?: string
-          title: string
-        }
-        Update: {
-          added_by?: string | null
-          author?: string
-          cover_url?: string | null
-          created_at?: string
-          description?: string | null
-          file_path?: string
-          file_size_bytes?: number | null
-          genre?: string | null
-          id?: string
-          title?: string
-        }
-        Relationships: []
-      }
       notifications: {
         Row: {
           content: string | null
@@ -1140,7 +1101,6 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
-          is_admin: boolean
           notification_preferences: Json
           reading_goal: number | null
           updated_at: string
@@ -1154,7 +1114,6 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
-          is_admin?: boolean
           notification_preferences?: Json
           reading_goal?: number | null
           updated_at?: string
@@ -1168,7 +1127,6 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
-          is_admin?: boolean
           notification_preferences?: Json
           reading_goal?: number | null
           updated_at?: string
