@@ -65,9 +65,14 @@ export default {
 				}
 			},
 			backgroundImage: {
-				'gradient-enchanted': 'linear-gradient(135deg, hsl(340, 65%, 75%), hsl(280, 40%, 88%), hsl(200, 45%, 85%))',
-				'gradient-soft': 'linear-gradient(180deg, hsl(340, 45%, 96%), hsl(35, 25%, 98%))',
-				'gradient-dreamy': 'linear-gradient(45deg, hsl(280, 40%, 88%), hsl(200, 45%, 85%))'
+				// Referencia as custom properties (definidas em index.css, com
+				// uma versão pro :root e outra pra .dark) em vez de cravar a
+				// cor aqui - senão esses gradientes nunca mudavam no modo
+				// escuro, já que Tailwind gera a classe com o valor literal
+				// desse config em tempo de build.
+				'gradient-enchanted': 'var(--gradient-enchanted)',
+				'gradient-soft': 'var(--gradient-soft)',
+				'gradient-dreamy': 'var(--gradient-dreamy)'
 			},
 			fontFamily: {
 				'enchanted': ['Georgia', 'serif'],

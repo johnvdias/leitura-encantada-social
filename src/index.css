@@ -76,41 +76,56 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Versão escura da MESMA paleta rosa/lilás do modo claro (só invertendo
+       claridade), em vez da paleta azul-acinzentada genérica do shadcn que
+       estava aqui antes. Isso evitava que --primary virasse quase branco e
+       --secondary/--accent virassem quase pretos no escuro - fazendo botões
+       e textos em gradiente (que usam essas variáveis, ex: .btn-enchanted e
+       .text-enchanted) terem uma ponta do gradiente praticamente invisível
+       contra o fundo escuro. */
+    --background: 335 25% 8%;
+    --foreground: 335 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 335 22% 12%;
+    --card-foreground: 335 20% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 335 22% 12%;
+    --popover-foreground: 335 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 340 55% 55%;
+    --primary-foreground: 340 20% 98%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 280 40% 32%;
+    --secondary-foreground: 280 20% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 335 15% 18%;
+    --muted-foreground: 335 10% 68%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 200 45% 35%;
+    --accent-foreground: 200 20% 95%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 0 15% 97%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 335 15% 20%;
+    --input: 335 15% 20%;
+    --ring: 340 55% 55%;
+    --sidebar-background: 335 25% 10%;
+    --sidebar-foreground: 335 15% 90%;
+    --sidebar-primary: 340 55% 55%;
+    --sidebar-primary-foreground: 340 20% 98%;
+    --sidebar-accent: 335 15% 18%;
+    --sidebar-accent-foreground: 335 15% 90%;
+    --sidebar-border: 335 15% 20%;
+    --sidebar-ring: 340 55% 55%;
+
+    /* Sem isso, o fundo da página inteira (bg-gradient-soft no App.tsx,
+       usado em toda tela logada) continuava sempre claro no escuro -
+       qualquer texto solto fora de um Card, já escurecido corretamente
+       pelas variáveis acima, ficava claro-sobre-claro e sumia. */
+    --gradient-enchanted: linear-gradient(135deg, hsl(340, 55%, 30%), hsl(280, 40%, 25%), hsl(200, 45%, 28%));
+    --gradient-soft: linear-gradient(180deg, hsl(335, 22%, 10%), hsl(335, 25%, 8%));
+    --gradient-dreamy: linear-gradient(45deg, hsl(280, 40%, 25%), hsl(200, 45%, 28%));
   }
 }
 
