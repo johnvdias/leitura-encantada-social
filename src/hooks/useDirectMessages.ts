@@ -89,11 +89,12 @@ export const useDirectMessages = (otherUserId: string | undefined) => {
 
       if (await shouldNotify(otherUserId, 'messages')) {
         const senderName = profile?.display_name || 'Alguém';
+        const notificationTitle = `💬 ${senderName}`;
 
         await supabase.from('notifications').insert({
           user_id: otherUserId,
           type: 'message',
-          title: `Nova mensagem de ${senderName}`,
+          title: notificationTitle,
           content: content.trim().slice(0, 120),
           related_id: user.id,
         });
@@ -102,7 +103,7 @@ export const useDirectMessages = (otherUserId: string | undefined) => {
           .invoke('send-push-notification', {
             body: {
               targetUserId: otherUserId,
-              title: `Nova mensagem de ${senderName}`,
+              title: notificationTitle,
               body: content.trim().slice(0, 120),
               tag: `dm-${user.id}-${otherUserId}`,
             },
