@@ -110,21 +110,21 @@ const Perfil = () => {
       {/* Profile Header */}
       <Card className="card-enchanted mb-8">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-6">
-            <Avatar className="w-24 h-24">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+            <Avatar className="w-24 h-24 mx-auto sm:mx-0 shrink-0">
               <AvatarImage src={profile?.avatar_url} />
               <AvatarFallback className="text-2xl">
                 {profile?.display_name?.[0] || user?.email?.[0] || '?'}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 text-center sm:text-left">
               <h1 className="text-2xl font-bold">
                 {profile?.display_name || 'Leitor Anônimo'}
               </h1>
               <p className="text-muted-foreground mb-4">
                 {profile?.bio || 'Apaixonado por livros e aventuras literárias'}
               </p>
-              <div className="flex items-center gap-6 text-sm mb-4">
+              <div className="flex items-center justify-center sm:justify-start flex-wrap gap-6 text-sm mb-4">
                 <div className="flex items-center gap-1">
                   <BookOpen className="h-4 w-4" />
                   <span>{stats.completedBooks} livros lidos</span>
@@ -134,9 +134,11 @@ const Perfil = () => {
                   <span>{achievements.length} conquistas</span>
                 </div>
               </div>
-              <AchievementBadges />
+              <div className="flex justify-center sm:justify-start">
+                <AchievementBadges />
+              </div>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center justify-center flex-wrap gap-2 sm:ml-auto sm:shrink-0">
               <YearlyWrapped />
               <EditProfileDialog />
             </div>
