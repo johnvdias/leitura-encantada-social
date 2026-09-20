@@ -46,10 +46,10 @@ const Clubes = () => {
               <Link key={club.id} to={`/clubes/${club.id}`}>
                 <Card className="card-enchanted hover-float cursor-pointer">
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="truncate">{club.name}</span>
+                    <CardTitle className="flex items-center justify-between gap-2">
+                      <span className="truncate min-w-0">{club.name}</span>
                       {club.is_private && (
-                        <Badge variant="outline">Privado</Badge>
+                        <Badge variant="outline" className="shrink-0">Privado</Badge>
                       )}
                     </CardTitle>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -121,10 +121,10 @@ const Clubes = () => {
             {clubs.map((club) => (
               <Card key={club.id} className="card-enchanted hover-float">
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="truncate">{club.name}</span>
+                  <CardTitle className="flex items-center justify-between gap-2">
+                    <span className="truncate min-w-0">{club.name}</span>
                     {club.is_private && (
-                      <Badge variant="outline">Privado</Badge>
+                      <Badge variant="outline" className="shrink-0">Privado</Badge>
                     )}
                   </CardTitle>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
