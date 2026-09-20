@@ -15,6 +15,7 @@ import { AchievementBadges } from "@/components/AchievementBadges";
 import { BookLoansSection } from "@/components/BookLoansSection";
 import { ReadingHeatmap } from "@/components/ReadingHeatmap";
 import { QuotesGallery } from "@/components/QuotesGallery";
+import { YearlyWrapped } from "@/components/YearlyWrapped";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -136,6 +137,7 @@ const Perfil = () => {
               <AchievementBadges />
             </div>
             <div className="ml-auto flex items-center gap-2">
+              <YearlyWrapped />
               <EditProfileDialog />
             </div>
           </div>
