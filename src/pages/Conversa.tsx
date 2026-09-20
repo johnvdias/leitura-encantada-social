@@ -10,6 +10,7 @@ import { useDirectMessages } from "@/hooks/useDirectMessages";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { formatSeenAt } from "@/lib/formatSeenAt";
 
 interface OtherProfile {
   display_name: string | null;
@@ -91,7 +92,9 @@ const Conversa = () => {
                   </div>
                 </div>
                 {isLastMineRead && (
-                  <p className="text-[10px] text-muted-foreground text-right mt-0.5 mr-1">Visto</p>
+                  <p className="text-[10px] text-muted-foreground text-right mt-0.5 mr-1">
+                    {formatSeenAt(msg.read_at as string)}
+                  </p>
                 )}
               </div>
             );
