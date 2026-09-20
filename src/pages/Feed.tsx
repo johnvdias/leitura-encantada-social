@@ -76,9 +76,10 @@ const Feed = () => {
           <div className="space-y-6">
             {posts.length > 0 ? (
               posts.map((post) => (
-                <PostCard 
-                  key={post.id} 
+                <PostCard
+                  key={post.id}
                   {...post}
+                  book={post.books ? { title: post.books.title ?? '', author: post.books.author ?? '' } : undefined}
                   onPostDeleted={refetch}
                 />
               ))
