@@ -213,7 +213,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
               </h3>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {searchResults.map((book) => (
-                  <Card key={book.id} className="hover:shadow-md transition-shadow">
+                  <Card key={book.id} className="hover:shadow-md transition-shadow overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex gap-4">
                         {book.cover_url ? (
@@ -233,9 +233,9 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                             {book.title}
                           </h4>
 
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-                            <User className="h-3 w-3" />
-                            <span className="truncate">{book.author}</span>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2 min-w-0">
+                            <User className="h-3 w-3 shrink-0" />
+                            <span className="truncate min-w-0">{book.author}</span>
                           </div>
 
                           <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2 flex-wrap">
