@@ -513,6 +513,7 @@ export type Database = {
           current_book_id: string | null
           description: string | null
           id: string
+          invite_code: string | null
           is_private: boolean
           max_members: number | null
           name: string
@@ -524,6 +525,7 @@ export type Database = {
           current_book_id?: string | null
           description?: string | null
           id?: string
+          invite_code?: string | null
           is_private?: boolean
           max_members?: number | null
           name: string
@@ -535,6 +537,7 @@ export type Database = {
           current_book_id?: string | null
           description?: string | null
           id?: string
+          invite_code?: string | null
           is_private?: boolean
           max_members?: number | null
           name?: string
@@ -1001,6 +1004,14 @@ export type Database = {
     }
     Functions: {
       ensure_creator_is_approved: { Args: never; Returns: undefined }
+      join_club_by_invite_code: {
+        Args: { p_invite_code: string }
+        Returns: string
+      }
+      regenerate_club_invite_code: {
+        Args: { p_club_id: string }
+        Returns: string
+      }
       remove_club_member: {
         Args: { p_club_id: string; p_user_id: string }
         Returns: undefined

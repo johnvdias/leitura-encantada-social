@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Heart, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { PENDING_INVITE_KEY } from '@/pages/InviteJoin';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -24,7 +25,15 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate('/', { replace: true });
+      // Se veio de um link de convite de clube (guardado antes do login),
+      // volta direto pra lá em vez de cair na home.
+      let pendingInviteCode: string | null = null;
+      try {
+        pendingInviteCode = sessionStorage.getItem(PENDING_INVITE_KEY);
+      } catch {
+        // sessionStorage indisponível; segue o fluxo normal pra home.
+      }
+      navigate(pendingInviteCode ? `/convite/${pendingInviteCode}` : '/', { replace: true });
     }
   }, [user, navigate]);
 

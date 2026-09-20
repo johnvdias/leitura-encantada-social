@@ -17,6 +17,7 @@ import Clubes from "./pages/Clubes";
 import Perfil from "./pages/Perfil";
 import ClubePage from "./pages/ClubePage";
 import UserProfile from "./pages/UserProfile";
+import InviteJoin from "./pages/InviteJoin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,10 @@ const App = () => (
                       <ClubePage />
                     </ProtectedRoute>
                   } />
+                  {/* Sem ProtectedRoute de propósito: essa página trata os
+                      dois casos (logada/deslogada) ela mesma - um redirect
+                      duro perderia o código do convite da URL. */}
+                  <Route path="/convite/:code" element={<InviteJoin />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

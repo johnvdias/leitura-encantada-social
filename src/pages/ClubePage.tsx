@@ -15,6 +15,7 @@ import { DeleteClubDialog } from "@/components/DeleteClubDialog";
 import { MemberManagement } from "@/components/MemberManagement";
 import { CreateClubScheduleDialog } from "@/components/CreateClubScheduleDialog";
 import { ClubSchedulesSection } from "@/components/ClubSchedulesSection";
+import { ClubInviteDialog } from "@/components/ClubInviteDialog";
 
 // Interfaces
 interface Club {
@@ -26,6 +27,7 @@ interface Club {
   max_members: number;
   creator_id: string;
   current_book_id?: string | null;
+  invite_code?: string | null;
   books?: {
     id: string;
     title: string;
@@ -179,7 +181,17 @@ const ClubePage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2 self-start sm:self-end shrink-0">
-                {isCreator && (<><EditClubDialog club={club} onUpdate={fetchClubData} /> <DeleteClubDialog clubId={club.id} clubName={club.name} /></>)}
+                {isCreator && (
+                  <>
+                    <ClubInviteDialog
+                      clubId={club.id}
+                      inviteCode={club.invite_code ?? null}
+                      onCodeGenerated={(code) => setClub((prev) => prev && { ...prev, invite_code: code })}
+                    />
+                    <EditClubDialog club={club} onUpdate={fetchClubData} />
+                    <DeleteClubDialog clubId={club.id} clubName={club.name} />
+                  </>
+                )}
                 {isMember && !isCreator && <Button variant="outline" onClick={handleLeaveClub}><UserMinus className="h-4 w-4 mr-2" /> Sair</Button>}
                 {!isMember && !hasPendingRequest && <Button onClick={handleJoinClub}>Entrar no Clube</Button>}
                 {hasPendingRequest && <Button variant="outline" disabled><Hourglass className="h-4 w-4 mr-2 animate-spin" /> Pendente</Button>}
