@@ -423,6 +423,118 @@ export type Database = {
           },
         ]
       }
+      club_book_poll_options: {
+        Row: {
+          author: string
+          cover_url: string | null
+          created_at: string
+          id: string
+          poll_id: string
+          title: string
+        }
+        Insert: {
+          author: string
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          poll_id: string
+          title: string
+        }
+        Update: {
+          author?: string
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          poll_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_book_poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "club_book_polls"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      club_book_poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_book_poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "club_book_poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_book_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "club_book_polls"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      club_book_polls: {
+        Row: {
+          claimed_by_current_book_id: string | null
+          club_id: string
+          closed_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          status: string
+        }
+        Insert: {
+          claimed_by_current_book_id?: string | null
+          club_id: string
+          closed_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          claimed_by_current_book_id?: string | null
+          club_id?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_book_polls_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       club_discussions: {
         Row: {
           club_id: string

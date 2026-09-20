@@ -17,6 +17,7 @@ import { MemberManagement } from "@/components/MemberManagement";
 import { CreateClubScheduleDialog } from "@/components/CreateClubScheduleDialog";
 import { ClubSchedulesSection } from "@/components/ClubSchedulesSection";
 import { ClubInviteDialog } from "@/components/ClubInviteDialog";
+import { ClubBookPollSection } from "@/components/ClubBookPollSection";
 
 // Interfaces
 interface Club {
@@ -252,9 +253,10 @@ const ClubePage = () => {
 
       {isMember ? (
         <Tabs defaultValue="discussions">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="discussions">Discussões</TabsTrigger>
             <TabsTrigger value="schedules">Cronogramas</TabsTrigger>
+            <TabsTrigger value="votacao">Votação</TabsTrigger>
             <TabsTrigger value="members">Membros ({approvedMembers.length})</TabsTrigger>
           </TabsList>
 
@@ -270,7 +272,11 @@ const ClubePage = () => {
             )}
             <ClubSchedulesSection clubId={club.id} isCreator={isCreator} onSchedulesUpdated={fetchClubData} />
           </TabsContent>
-          
+
+          <TabsContent value="votacao" className="mt-6">
+            <ClubBookPollSection clubId={club.id} isCreator={isCreator} onResolved={fetchClubData} />
+          </TabsContent>
+
           <TabsContent value="members" className="mt-6">
              {isCreator ? (
                   <MemberManagement clubId={club.id} initialMembers={members} creatorId={club.creator_id} onMembersUpdate={fetchClubData} />
