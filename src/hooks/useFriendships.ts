@@ -32,7 +32,7 @@ export const useFriendships = () => {
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<SentRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
   const fetchFriendships = useCallback(async () => {
@@ -165,7 +165,7 @@ export const useFriendships = () => {
             user_id: addresseeId,
             type: 'friend_request',
             title: 'Nova solicitação de amizade!',
-            content: 'Você recebeu uma solicitação de amizade',
+            content: `${profile?.display_name || 'Alguém'} quer ser sua amiga`,
             related_id: user.id
           });
       }
@@ -203,7 +203,7 @@ export const useFriendships = () => {
             user_id: requesterId,
             type: 'friend_accepted',
             title: 'Solicitação aceita! 🎉',
-            content: 'Sua solicitação de amizade foi aceita',
+            content: `${profile?.display_name || 'Alguém'} aceitou sua solicitação de amizade`,
             related_id: user.id
           });
       }

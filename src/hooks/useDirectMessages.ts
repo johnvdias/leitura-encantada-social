@@ -8,7 +8,7 @@ import { shouldNotify } from "@/lib/notificationPreferences";
 type DirectMessage = Tables<'direct_messages'>;
 
 export const useDirectMessages = (otherUserId: string | undefined) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,10 +88,12 @@ export const useDirectMessages = (otherUserId: string | undefined) => {
       if (error) throw error;
 
       if (await shouldNotify(otherUserId, 'messages')) {
+        const senderName = profile?.display_name || 'Alguém';
+
         await supabase.from('notifications').insert({
           user_id: otherUserId,
           type: 'message',
-          title: 'Nova mensagem',
+          title: `Nova mensagem de ${senderName}`,
           content: content.trim().slice(0, 120),
           related_id: user.id,
         });
@@ -100,7 +102,7 @@ export const useDirectMessages = (otherUserId: string | undefined) => {
           .invoke('send-push-notification', {
             body: {
               targetUserId: otherUserId,
-              title: 'Nova mensagem',
+              title: `Nova mensagem de ${senderName}`,
               body: content.trim().slice(0, 120),
               tag: `dm-${user.id}-${otherUserId}`,
             },

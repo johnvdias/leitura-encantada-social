@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNotifications } from "@/hooks/useNotifications";
 import { getNotificationLink } from "@/lib/notificationLinks";
 import { formatDistanceToNow } from "date-fns";
@@ -84,11 +85,19 @@ export function NotificationDropdown() {
                 }`}
                 onClick={() => handleNotificationClick(notification)}
               >
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{notification.title}</span>
+                {notification.senderProfile && (
+                  <Avatar className="h-8 w-8 shrink-0 mt-0.5">
+                    <AvatarImage src={notification.senderProfile.avatar_url || undefined} />
+                    <AvatarFallback className="text-xs">
+                      {notification.senderProfile.display_name?.charAt(0) || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-sm truncate">{notification.title}</span>
                     {!notification.is_read && (
-                      <div className="w-2 h-2 bg-primary rounded-full" />
+                      <div className="w-2 h-2 bg-primary rounded-full shrink-0" />
                     )}
                   </div>
                   {notification.content && (
