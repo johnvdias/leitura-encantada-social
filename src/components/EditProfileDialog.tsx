@@ -21,6 +21,19 @@ import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { TablesUpdate } from "@/integrations/supabase/types";
 import { ImageCropperDialog } from './ImageCropperDialog';
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  NotificationCategory,
+  isCategoryEnabled,
+} from '@/lib/notificationPreferences';
+
+const NOTIFICATION_CATEGORY_LABELS: Record<NotificationCategory, string> = {
+  likes: 'Curtidas',
+  comments: 'Comentários e menções',
+  friends: 'Solicitações de amizade',
+  nudges: 'Cutucões',
+  achievements: 'Conquistas',
+};
 
 // Debounce function
 const debounce = <Args extends unknown[]>(func: (...args: Args) => void, waitFor: number) => {
@@ -46,7 +59,10 @@ export function EditProfileDialog() {
     bio: "",
     reading_goal: 12,
   });
-  
+  const [notificationPreferences, setNotificationPreferences] = useState<Record<NotificationCategory, boolean>>(
+    DEFAULT_NOTIFICATION_PREFERENCES
+  );
+
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   
@@ -69,6 +85,13 @@ export function EditProfileDialog() {
       } else {
         setAvatarPreview(null);
       }
+      setNotificationPreferences({
+        likes: isCategoryEnabled(profile.notification_preferences, 'likes'),
+        comments: isCategoryEnabled(profile.notification_preferences, 'comments'),
+        friends: isCategoryEnabled(profile.notification_preferences, 'friends'),
+        nudges: isCategoryEnabled(profile.notification_preferences, 'nudges'),
+        achievements: isCategoryEnabled(profile.notification_preferences, 'achievements'),
+      });
     }
   }, [profile, open]);
 
@@ -167,6 +190,7 @@ export function EditProfileDialog() {
         bio: formData.bio,
         reading_goal: formData.reading_goal,
         avatar_url: avatar_url,
+        notification_preferences: notificationPreferences,
       };
 
       const { error } = await updateProfile(updateData);
@@ -296,6 +320,25 @@ export function EditProfileDialog() {
                 )}
             </div>
 
+            <div className="space-y-2">
+                <Label>Quero ser notificada sobre</Label>
+                <div className="space-y-2 rounded-lg border p-3">
+                    {(Object.keys(NOTIFICATION_CATEGORY_LABELS) as NotificationCategory[]).map((category) => (
+                        <div key={category} className="flex items-center justify-between">
+                            <Label htmlFor={`notif-${category}`} className="font-normal text-sm">
+                                {NOTIFICATION_CATEGORY_LABELS[category]}
+                            </Label>
+                            <Switch
+                                id={`notif-${category}`}
+                                checked={notificationPreferences[category]}
+                                onCheckedChange={(checked) =>
+                                    setNotificationPreferences((prev) => ({ ...prev, [category]: checked }))
+                                }
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
+import { shouldNotify } from "@/lib/notificationPreferences";
 
 type Comment = Tables<'post_comments'> & {
   profiles: {
@@ -76,8 +77,15 @@ export const useComments = (postId: string) => {
     const targets = (mentionedProfiles || []).filter((p) => p.user_id !== excludeUserId);
     if (targets.length === 0) return;
 
+    const notifiableTargets = (
+      await Promise.all(
+        targets.map(async (target) => ((await shouldNotify(target.user_id, 'comments')) ? target : null))
+      )
+    ).filter((t): t is (typeof targets)[number] => t !== null);
+    if (notifiableTargets.length === 0) return;
+
     await supabase.from('notifications').insert(
-      targets.map((target) => ({
+      notifiableTargets.map((target) => ({
         user_id: target.user_id,
         type: 'mention',
         title: 'Você foi mencionado! 📣',
@@ -123,7 +131,7 @@ export const useComments = (postId: string) => {
         .eq('id', postId)
         .single();
 
-      if (postData && postData.user_id !== user.id) {
+      if (postData && postData.user_id !== user.id && await shouldNotify(postData.user_id, 'comments')) {
         await supabase
           .from('notifications')
           .insert({

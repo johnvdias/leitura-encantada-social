@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
+import { shouldNotify } from "@/lib/notificationPreferences";
 
 type Friendship = Tables<'friendships'>;
 
@@ -157,15 +158,17 @@ export const useFriendships = () => {
       if (error) throw error;
 
       // Create notification
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: addresseeId,
-          type: 'friend_request',
-          title: 'Nova solicitação de amizade!',
-          content: 'Você recebeu uma solicitação de amizade',
-          related_id: user.id
-        });
+      if (await shouldNotify(addresseeId, 'friends')) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: addresseeId,
+            type: 'friend_request',
+            title: 'Nova solicitação de amizade!',
+            content: 'Você recebeu uma solicitação de amizade',
+            related_id: user.id
+          });
+      }
 
       await fetchFriendships();
       toast({
@@ -193,15 +196,17 @@ export const useFriendships = () => {
       if (error) throw error;
 
       // Create notification for requester
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: requesterId,
-          type: 'friend_accepted',
-          title: 'Solicitação aceita! 🎉',
-          content: 'Sua solicitação de amizade foi aceita',
-          related_id: user.id
-        });
+      if (await shouldNotify(requesterId, 'friends')) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: requesterId,
+            type: 'friend_accepted',
+            title: 'Solicitação aceita! 🎉',
+            content: 'Sua solicitação de amizade foi aceita',
+            related_id: user.id
+          });
+      }
 
       await fetchFriendships();
       toast({

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Hand } from 'lucide-react';
+import { shouldNotify } from '@/lib/notificationPreferences';
 
 interface NudgeButtonProps {
   friendId: string;
@@ -42,33 +43,35 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
 
       const notificationTitle = `${profile.display_name} te cutucou! 👋`;
 
-      await supabase.from('notifications').insert({
-        user_id: friendId,
-        type: 'nudge',
-        title: notificationTitle,
-        content: message,
-        related_id: user.id,
-      });
-      
-      // Push notifications com tratamento robusto de erros
-      supabase.functions.invoke('send-push-notification', {
-        body: {
-          targetUserId: friendId,
+      if (await shouldNotify(friendId, 'nudges')) {
+        await supabase.from('notifications').insert({
+          user_id: friendId,
+          type: 'nudge',
           title: notificationTitle,
-          body: message,
-          tag: `nudge-${user.id}-${friendId}`
-        },
-      }).then(({ data, error: functionError }) => {
-        if (functionError) {
-          console.log('Push notification não disponível (normal se não configurado):', functionError.message);
-          // Não é um erro crítico - as notificações in-app funcionam
-        } else {
-          console.log('Push notification enviada com sucesso:', data);
-        }
-      }).catch(err => {
-        console.log('Push notification indisponível (funcionamento normal mantido):', err.message);
-        // A funcionalidade principal da cutucação continua funcionando
-      });
+          content: message,
+          related_id: user.id,
+        });
+
+        // Push notifications com tratamento robusto de erros
+        supabase.functions.invoke('send-push-notification', {
+          body: {
+            targetUserId: friendId,
+            title: notificationTitle,
+            body: message,
+            tag: `nudge-${user.id}-${friendId}`
+          },
+        }).then(({ data, error: functionError }) => {
+          if (functionError) {
+            console.log('Push notification não disponível (normal se não configurado):', functionError.message);
+            // Não é um erro crítico - as notificações in-app funcionam
+          } else {
+            console.log('Push notification enviada com sucesso:', data);
+          }
+        }).catch(err => {
+          console.log('Push notification indisponível (funcionamento normal mantido):', err.message);
+          // A funcionalidade principal da cutucação continua funcionando
+        });
+      }
 
       // Como não estamos mais esperando, o toast de sucesso é mostrado imediatamente.
       toast({

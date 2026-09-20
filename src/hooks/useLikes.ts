@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
+import { shouldNotify } from "@/lib/notificationPreferences";
 
 type Like = Tables<'post_likes'>;
 
@@ -71,7 +72,7 @@ export const useLikes = (postId: string) => {
           .eq('id', postId)
           .single();
 
-        if (postData && postData.user_id !== user.id) {
+        if (postData && postData.user_id !== user.id && await shouldNotify(postData.user_id, 'likes')) {
           await supabase
             .from('notifications')
             .insert({

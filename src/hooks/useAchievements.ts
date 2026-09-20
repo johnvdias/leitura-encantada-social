@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { shouldNotify } from "@/lib/notificationPreferences";
 
 type Achievement = Tables<'achievements'>;
 
@@ -206,15 +207,18 @@ export const useAchievements = () => {
         if (error) throw error;
 
         // Create notifications for new achievements
+        const notifyAchievements = await shouldNotify(user.id, 'achievements');
         for (const achievement of achievementsToUnlock) {
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: user.id,
-              type: 'achievement',
-              title: 'Nova conquista desbloqueada! 🏆',
-              content: `Você desbloqueou: ${achievement.achievement_name}`,
-            });
+          if (notifyAchievements) {
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: user.id,
+                type: 'achievement',
+                title: 'Nova conquista desbloqueada! 🏆',
+                content: `Você desbloqueou: ${achievement.achievement_name}`,
+              });
+          }
 
           toast({
             title: "Nova conquista! 🏆",

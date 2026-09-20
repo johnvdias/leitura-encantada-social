@@ -858,6 +858,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          notification_preferences: Json
           reading_goal: number | null
           updated_at: string
           user_id: string
@@ -870,6 +871,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          notification_preferences?: Json
           reading_goal?: number | null
           updated_at?: string
           user_id: string
@@ -882,6 +884,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          notification_preferences?: Json
           reading_goal?: number | null
           updated_at?: string
           user_id?: string
