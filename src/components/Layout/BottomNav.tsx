@@ -20,8 +20,8 @@ const BottomNav = () => {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-background/95 backdrop-blur border-t">
-      <div className="grid h-full max-w-lg grid-cols-4 mx-auto font-medium">
+    <div className="md:hidden fixed bottom-0 left-0 z-50 w-full h-24 bg-background/95 backdrop-blur border-t">
+      <div className="grid h-full max-w-lg grid-cols-4 mx-auto font-medium pb-4">
         {navLinks.map(({ href, label, icon: Icon }) => (
           <Link
             key={label}

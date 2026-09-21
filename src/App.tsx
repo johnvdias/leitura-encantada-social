@@ -33,7 +33,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <div className="min-h-screen bg-gradient-soft pb-16 md:pb-0">
+            <div className="min-h-screen bg-gradient-soft pb-24 md:pb-0">
               {/* BottomNav fica fora do PullToRefresh: um ancestral com
                   transform vira o "containing block" de elementos com
                   position: fixed, o que quebrava o posicionamento fixo
