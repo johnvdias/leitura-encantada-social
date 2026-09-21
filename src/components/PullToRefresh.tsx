@@ -128,7 +128,13 @@ export function PullToRefresh({ children }: PullToRefreshProps) {
       </div>
       <div
         style={{
-          transform: `translateY(${indicatorHeight}px)`,
+          // Qualquer valor de transform diferente de "none" (mesmo
+          // translateY(0px)) cria um novo containing block pra
+          // descendentes com position: fixed - por isso só aplica a
+          // transform quando realmente há um deslocamento acontecendo,
+          // senão a barra de navegação inferior (fixed) perde a
+          // referência da viewport e passa a "rolar" junto com a página.
+          transform: indicatorHeight > 0 ? `translateY(${indicatorHeight}px)` : undefined,
           transition: pullDistance === 0 || refreshing ? "transform 0.2s ease-out" : "none",
         }}
       >
