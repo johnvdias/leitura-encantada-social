@@ -207,10 +207,10 @@ const UserProfile = () => {
       </Card>
       
       <Tabs defaultValue="books">
-        <TabsList>
-          <TabsTrigger value="books">Estante ({stats?.totalBooks || 0})</TabsTrigger>
-          <TabsTrigger value="achievements">Conquistas ({achievements.length})</TabsTrigger>
-          <TabsTrigger value="stats">Estatísticas</TabsTrigger>
+        <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-3 gap-1">
+          <TabsTrigger value="books" className="shrink-0">Estante ({stats?.totalBooks || 0})</TabsTrigger>
+          <TabsTrigger value="achievements" className="shrink-0">Conquistas ({achievements.length})</TabsTrigger>
+          <TabsTrigger value="stats" className="shrink-0">Estatísticas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="books" className="mt-6">

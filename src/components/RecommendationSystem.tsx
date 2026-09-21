@@ -244,21 +244,21 @@ export function RecommendationSystem() {
             <div className="space-y-3">
               {userRecs.map((user) => (
                 <div key={user.user_id} className="flex items-center justify-between">
-                  <Link to={`/perfil/${user.user_id}`} className="flex items-center gap-3 hover:bg-muted/50 p-2 rounded transition-colors flex-1">
-                    <Avatar className="h-10 w-10">
+                  <Link to={`/perfil/${user.user_id}`} className="flex items-center gap-3 hover:bg-muted/50 p-2 rounded transition-colors flex-1 min-w-0">
+                    <Avatar className="h-10 w-10 shrink-0">
                       <AvatarImage src={user.avatar_url} />
                       <AvatarFallback>
                         {user.display_name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <p className="font-medium">{user.display_name}</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{user.display_name}</p>
+                      <p className="text-sm text-muted-foreground truncate">
                         Gêneros em comum: {user.commonGenres.join(', ')}
                       </p>
                     </div>
                   </Link>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="shrink-0">
                     <UserPlus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -281,8 +281,8 @@ export function RecommendationSystem() {
             <div className="space-y-3">
               {clubRecs.map((club) => (
                 <div key={club.id} className="flex items-center justify-between p-3 border rounded">
-                  <Link to={`/clubes/${club.id}`} className="flex-1">
-                    <h4 className="font-medium">{club.name}</h4>
+                  <Link to={`/clubes/${club.id}`} className="flex-1 min-w-0">
+                    <h4 className="font-medium truncate">{club.name}</h4>
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {club.description}
                     </p>
@@ -297,7 +297,7 @@ export function RecommendationSystem() {
                       )}
                     </div>
                   </Link>
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="shrink-0">
                     <Link to={`/clubes/${club.id}`}>
                       Ver Clube
                     </Link>

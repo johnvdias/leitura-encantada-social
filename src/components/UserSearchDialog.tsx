@@ -83,15 +83,15 @@ export function UserSearchDialog({ children, onUserSelected }: UserSearchDialogP
           <div className="space-y-3 max-h-60 overflow-y-auto">
             {results.length > 0 ? (
               results.map(result => (
-                <div key={result.user_id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
-                  <div className="flex items-center gap-3">
-                    <Avatar>
+                <div key={result.user_id} className="flex items-center justify-between gap-2 p-2 rounded-md hover:bg-muted">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Avatar className="shrink-0">
                       <AvatarImage src={result.avatar_url} />
                       <AvatarFallback>{result.display_name?.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <span>{result.display_name}</span>
+                    <span className="truncate">{result.display_name}</span>
                   </div>
-                  <Button size="sm" onClick={() => handleSelectUser(result.user_id)}>
+                  <Button size="sm" onClick={() => handleSelectUser(result.user_id)} className="shrink-0">
                     <UserPlus className="mr-2 h-4 w-4"/>
                     Adicionar
                   </Button>

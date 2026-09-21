@@ -110,15 +110,15 @@ export function MemberManagement({ clubId, initialMembers, creatorId, onMembersU
           <CardContent>
             <ul className="space-y-4">
               {pendingMembers.map(member => (
-                <li key={member.user_id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
+                <li key={member.user_id} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Avatar className="h-10 w-10 shrink-0">
                       <AvatarImage src={member.profiles.avatar_url} />
                       <AvatarFallback>{member.profiles.display_name?.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <p className="font-medium">{member.profiles.display_name}</p>
+                    <p className="font-medium truncate">{member.profiles.display_name}</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 shrink-0">
                     <Button
                       size="icon"
                       variant="outline"
@@ -153,14 +153,14 @@ export function MemberManagement({ clubId, initialMembers, creatorId, onMembersU
         <CardContent>
           <ul className="space-y-4">
             {approvedMembers.map(member => (
-              <li key={member.user_id} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
+              <li key={member.user_id} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Avatar className="h-10 w-10 shrink-0">
                     <AvatarImage src={member.profiles.avatar_url} />
                     <AvatarFallback>{member.profiles.display_name?.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="font-medium">{member.profiles.display_name}</p>
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{member.profiles.display_name}</p>
                     {member.role === 'creator' && (
                       <span className="text-xs font-semibold text-yellow-500 flex items-center gap-1">
                         <Crown className="h-3 w-3" />
@@ -170,7 +170,7 @@ export function MemberManagement({ clubId, initialMembers, creatorId, onMembersU
                   </div>
                 </div>
                 {member.user_id !== creatorId && (
-                   <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => handleUpdateMemberStatus(member.user_id, 'rejected')}>
+                   <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleUpdateMemberStatus(member.user_id, 'rejected')}>
                        Remover
                    </Button>
                 )}
