@@ -18,10 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Loader2 } from "lucide-react";
+import { Settings, Loader2, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { ImageCropperDialog } from "./ImageCropperDialog";
 
 interface Book {
   id: string;
@@ -36,6 +38,7 @@ interface EditClubDialogProps {
     is_private: boolean;
     max_members: number;
     current_book_id?: string | null;
+    avatar_url?: string | null;
   };
   onUpdate: () => void;
 }
@@ -51,6 +54,44 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
   const [userBooks, setUserBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(club.avatar_url || null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageToCrop(reader.result as string);
+        setCropperOpen(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onCropComplete = (croppedImageBlob: Blob) => {
+    const croppedFile = new File([croppedImageBlob], `avatar-${club.id}.jpeg`, { type: "image/jpeg" });
+    setAvatarFile(croppedFile);
+    setAvatarPreview(URL.createObjectURL(croppedFile));
+    setCropperOpen(false);
+  };
+
+  const uploadAvatar = async (): Promise<string | null> => {
+    if (!avatarFile) return club.avatar_url ?? null;
+
+    const filePath = `${club.id}/avatar.jpeg`;
+    const { error: uploadError } = await supabase.storage
+      .from('club-avatars')
+      .upload(filePath, avatarFile, { upsert: true, contentType: avatarFile.type });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from('club-avatars').getPublicUrl(filePath);
+    return `${data.publicUrl}?t=${Date.now()}`;
+  };
 
   useEffect(() => {
     const fetchUserBooks = async () => {
@@ -75,6 +116,8 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
 
     setLoading(true);
     try {
+      const avatar_url = await uploadAvatar();
+
       const { error } = await supabase
         .from('clubs')
         .update({
@@ -83,6 +126,7 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
           is_private: isPrivate,
           max_members: maxMembers || 1,
           current_book_id: currentBookId,
+          avatar_url,
         })
         .eq('id', club.id);
 
@@ -108,6 +152,7 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
@@ -120,6 +165,25 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
           <DialogTitle>Editar Clube</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={avatarPreview || undefined} />
+              <AvatarFallback>{name.charAt(0).toUpperCase() || '?'}</AvatarFallback>
+            </Avatar>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+              id="club-avatar-upload"
+            />
+            <Button type="button" variant="outline" asChild>
+              <Label htmlFor="club-avatar-upload" className="cursor-pointer flex items-center">
+                <Upload className="h-4 w-4 mr-2" /> Alterar Foto
+              </Label>
+            </Button>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="name">Nome do Clube</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do clube" required />
@@ -177,5 +241,13 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
         </form>
       </DialogContent>
     </Dialog>
+
+    <ImageCropperDialog
+      open={cropperOpen}
+      onOpenChange={setCropperOpen}
+      imageSrc={imageToCrop}
+      onCropComplete={onCropComplete}
+    />
+    </>
   );
 }

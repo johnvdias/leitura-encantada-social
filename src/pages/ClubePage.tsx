@@ -30,6 +30,7 @@ interface Club {
   creator_id: string;
   current_book_id?: string | null;
   invite_code?: string | null;
+  avatar_url?: string | null;
   books?: {
     id: string;
     title: string;
@@ -229,7 +230,7 @@ const ClubePage = () => {
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20 border-2 border-primary/10"><AvatarImage src={club.profiles.avatar_url} /><AvatarFallback>{club.name.charAt(0)}</AvatarFallback></Avatar>
+                <Avatar className="h-20 w-20 border-2 border-primary/10"><AvatarImage src={club.avatar_url || undefined} /><AvatarFallback>{club.name.charAt(0)}</AvatarFallback></Avatar>
                 <div>
                   <h1 className="text-3xl font-bold">{club.name}</h1>
                   <p className="text-muted-foreground max-w-prose">{club.description}</p>

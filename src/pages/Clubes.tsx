@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, BookOpen, Crown, Calendar } from "lucide-react";
 import { CreateClubDialog } from "@/components/CreateClubDialog";
 import { useClubs } from "@/hooks/useClubs";
@@ -47,7 +48,13 @@ const Clubes = () => {
                 <Card className="card-enchanted hover-float cursor-pointer">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between gap-2">
-                      <span className="truncate min-w-0">{club.name}</span>
+                      <span className="flex items-center gap-2 min-w-0">
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage src={club.avatar_url || undefined} />
+                          <AvatarFallback>{club.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="truncate min-w-0">{club.name}</span>
+                      </span>
                       {club.is_private && (
                         <Badge variant="outline" className="shrink-0">Privado</Badge>
                       )}
@@ -72,7 +79,7 @@ const Clubes = () => {
                         {club.description}
                       </p>
                     )}
-                    
+
                     {club.books && (
                       <div className="flex items-center gap-2 p-2 bg-muted/30 rounded">
                         <BookOpen className="h-4 w-4 text-primary" />
@@ -122,7 +129,13 @@ const Clubes = () => {
               <Card key={club.id} className="card-enchanted hover-float">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between gap-2">
-                    <span className="truncate min-w-0">{club.name}</span>
+                    <span className="flex items-center gap-2 min-w-0">
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarImage src={club.avatar_url || undefined} />
+                        <AvatarFallback>{club.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="truncate min-w-0">{club.name}</span>
+                    </span>
                     {club.is_private && (
                       <Badge variant="outline" className="shrink-0">Privado</Badge>
                     )}
