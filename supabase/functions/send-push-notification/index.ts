@@ -150,12 +150,13 @@ Deno.serve(async (req) => {
       }
     });
 
+    // O cabeçalho "Topic" que existia aqui antes (valor fixo "notifications")
+    // não é um valor válido pro Web Push da Apple/Safari - a APNs recusava
+    // toda notificação com erro "BadWebPushTopic". O web-push já cuida dos
+    // cabeçalhos certos sozinho quando esse campo não é forçado.
     const options = {
       TTL: 86400, // 24 horas
       urgency: 'high' as const,
-      headers: {
-        'Topic': 'notifications'
-      }
     };
 
     console.log(`[${VERSION}] 📨 Enviando ${subscriptions.length} notificações...`);
