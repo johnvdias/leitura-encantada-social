@@ -84,15 +84,33 @@ export const useComments = (postId: string) => {
     ).filter((t): t is (typeof targets)[number] => t !== null);
     if (notifiableTargets.length === 0) return;
 
+    const mentionTitle = 'Você foi mencionado! 📣';
+    const mentionBody = `${profile?.display_name || 'Alguém'} mencionou você em um comentário`;
+
     await supabase.from('notifications').insert(
       notifiableTargets.map((target) => ({
         user_id: target.user_id,
         type: 'mention',
-        title: 'Você foi mencionado! 📣',
-        content: `${profile?.display_name || 'Alguém'} mencionou você em um comentário`,
+        title: mentionTitle,
+        content: mentionBody,
         related_id: postId
       }))
     );
+
+    notifiableTargets.forEach((target) => {
+      supabase.functions
+        .invoke('send-push-notification', {
+          body: {
+            targetUserId: target.user_id,
+            title: mentionTitle,
+            body: mentionBody,
+            tag: `mention-${postId}-${target.user_id}`,
+          },
+        })
+        .catch(() => {
+          // Push é best-effort; a notificação in-app já foi salva.
+        });
+    });
   }, [postId, profile?.display_name]);
 
   const addComment = async (content: string, parentCommentId?: string) => {
@@ -140,6 +158,19 @@ export const useComments = (postId: string) => {
             title: 'Novo comentário!',
             content: 'Alguém comentou em seu post',
             related_id: postId
+          });
+
+        supabase.functions
+          .invoke('send-push-notification', {
+            body: {
+              targetUserId: postData.user_id,
+              title: 'Novo comentário!',
+              body: 'Alguém comentou em seu post',
+              tag: `comment-${postId}`,
+            },
+          })
+          .catch(() => {
+            // Push é best-effort; a notificação in-app já foi salva.
           });
       }
 

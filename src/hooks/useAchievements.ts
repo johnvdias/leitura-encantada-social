@@ -210,13 +210,29 @@ export const useAchievements = () => {
         const notifyAchievements = await shouldNotify(user.id, 'achievements');
         for (const achievement of achievementsToUnlock) {
           if (notifyAchievements) {
+            const achievementTitle = 'Nova conquista desbloqueada! 🏆';
+            const achievementBody = `Você desbloqueou: ${achievement.achievement_name}`;
+
             await supabase
               .from('notifications')
               .insert({
                 user_id: user.id,
                 type: 'achievement',
-                title: 'Nova conquista desbloqueada! 🏆',
-                content: `Você desbloqueou: ${achievement.achievement_name}`,
+                title: achievementTitle,
+                content: achievementBody,
+              });
+
+            supabase.functions
+              .invoke('send-push-notification', {
+                body: {
+                  targetUserId: user.id,
+                  title: achievementTitle,
+                  body: achievementBody,
+                  tag: `achievement-${achievement.achievement_type}`,
+                },
+              })
+              .catch(() => {
+                // Push é best-effort; a notificação in-app já foi salva.
               });
           }
 

@@ -159,14 +159,30 @@ export const useFriendships = () => {
 
       // Create notification
       if (await shouldNotify(addresseeId, 'friends')) {
+        const requestTitle = 'Nova solicitação de amizade!';
+        const requestBody = `${profile?.display_name || 'Alguém'} quer ser sua amiga`;
+
         await supabase
           .from('notifications')
           .insert({
             user_id: addresseeId,
             type: 'friend_request',
-            title: 'Nova solicitação de amizade!',
-            content: `${profile?.display_name || 'Alguém'} quer ser sua amiga`,
+            title: requestTitle,
+            content: requestBody,
             related_id: user.id
+          });
+
+        supabase.functions
+          .invoke('send-push-notification', {
+            body: {
+              targetUserId: addresseeId,
+              title: requestTitle,
+              body: requestBody,
+              tag: `friend-request-${user.id}-${addresseeId}`,
+            },
+          })
+          .catch(() => {
+            // Push é best-effort; a notificação in-app já foi salva.
           });
       }
 
@@ -197,14 +213,30 @@ export const useFriendships = () => {
 
       // Create notification for requester
       if (await shouldNotify(requesterId, 'friends')) {
+        const acceptedTitle = 'Solicitação aceita! 🎉';
+        const acceptedBody = `${profile?.display_name || 'Alguém'} aceitou sua solicitação de amizade`;
+
         await supabase
           .from('notifications')
           .insert({
             user_id: requesterId,
             type: 'friend_accepted',
-            title: 'Solicitação aceita! 🎉',
-            content: `${profile?.display_name || 'Alguém'} aceitou sua solicitação de amizade`,
+            title: acceptedTitle,
+            content: acceptedBody,
             related_id: user.id
+          });
+
+        supabase.functions
+          .invoke('send-push-notification', {
+            body: {
+              targetUserId: requesterId,
+              title: acceptedTitle,
+              body: acceptedBody,
+              tag: `friend-accepted-${user.id}-${requesterId}`,
+            },
+          })
+          .catch(() => {
+            // Push é best-effort; a notificação in-app já foi salva.
           });
       }
 

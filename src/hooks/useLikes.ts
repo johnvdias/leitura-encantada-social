@@ -82,6 +82,19 @@ export const useLikes = (postId: string) => {
               content: 'Alguém curtiu seu post',
               related_id: postId
             });
+
+          supabase.functions
+            .invoke('send-push-notification', {
+              body: {
+                targetUserId: postData.user_id,
+                title: 'Nova curtida!',
+                body: 'Alguém curtiu seu post',
+                tag: `like-${postId}`,
+              },
+            })
+            .catch(() => {
+              // Push é best-effort; a notificação in-app já foi salva.
+            });
         }
       }
 
