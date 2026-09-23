@@ -110,65 +110,6 @@ export type Database = {
         }
         Relationships: []
       }
-      book_loans: {
-        Row: {
-          book_author: string | null
-          book_cover_url: string | null
-          book_id: string
-          book_title: string | null
-          borrower_id: string
-          created_at: string
-          id: string
-          message: string | null
-          owner_id: string
-          requested_at: string
-          responded_at: string | null
-          returned_at: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          book_author?: string | null
-          book_cover_url?: string | null
-          book_id: string
-          book_title?: string | null
-          borrower_id: string
-          created_at?: string
-          id?: string
-          message?: string | null
-          owner_id: string
-          requested_at?: string
-          responded_at?: string | null
-          returned_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          book_author?: string | null
-          book_cover_url?: string | null
-          book_id?: string
-          book_title?: string | null
-          borrower_id?: string
-          created_at?: string
-          id?: string
-          message?: string | null
-          owner_id?: string
-          requested_at?: string
-          responded_at?: string | null
-          returned_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "book_loans_book_id_fkey"
-            columns: ["book_id"]
-            isOneToOne: false
-            referencedRelation: "books"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       book_quotes: {
         Row: {
           book_id: string

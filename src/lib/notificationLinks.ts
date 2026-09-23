@@ -4,8 +4,8 @@ type Notification = Tables<'notifications'>;
 
 // Pra onde clicar numa notificação deve levar, baseado no seu tipo e no
 // related_id salvo no momento em que ela foi criada (ver useLikes,
-// useComments, useFriendships, useBookLoans, useDirectMessages, NudgeButton
-// e useAchievements - cada um decide o que related_id significa).
+// useComments, useFriendships, useDirectMessages, NudgeButton e
+// useAchievements - cada um decide o que related_id significa).
 export const getNotificationLink = (notification: Notification): string | null => {
   const { type, related_id } = notification;
 
@@ -18,9 +18,6 @@ export const getNotificationLink = (notification: Notification): string | null =
     case 'friend_accepted':
     case 'nudge':
       return related_id ? `/perfil/${related_id}` : null;
-    case 'loan_request':
-    case 'loan_response':
-      return '/perfil?tab=emprestimos';
     case 'message':
       return related_id ? `/mensagens/${related_id}` : null;
     case 'achievement':

@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type NotificationCategory = 'likes' | 'comments' | 'friends' | 'nudges' | 'achievements' | 'loans' | 'messages';
+export type NotificationCategory = 'likes' | 'comments' | 'friends' | 'nudges' | 'achievements' | 'messages';
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: Record<NotificationCategory, boolean> = {
   likes: true,
@@ -8,7 +8,6 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: Record<NotificationCategory, bool
   friends: true,
   nudges: true,
   achievements: true,
-  loans: true,
   messages: true,
 };
 

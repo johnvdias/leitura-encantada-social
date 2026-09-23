@@ -13,7 +13,6 @@ import { FriendsSection } from "@/components/FriendsSection";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { AdvancedStats } from "@/components/AdvancedStats";
 import { AchievementBadges } from "@/components/AchievementBadges";
-import { BookLoansSection } from "@/components/BookLoansSection";
 import { ReadingHeatmap } from "@/components/ReadingHeatmap";
 import { QuotesGallery } from "@/components/QuotesGallery";
 import { YearlyWrapped } from "@/components/YearlyWrapped";
@@ -31,7 +30,7 @@ interface RecentActivity {
   };
 }
 
-const VALID_TABS = ['estatisticas', 'conquistas', 'amigos', 'emprestimos', 'citacoes', 'atividade'];
+const VALID_TABS = ['estatisticas', 'conquistas', 'amigos', 'citacoes', 'atividade'];
 
 const Perfil = () => {
   const { user, profile } = useAuth();
@@ -153,11 +152,10 @@ const Perfil = () => {
       </Card>
       
       <Tabs defaultValue={initialTab} className="space-y-6">
-        <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-6 gap-1">
+        <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-5 gap-1">
           <TabsTrigger value="estatisticas" className="shrink-0">Estatísticas</TabsTrigger>
           <TabsTrigger value="conquistas" className="shrink-0">Conquistas</TabsTrigger>
           <TabsTrigger value="amigos" className="shrink-0">Amigos</TabsTrigger>
-          <TabsTrigger value="emprestimos" className="shrink-0">Empréstimos</TabsTrigger>
           <TabsTrigger value="citacoes" className="shrink-0">Citações</TabsTrigger>
           <TabsTrigger value="atividade" className="shrink-0">Atividade</TabsTrigger>
         </TabsList>
@@ -205,10 +203,6 @@ const Perfil = () => {
 
         <TabsContent value="amigos">
           <FriendsSection />
-        </TabsContent>
-
-        <TabsContent value="emprestimos" className="space-y-6">
-          <BookLoansSection />
         </TabsContent>
 
         <TabsContent value="citacoes" className="space-y-6">

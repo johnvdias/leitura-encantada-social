@@ -14,7 +14,6 @@ import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NudgeButton } from "@/components/NudgeButton";
 import { useFriendships } from "@/hooks/useFriendships";
-import { RequestLoanButton } from "@/components/RequestLoanButton";
 
 // Interfaces para os dados
 interface Profile {
@@ -223,7 +222,6 @@ const UserProfile = () => {
                                 <h3 className="font-semibold text-lg">{book.title}</h3>
                                 <p className="text-sm text-muted-foreground">{book.author}</p>
                                 {book.rating && <p>Nota: {book.rating}/5</p>}
-                                {!isOwnProfile && <RequestLoanButton bookId={book.id} />}
                             </CardContent>
                         </Card>
                     ))}
