@@ -6,18 +6,12 @@ import { Tables } from "@/integrations/supabase/types";
 
 type Poll = Tables<'club_book_polls'>;
 type PollOption = Tables<'club_book_poll_options'>;
-type PollVote = Tables<'club_book_poll_votes'>;
-
-export interface PollOptionWithVotes extends PollOption {
-  voteCount: number;
-  votedByMe: boolean;
-}
 
 export const useClubBookPoll = (clubId: string, isCreator: boolean, onResolved?: () => void) => {
   const [poll, setPoll] = useState<Poll | null>(null);
-  const [options, setOptions] = useState<PollOptionWithVotes[]>([]);
+  const [options, setOptions] = useState<PollOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [closing, setClosing] = useState(false);
+  const [drawing, setDrawing] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -43,19 +37,12 @@ export const useClubBookPoll = (clubId: string, isCreator: boolean, onResolved?:
 
       setPoll(pollData);
 
-      const [{ data: optionsData }, { data: votesData }] = await Promise.all([
-        supabase.from('club_book_poll_options').select('*').eq('poll_id', pollData.id),
-        supabase.from('club_book_poll_votes').select('*').eq('poll_id', pollData.id),
-      ]);
+      const { data: optionsData } = await supabase
+        .from('club_book_poll_options')
+        .select('*')
+        .eq('poll_id', pollData.id);
 
-      const votes = (votesData as PollVote[]) || [];
-      setOptions(
-        ((optionsData as PollOption[]) || []).map((opt) => ({
-          ...opt,
-          voteCount: votes.filter((v) => v.option_id === opt.id).length,
-          votedByMe: votes.some((v) => v.option_id === opt.id && v.user_id === user.id),
-        }))
-      );
+      setOptions((optionsData as PollOption[]) || []);
     } catch (error) {
       console.error('Error fetching club book poll:', error);
     } finally {
@@ -88,33 +75,20 @@ export const useClubBookPoll = (clubId: string, isCreator: boolean, onResolved?:
       );
       if (optionsError) throw optionsError;
 
-      toast({ title: 'Votação criada!', description: 'As membros já podem votar no próximo livro.' });
+      toast({ title: 'Sorteio criado!', description: 'Quando quiser, sorteie o próximo livro entre as opções.' });
       await fetchPoll();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Não foi possível criar a votação.';
+      const message = error instanceof Error ? error.message : 'Não foi possível criar o sorteio.';
       toast({ title: 'Erro', description: message, variant: 'destructive' });
     }
   };
 
-  const castVote = async (optionId: string) => {
-    if (!user || !poll) return;
-    try {
-      const { error } = await supabase
-        .from('club_book_poll_votes')
-        .upsert({ poll_id: poll.id, option_id: optionId, user_id: user.id }, { onConflict: 'poll_id,user_id' });
-      if (error) throw error;
-      await fetchPoll();
-    } catch (error) {
-      toast({ title: 'Erro', description: 'Não foi possível registrar seu voto.', variant: 'destructive' });
-    }
-  };
-
-  const closePoll = async () => {
+  const drawWinner = async () => {
     if (!user || !poll || options.length === 0 || !isCreator) return;
 
-    setClosing(true);
+    setDrawing(true);
     try {
-      const winner = [...options].sort((a, b) => b.voteCount - a.voteCount)[0];
+      const winner = options[Math.floor(Math.random() * options.length)];
 
       const { data: existingBook } = await supabase
         .from('books')
@@ -150,20 +124,25 @@ export const useClubBookPoll = (clubId: string, isCreator: boolean, onResolved?:
 
       const { error: pollError } = await supabase
         .from('club_book_polls')
-        .update({ status: 'closed', closed_at: new Date().toISOString(), claimed_by_current_book_id: bookId })
+        .update({
+          status: 'closed',
+          closed_at: new Date().toISOString(),
+          claimed_by_current_book_id: bookId,
+          winning_option_id: winner.id,
+        })
         .eq('id', poll.id);
       if (pollError) throw pollError;
 
-      toast({ title: 'Votação encerrada!', description: `"${winner.title}" é a nova leitura do clube.` });
+      toast({ title: 'Sorteio feito! 🎉', description: `"${winner.title}" é a nova leitura do clube.` });
       await fetchPoll();
       onResolved?.();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Não foi possível encerrar a votação.';
+      const message = error instanceof Error ? error.message : 'Não foi possível fazer o sorteio.';
       toast({ title: 'Erro', description: message, variant: 'destructive' });
     } finally {
-      setClosing(false);
+      setDrawing(false);
     }
   };
 
-  return { poll, options, loading, closing, createPoll, castVote, closePoll, refetch: fetchPoll };
+  return { poll, options, loading, drawing, createPoll, drawWinner, refetch: fetchPoll };
 };

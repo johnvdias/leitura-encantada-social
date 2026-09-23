@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Vote, Plus, X, Loader2 } from "lucide-react";
+import { Dices, Plus, X, Loader2 } from "lucide-react";
 
 interface Candidate {
   title: string;
@@ -61,14 +61,14 @@ export function CreatePollDialog({ onCreate }: CreatePollDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm">
-          <Vote className="h-4 w-4 mr-2" />
-          Criar votação
+          <Dices className="h-4 w-4 mr-2" />
+          Criar sorteio
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Votação do próximo livro</DialogTitle>
-          <DialogDescription>Proponha de 2 a 4 opções pras membros escolherem.</DialogDescription>
+          <DialogTitle>Sorteio do próximo livro</DialogTitle>
+          <DialogDescription>Proponha de 2 a 4 opções pra sortear entre elas.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -105,7 +105,7 @@ export function CreatePollDialog({ onCreate }: CreatePollDialogProps) {
 
           <Button onClick={handleSubmit} disabled={!isValid || saving} className="w-full">
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Iniciar votação
+            Criar opções
           </Button>
         </div>
       </DialogContent>

@@ -256,7 +256,7 @@ const ClubePage = () => {
           <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-4 gap-1">
             <TabsTrigger value="discussions" className="shrink-0">Discussões</TabsTrigger>
             <TabsTrigger value="schedules" className="shrink-0">Cronogramas</TabsTrigger>
-            <TabsTrigger value="votacao" className="shrink-0">Votação</TabsTrigger>
+            <TabsTrigger value="votacao" className="shrink-0">Sorteio</TabsTrigger>
             <TabsTrigger value="members" className="shrink-0">Membros ({approvedMembers.length})</TabsTrigger>
           </TabsList>
 

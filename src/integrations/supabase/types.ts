@@ -136,7 +136,7 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string | null
-          owner_id?: string
+          owner_id: string
           requested_at?: string
           responded_at?: string | null
           returned_at?: string | null
@@ -166,7 +166,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "books"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       book_quotes: {
@@ -201,7 +201,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "books"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       book_search_cache: {
@@ -455,84 +455,62 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "club_book_polls"
             referencedColumns: ["id"]
-          }
-        ]
-      }
-      club_book_poll_votes: {
-        Row: {
-          created_at: string
-          id: string
-          option_id: string
-          poll_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          option_id: string
-          poll_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          option_id?: string
-          poll_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "club_book_poll_votes_option_id_fkey"
-            columns: ["option_id"]
-            isOneToOne: false
-            referencedRelation: "club_book_poll_options"
-            referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "club_book_poll_votes_poll_id_fkey"
-            columns: ["poll_id"]
-            isOneToOne: false
-            referencedRelation: "club_book_polls"
-            referencedColumns: ["id"]
-          }
         ]
       }
       club_book_polls: {
         Row: {
           claimed_by_current_book_id: string | null
-          club_id: string
           closed_at: string | null
+          club_id: string
           created_at: string
           created_by: string
           id: string
           status: string
+          winning_option_id: string | null
         }
         Insert: {
           claimed_by_current_book_id?: string | null
-          club_id: string
           closed_at?: string | null
+          club_id: string
           created_at?: string
           created_by: string
           id?: string
           status?: string
+          winning_option_id?: string | null
         }
         Update: {
           claimed_by_current_book_id?: string | null
-          club_id?: string
           closed_at?: string | null
+          club_id?: string
           created_at?: string
           created_by?: string
           id?: string
           status?: string
+          winning_option_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "club_book_polls_claimed_by_current_book_id_fkey"
+            columns: ["claimed_by_current_book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "club_book_polls_club_id_fkey"
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
             referencedColumns: ["id"]
-          }
+          },
+          {
+            foreignKeyName: "club_book_polls_winning_option_id_fkey"
+            columns: ["winning_option_id"]
+            isOneToOne: false
+            referencedRelation: "club_book_poll_options"
+            referencedColumns: ["id"]
+          },
         ]
       }
       club_discussions: {
@@ -1250,6 +1228,30 @@ export type Database = {
     }
     Functions: {
       ensure_creator_is_approved: { Args: never; Returns: undefined }
+      is_approved_club_member: {
+        Args: { p_club_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_challenge_creator: {
+        Args: { p_challenge_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_challenge_participant: {
+        Args: { p_challenge_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_club_creator: {
+        Args: { p_club_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_schedule_creator: {
+        Args: { p_schedule_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_schedule_participant: {
+        Args: { p_schedule_id: string; p_user_id: string }
+        Returns: boolean
+      }
       join_club_by_invite_code: {
         Args: { p_invite_code: string }
         Returns: string
