@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { UserMinus, Hourglass } from "lucide-react";
+import { UserMinus, Hourglass, BookPlus, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -64,7 +64,9 @@ const ClubePage = () => {
   const [isMember, setIsMember] = useState(false);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [readProgress, setReadProgress] = useState<{ completed: number; total: number } | null>(null);
-  
+  const [hasBookInShelf, setHasBookInShelf] = useState(false);
+  const [addingToShelf, setAddingToShelf] = useState(false);
+
   const isCreator = club?.creator_id === user?.id;
 
   const fetchClubData = useCallback(async () => {
@@ -131,21 +133,23 @@ const ClubePage = () => {
         if (bookData && approvedIds.length > 0) {
             const { data: memberBooksData } = await supabase
                 .from('books')
-                .select('user_id, title, author')
-                .in('user_id', approvedIds)
-                .eq('reading_status', 'completed');
+                .select('user_id, title, author, reading_status')
+                .in('user_id', approvedIds);
 
             const normalize = (s: string) => s.trim().toLowerCase();
             const targetTitle = normalize(bookData.title);
             const targetAuthor = normalize(bookData.author);
+            const matchingBooks = (memberBooksData || [])
+                .filter(b => normalize(b.title) === targetTitle && normalize(b.author) === targetAuthor);
+
             const completedUserIds = new Set(
-                (memberBooksData || [])
-                    .filter(b => normalize(b.title) === targetTitle && normalize(b.author) === targetAuthor)
-                    .map(b => b.user_id)
+                matchingBooks.filter(b => b.reading_status === 'completed').map(b => b.user_id)
             );
             setReadProgress({ completed: completedUserIds.size, total: approvedIds.length });
+            setHasBookInShelf(matchingBooks.some(b => b.user_id === user.id));
         } else {
             setReadProgress(null);
+            setHasBookInShelf(false);
         }
 
     } catch (err) {
@@ -177,6 +181,27 @@ const ClubePage = () => {
     }
   };
   
+  const handleAddToShelf = async () => {
+    if (!user || !club?.books) return;
+    setAddingToShelf(true);
+    try {
+      const { error } = await supabase.from('books').insert({
+        user_id: user.id,
+        title: club.books.title,
+        author: club.books.author,
+        cover_url: club.books.cover_url,
+        reading_status: 'want_to_read',
+      });
+      if (error) throw error;
+      setHasBookInShelf(true);
+      toast({ title: "Adicionado à estante! 📚", description: `"${club.books.title}" já está na sua estante.` });
+    } catch (error) {
+      toast({ title: "Erro", description: "Não foi possível adicionar o livro à sua estante.", variant: "destructive" });
+    } finally {
+      setAddingToShelf(false);
+    }
+  };
+
   const handleLeaveClub = async () => {
     if (!user || !club) return;
     try {
@@ -237,6 +262,18 @@ const ClubePage = () => {
                         <p className="font-bold">{club.books.title}</p>
                         <p className="text-sm text-muted-foreground">{club.books.author}</p>
                     </div>
+                    {isMember && (
+                        hasBookInShelf ? (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                                <Check className="h-4 w-4" /> Na sua estante
+                            </span>
+                        ) : (
+                            <Button size="sm" variant="outline" className="shrink-0" onClick={handleAddToShelf} disabled={addingToShelf}>
+                                <BookPlus className="h-4 w-4 mr-2" />
+                                Adicionar à minha estante
+                            </Button>
+                        )
+                    )}
                 </div>
                 {readProgress && readProgress.total > 0 && (
                     <div className="mt-4">
