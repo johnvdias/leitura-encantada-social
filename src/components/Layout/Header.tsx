@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Users, Home, MessageSquare, MessageCircle, Search } from "lucide-react";
+import { BookOpen, Users, MessageSquare, MessageCircle, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { GlobalSearch } from "@/components/GlobalSearch";
@@ -34,17 +34,6 @@ const Header = () => {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-4">
-          <Link to="/">
-            <Button 
-              variant={isActive("/") ? "default" : "ghost"} 
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Home className="h-4 w-4" />
-              Início
-            </Button>
-          </Link>
-          
           {user && (
             <>
               <Link to="/estante">
