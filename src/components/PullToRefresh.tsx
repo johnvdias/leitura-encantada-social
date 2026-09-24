@@ -91,14 +91,25 @@ export function PullToRefresh({ children }: PullToRefreshProps) {
       });
     };
 
+    // O sistema/navegador pode interromper um gesto de toque no meio (ex:
+    // um app trocando de primeiro plano, ou o próprio navegador assumindo o
+    // gesto) disparando touchcancel em vez de touchend - sem isso, a barra
+    // ficava travada num valor incorreto até o próximo gesto bem-sucedido.
+    const onTouchCancel = () => {
+      startY.current = null;
+      setPullDistance(0);
+    };
+
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: true });
     window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
     return () => {
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchCancel);
     };
   }, []);
 
