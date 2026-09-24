@@ -79,7 +79,7 @@ const Index = () => {
               <span className="text-5xl sm:text-6xl md:text-7xl">Estante Encantada</span>
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
-              Uma rede social acolhedora onde leitoras apaixonadas 
+              Uma rede social acolhedora onde leitoras apaixonadas{" "}
               <br className="hidden md:block" />
               compartilham emoções, criam laços afetivos e mergulham em suas memórias literárias
             </p>
