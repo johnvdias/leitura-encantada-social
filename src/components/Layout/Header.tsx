@@ -2,16 +2,18 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Users, Home, User, MessageSquare, MessageCircle, Search } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BookOpen, Users, Home, MessageSquare, MessageCircle, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { GlobalSearch } from "@/components/GlobalSearch";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppMenu } from "@/components/Layout/AppMenu";
 import { useConversations } from "@/hooks/useConversations";
+import { cn } from "@/lib/utils";
 
 const Header = () => {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { totalUnread } = useConversations();
 
   const isActive = (path: string) => location.pathname === path;
@@ -78,15 +80,19 @@ const Header = () => {
                 </Button>
               </Link>
 
-              <Link to="/perfil">
-                <Button 
-                  variant={isActive("/perfil") ? "default" : "ghost"} 
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <User className="h-4 w-4" />
-                  Perfil
-                </Button>
+              <Link
+                to="/perfil"
+                className={cn(
+                  "rounded-full",
+                  isActive("/perfil") && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                )}
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={profile?.avatar_url ?? undefined} />
+                  <AvatarFallback className="text-xs">
+                    {profile?.display_name?.charAt(0) || user.email?.charAt(0) || '?'}
+                  </AvatarFallback>
+                </Avatar>
               </Link>
             </>
           )}
@@ -115,15 +121,12 @@ const Header = () => {
                 </Button>
               </Link>
               <NotificationDropdown />
-              <ThemeToggle />
-              <Button onClick={signOut} variant="outline" size="sm">
-                Sair
-              </Button>
+              <AppMenu onSignOut={signOut} />
             </>
           )}
           {!user && (
             <>
-              <ThemeToggle />
+              <AppMenu />
               <Link to="/auth">
                 <Button size="sm">Entrar</Button>
               </Link>

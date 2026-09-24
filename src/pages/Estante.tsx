@@ -106,10 +106,6 @@ const Estante = () => {
         <SchedulesSection />
       </section>
 
-      <FriendRecommendations />
-
-      <Separator className="my-8" />
-
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
           <div className="relative w-full sm:w-auto sm:flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -165,6 +161,10 @@ const Estante = () => {
           ) : <p className="text-center text-muted-foreground py-10">Sua lista de desejos está vazia.</p>}
         </TabsContent>
       </Tabs>
+
+      <Separator className="my-8" />
+
+      <FriendRecommendations />
 
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
         <DialogContent className="sm:max-w-[400px]">

@@ -21,6 +21,10 @@ import InviteJoin from "./pages/InviteJoin";
 import Mensagens from "./pages/Mensagens";
 import Conversa from "./pages/Conversa";
 import PostDetail from "./pages/PostDetail";
+import Ajuda from "./pages/Ajuda";
+import TermosDeUso from "./pages/TermosDeUso";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import Suporte from "./pages/Suporte";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -92,6 +96,13 @@ const App = () => (
                       dois casos (logada/deslogada) ela mesma - um redirect
                       duro perderia o código do convite da URL. */}
                   <Route path="/convite/:code" element={<InviteJoin />} />
+                  {/* Páginas institucionais - de propósito sem ProtectedRoute,
+                      acessíveis mesmo deslogada (ex: política de privacidade
+                      antes de criar conta). */}
+                  <Route path="/ajuda" element={<Ajuda />} />
+                  <Route path="/termos" element={<TermosDeUso />} />
+                  <Route path="/privacidade" element={<PoliticaPrivacidade />} />
+                  <Route path="/suporte" element={<Suporte />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
