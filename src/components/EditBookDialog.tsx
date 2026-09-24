@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Edit3 } from "lucide-react";
+import { GenreSelect } from "@/components/GenreSelect";
+import { CompletedDatePicker } from "@/components/CompletedDatePicker";
+import { format } from "date-fns";
 
 interface EditBookDialogProps {
   bookId: string;
@@ -19,6 +22,7 @@ interface EditBookDialogProps {
   description?: string;
   coverUrl?: string | null;
   status: 'reading' | 'completed' | 'want_to_read';
+  completedAt?: string | null;
   onBookUpdated: () => void;
   children?: React.ReactNode;
 }
@@ -32,6 +36,7 @@ export function EditBookDialog({
   description,
   coverUrl,
   status,
+  completedAt,
   onBookUpdated,
   children,
 }: EditBookDialogProps) {
@@ -44,6 +49,10 @@ export function EditBookDialog({
     coverUrl: coverUrl || "",
     status,
   });
+  const [completedDate, setCompletedDate] = useState<Date | null>(
+    completedAt ? new Date(`${completedAt}T00:00:00`) : null
+  );
+  const [dateTouched, setDateTouched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
@@ -51,6 +60,21 @@ export function EditBookDialog({
   const handleUpdateBook = async () => {
     setIsLoading(true);
     try {
+      // Só mexe em completed_at quando faz sentido: virando "lido" agora
+      // (usa a data escolhida ou hoje), quando a data foi alterada
+      // manualmente, ou quando o livro deixou de estar "lido" (limpa).
+      // Fora isso, não sobrescreve o que já estava salvo.
+      let completedAtUpdate: { completed_at?: string | null } = {};
+      if (formData.status === 'completed') {
+        if (status !== 'completed') {
+          completedAtUpdate = { completed_at: format(completedDate ?? new Date(), "yyyy-MM-dd") };
+        } else if (dateTouched) {
+          completedAtUpdate = { completed_at: completedDate ? format(completedDate, "yyyy-MM-dd") : null };
+        }
+      } else if (status === 'completed') {
+        completedAtUpdate = { completed_at: null };
+      }
+
       const { error } = await supabase
         .from("books")
         .update({
@@ -62,6 +86,7 @@ export function EditBookDialog({
           cover_url: formData.coverUrl || null,
           reading_status: formData.status,
           updated_at: new Date().toISOString(),
+          ...completedAtUpdate,
         })
         .eq("id", bookId);
 
@@ -172,6 +197,16 @@ export function EditBookDialog({
             </div>
           </div>
 
+          {formData.status === 'completed' && (
+            <CompletedDatePicker
+              value={completedDate}
+              onChange={(date) => {
+                setCompletedDate(date);
+                setDateTouched(true);
+              }}
+            />
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="cover_url">URL da Capa</Label>
             <Input
@@ -195,11 +230,9 @@ export function EditBookDialog({
 
           <div className="space-y-2">
             <Label htmlFor="genre">Gênero</Label>
-            <Input
-              id="genre"
+            <GenreSelect
               value={formData.genre}
-              onChange={(e) => setFormData(prev => ({ ...prev, genre: e.target.value }))}
-              placeholder="Gênero do livro"
+              onChange={(genre) => setFormData(prev => ({ ...prev, genre }))}
             />
           </div>
 

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isValidIsbn } from "@/lib/isbn";
 import { ManualBookDialog } from "@/components/ManualBookDialog";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
+import { format } from "date-fns";
 
 interface BookResult {
   id: string;
@@ -126,6 +127,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
           cover_url: book.cover_url,
           reading_status: status,
           reading_progress: status === 'completed' ? 100 : 0,
+          completed_at: status === 'completed' ? format(new Date(), 'yyyy-MM-dd') : null,
         });
 
       if (error) throw error;

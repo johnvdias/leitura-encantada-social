@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BookOpen, Clock } from "lucide-react";
 import { ReadingStats } from "@/components/ReadingStats";
+import { CompletedDatePicker } from "@/components/CompletedDatePicker";
+import { format } from "date-fns";
 
 interface UpdateProgressDialogProps {
   bookId: string;
@@ -35,6 +37,7 @@ export function UpdateProgressDialog({
   const [newPage, setNewPage] = useState(safeCurrentPage);
   const [readingMinutes, setReadingMinutes] = useState<number>(0);
   const [notes, setNotes] = useState("");
+  const [completedDate, setCompletedDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
@@ -88,6 +91,9 @@ export function UpdateProgressDialog({
           reading_progress: newProgress,
           last_read_at: new Date().toISOString(),
           reading_status: newStatus,
+          ...(isCompleting && {
+            completed_at: format(completedDate ?? new Date(), "yyyy-MM-dd"),
+          }),
         })
         .eq("id", bookId);
 
@@ -128,10 +134,11 @@ export function UpdateProgressDialog({
 
       setOpen(false);
       onProgressUpdate();
-      
+
       // Reset form
       setNotes("");
       setReadingMinutes(0);
+      setCompletedDate(null);
     } catch (error) {
       console.error("Error updating progress:", error);
       toast({
@@ -199,6 +206,10 @@ export function UpdateProgressDialog({
               )}
             </div>
           </div>
+
+          {isCompleting && (
+            <CompletedDatePicker value={completedDate} onChange={setCompletedDate} />
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="minutes" className="flex items-center gap-1">

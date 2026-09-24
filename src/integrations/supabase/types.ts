@@ -214,6 +214,7 @@ export type Database = {
       books: {
         Row: {
           author: string | null
+          completed_at: string | null
           cover_url: string | null
           created_at: string
           current_page: number | null
@@ -233,6 +234,7 @@ export type Database = {
         }
         Insert: {
           author?: string | null
+          completed_at?: string | null
           cover_url?: string | null
           created_at?: string
           current_page?: number | null
@@ -252,6 +254,7 @@ export type Database = {
         }
         Update: {
           author?: string | null
+          completed_at?: string | null
           cover_url?: string | null
           created_at?: string
           current_page?: number | null
@@ -1172,6 +1175,7 @@ export type Database = {
     }
     Functions: {
       ensure_creator_is_approved: { Args: never; Returns: undefined }
+      get_club_rankings: { Args: { p_club_id: string }; Returns: Json }
       is_approved_club_member: {
         Args: { p_club_id: string; p_user_id: string }
         Returns: boolean

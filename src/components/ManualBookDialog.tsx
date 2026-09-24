@@ -25,6 +25,9 @@ import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { TablesInsert } from "@/integrations/supabase/types";
 import { normalizeIsbn, isIsbn10, isIsbn13 } from "@/lib/isbn";
+import { GenreSelect } from "@/components/GenreSelect";
+import { CompletedDatePicker } from "@/components/CompletedDatePicker";
+import { format } from "date-fns";
 
 interface ManualBookDialogProps {
   onBookAdded: () => void;
@@ -36,6 +39,7 @@ const initialFormData = {
   title: "",
   author: "",
   pages: 0,
+  genre: "",
   cover_url: "",
   reading_status: "want_to_read" as ReadingStatus,
   isbn_10: "",
@@ -52,6 +56,7 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
+  const [completedDate, setCompletedDate] = useState<Date | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
   const handleCoverUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +107,7 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
         p_language: formData.language.trim() || null,
         p_description: formData.description.trim() || null,
         p_cover_url: formData.cover_url.trim() || null,
+        p_genre: formData.genre.trim() || null,
         p_source: 'manual',
       });
 
@@ -110,9 +116,13 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
         title: formData.title.trim(),
         author: formData.author.trim(),
         pages: formData.pages > 0 ? formData.pages : null,
+        genre: formData.genre.trim() || null,
         cover_url: formData.cover_url || null,
         description: formData.description.trim() || null,
         reading_status: formData.reading_status,
+        completed_at: formData.reading_status === 'completed'
+          ? format(completedDate ?? new Date(), "yyyy-MM-dd")
+          : null,
       };
 
       const { error } = await supabase.from("books").insert(newBook);
@@ -127,6 +137,7 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
       setOpen(false);
       onBookAdded();
       setFormData(initialFormData);
+      setCompletedDate(null);
       setCoverPreview(null);
     } catch (error) {
       console.error("Error adding book manually:", error);
@@ -231,6 +242,13 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="genre">Gênero</Label>
+            <GenreSelect
+              value={formData.genre}
+              onChange={(genre) => setFormData({ ...formData, genre })}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>
             <Textarea
               id="description"
@@ -255,6 +273,9 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
               </SelectContent>
             </Select>
           </div>
+          {formData.reading_status === 'completed' && (
+            <CompletedDatePicker value={completedDate} onChange={setCompletedDate} />
+          )}
           <div className="space-y-2">
             <Label htmlFor="cover_url">URL da Capa (Opcional)</Label>
             <Input
