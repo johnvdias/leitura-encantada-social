@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
-import { Target, TrendingUp, Clock, Flame, Book } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Target, TrendingUp, Clock, Flame, Book, Loader2 } from "lucide-react";
 
 interface ReadingGoalsProps {
   className?: string;
@@ -30,8 +31,18 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
   const { streak } = useStreak();
+  const { toast } = useToast();
+
+  // Lido dentro do fetch via ref (em vez de dependência do useCallback) pra
+  // não precisar refazer a busca - e piscar um "Carregando..." por cima do
+  // formulário - toda vez que a usuária abre/fecha o modo de edição.
+  const isEditingRef = useRef(isEditing);
+  useEffect(() => {
+    isEditingRef.current = isEditing;
+  }, [isEditing]);
 
   const fetchGoalsAndStats = useCallback(async () => {
     if (!user) return;
@@ -48,7 +59,12 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
 
       if (profileError) throw profileError;
 
-      if (profileData) {
+      // Não sobrescreve os campos enquanto a usuária está editando - o
+      // Supabase renova o token de sessão em segundo plano de tempos em
+      // tempos, o que troca a referência do objeto `user` e refaz essa
+      // busca; sem essa checagem, isso apagava silenciosamente o que
+      // estava sendo digitado no formulário.
+      if (profileData && !isEditingRef.current) {
         setDailyGoal(profileData.reading_goal || 10);
         setAnnualBooksGoal(profileData.annual_books_goal || 12);
       }
@@ -93,7 +109,8 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   useEffect(() => {
     fetchGoalsAndStats();
@@ -101,10 +118,11 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
 
   const updateGoals = async () => {
     if (!user) return;
+    setIsSaving(true);
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ 
+        .update({
           reading_goal: dailyGoal || 1,
           annual_books_goal: annualBooksGoal || 1
         })
@@ -112,8 +130,16 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
 
       if (error) throw error;
       setIsEditing(false);
+      toast({ title: "Metas salvas!", description: "Suas metas de leitura foram atualizadas." });
     } catch (error) {
       console.error("Error updating goals:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar suas metas. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -170,7 +196,8 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
                 onChange={(e) => setAnnualBooksGoal(e.target.value === "" ? 0 : Number(e.target.value))}
               />
             </div>
-            <Button onClick={updateGoals} className="w-full">
+            <Button onClick={updateGoals} disabled={isSaving} className="w-full">
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar Metas
             </Button>
           </div>
