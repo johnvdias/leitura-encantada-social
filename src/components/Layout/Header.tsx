@@ -125,12 +125,9 @@ const Header = () => {
             </>
           )}
           {!user && (
-            <>
-              <AppMenu />
-              <Link to="/auth">
-                <Button size="sm">Entrar</Button>
-              </Link>
-            </>
+            <Link to="/auth">
+              <Button size="sm">Entrar</Button>
+            </Link>
           )}
         </div>
       </div>
