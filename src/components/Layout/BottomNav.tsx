@@ -44,16 +44,15 @@ const BottomNav = () => {
         >
           <Avatar
             className={cn(
-              "w-5 h-5 mb-1 shrink-0 ring-offset-background",
+              "w-7 h-7 shrink-0 ring-offset-background",
               isActive("/perfil") && "ring-2 ring-primary"
             )}
           >
             <AvatarImage src={profile?.avatar_url ?? undefined} />
-            <AvatarFallback className="text-[8px]">
+            <AvatarFallback className="text-xs">
               {profile?.display_name?.charAt(0) || user.email?.charAt(0) || '?'}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs truncate">Perfil</span>
         </Link>
       </div>
     </div>
