@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Edit3 } from "lucide-react";
 import { GenreSelect } from "@/components/GenreSelect";
 import { CompletedDatePicker } from "@/components/CompletedDatePicker";
+import { BookFormatSelect } from "@/components/BookFormatSelect";
+import { BookFormat } from "@/lib/bookFormats";
 import { format } from "date-fns";
 
 interface EditBookDialogProps {
@@ -19,6 +21,7 @@ interface EditBookDialogProps {
   author: string;
   pages: number | null;
   genre: string;
+  format: BookFormat;
   description?: string;
   coverUrl?: string | null;
   status: 'reading' | 'completed' | 'want_to_read';
@@ -33,6 +36,7 @@ export function EditBookDialog({
   author,
   pages,
   genre,
+  format: bookFormat,
   description,
   coverUrl,
   status,
@@ -45,6 +49,7 @@ export function EditBookDialog({
     author,
     pages: pages || 0,
     genre,
+    format: bookFormat,
     description: description || "",
     coverUrl: coverUrl || "",
     status,
@@ -82,6 +87,7 @@ export function EditBookDialog({
           author: formData.author,
           pages: formData.pages > 0 ? formData.pages : null,
           genre: formData.genre,
+          format: formData.format,
           description: formData.description || null,
           cover_url: formData.coverUrl || null,
           reading_status: formData.status,
@@ -233,6 +239,14 @@ export function EditBookDialog({
             <GenreSelect
               value={formData.genre}
               onChange={(genre) => setFormData(prev => ({ ...prev, genre }))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="format">Formato</Label>
+            <BookFormatSelect
+              value={formData.format}
+              onChange={(newFormat) => setFormData(prev => ({ ...prev, format: newFormat }))}
             />
           </div>
 

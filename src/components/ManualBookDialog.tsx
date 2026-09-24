@@ -27,6 +27,8 @@ import { TablesInsert } from "@/integrations/supabase/types";
 import { normalizeIsbn, isIsbn10, isIsbn13 } from "@/lib/isbn";
 import { GenreSelect } from "@/components/GenreSelect";
 import { CompletedDatePicker } from "@/components/CompletedDatePicker";
+import { BookFormatSelect } from "@/components/BookFormatSelect";
+import { BookFormat } from "@/lib/bookFormats";
 import { format } from "date-fns";
 
 interface ManualBookDialogProps {
@@ -40,6 +42,7 @@ const initialFormData = {
   author: "",
   pages: 0,
   genre: "",
+  format: "physical" as BookFormat,
   cover_url: "",
   reading_status: "want_to_read" as ReadingStatus,
   isbn_10: "",
@@ -117,6 +120,7 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
         author: formData.author.trim(),
         pages: formData.pages > 0 ? formData.pages : null,
         genre: formData.genre.trim() || null,
+        format: formData.format,
         cover_url: formData.cover_url || null,
         description: formData.description.trim() || null,
         reading_status: formData.reading_status,
@@ -246,6 +250,13 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
             <GenreSelect
               value={formData.genre}
               onChange={(genre) => setFormData({ ...formData, genre })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="format">Formato</Label>
+            <BookFormatSelect
+              value={formData.format}
+              onChange={(bookFormat) => setFormData({ ...formData, format: bookFormat })}
             />
           </div>
           <div className="space-y-2">

@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { isValidIsbn } from "@/lib/isbn";
 import { ManualBookDialog } from "@/components/ManualBookDialog";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
+import { BookFormatSelect } from "@/components/BookFormatSelect";
+import { BookFormat } from "@/lib/bookFormats";
 import { format } from "date-fns";
 
 interface BookResult {
@@ -51,8 +53,11 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [formats, setFormats] = useState<Record<string, BookFormat>>({});
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const getFormat = (bookId: string) => formats[bookId] ?? 'physical';
 
   // "978..." já dá pra reconhecer como provável ISBN antes de buscar - só
   // um aviso visual, a detecção de verdade acontece no backend.
@@ -124,6 +129,7 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
           description: book.description,
           pages: book.pages,
           genre: book.genre,
+          format: getFormat(book.id),
           cover_url: book.cover_url,
           reading_status: status,
           reading_progress: status === 'completed' ? 100 : 0,
@@ -280,6 +286,14 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
                               {book.description.substring(0, 120)}...
                             </p>
                           )}
+
+                          <BookFormatSelect
+                            value={getFormat(book.id)}
+                            onChange={(bookFormat) =>
+                              setFormats((prev) => ({ ...prev, [book.id]: bookFormat }))
+                            }
+                            className="h-7 w-auto text-xs mb-2 px-2 gap-1"
+                          />
 
                           <div className="flex gap-2 flex-wrap">
                             <Button

@@ -219,6 +219,7 @@ export type Database = {
           created_at: string
           current_page: number | null
           description: string | null
+          format: string
           genre: string | null
           id: string
           last_read_at: string | null
@@ -239,6 +240,7 @@ export type Database = {
           created_at?: string
           current_page?: number | null
           description?: string | null
+          format?: string
           genre?: string | null
           id?: string
           last_read_at?: string | null
@@ -259,6 +261,7 @@ export type Database = {
           created_at?: string
           current_page?: number | null
           description?: string | null
+          format?: string
           genre?: string | null
           id?: string
           last_read_at?: string | null

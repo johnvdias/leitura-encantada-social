@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, Trash2, Play, Loader2, Image as ImageIcon } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
+import { Star, Trash2, Play, Loader2, Image as ImageIcon, Book as BookIcon, Tablet, Headphones } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
+import { BOOK_FORMAT_LABEL } from "@/lib/bookFormats";
 import { EditBookDialog } from "@/components/EditBookDialog";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
@@ -30,9 +31,16 @@ interface BookCardProps {
   onUpdate: () => void;
 }
 
+const FORMAT_ICON = {
+  physical: BookIcon,
+  kindle: Tablet,
+  audiobook: Headphones,
+} as const;
+
 const BookCard = ({ book, onUpdate }: BookCardProps) => {
   const { toast } = useToast();
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const FormatIcon = FORMAT_ICON[book.format];
 
   const getStatusLabel = (status: string) => {
     if (status === 'reading') return 'Lendo';
@@ -100,6 +108,10 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
                 <Badge variant={book.reading_status === 'reading' ? 'default' : 'outline'} className="self-start mb-1">{getStatusLabel(book.reading_status)}</Badge>
                 <h3 className="font-bold truncate" title={book.title}>{book.title}</h3>
                 <p className="text-sm text-muted-foreground truncate">{book.author}</p>
+                <p className="flex items-center gap-1 text-xs text-muted-foreground/80 mt-0.5">
+                  <FormatIcon className="h-3 w-3" />
+                  {BOOK_FORMAT_LABEL[book.format]}
+                </p>
                 {book.reading_status === 'completed' ? (
                     <div className="flex items-center mt-1" aria-label="Avaliar livro">
                         {[...Array(5)].map((_, i) => (
@@ -183,6 +195,7 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
                 author={book.author}
                 pages={book.pages}
                 genre={book.genre ?? ''}
+                format={book.format}
                 description={book.description ?? undefined}
                 coverUrl={book.cover_url}
                 status={book.reading_status}
