@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, Send, X } from "lucide-react";
@@ -26,17 +27,19 @@ interface ReplyTarget {
 function CommentRow({ comment, onReply }: { comment: Comment; onReply: (target: ReplyTarget, topLevelId: string) => void }) {
   return (
     <div className="flex gap-2">
-      <Avatar className="w-8 h-8">
-        <AvatarImage src={comment.profiles?.avatar_url ?? undefined} />
-        <AvatarFallback>
-          {comment.profiles?.display_name?.[0] || '?'}
-        </AvatarFallback>
-      </Avatar>
+      <Link to={`/perfil/${comment.user_id}`} className="shrink-0">
+        <Avatar className="w-8 h-8">
+          <AvatarImage src={comment.profiles?.avatar_url ?? undefined} />
+          <AvatarFallback>
+            {comment.profiles?.display_name?.[0] || '?'}
+          </AvatarFallback>
+        </Avatar>
+      </Link>
       <div className="flex-1 space-y-1">
         <div className="bg-muted rounded-lg p-3">
-          <div className="font-medium text-sm">
+          <Link to={`/perfil/${comment.user_id}`} className="font-medium text-sm hover:underline block w-fit">
             {comment.profiles?.display_name || 'Usuário'}
-          </div>
+          </Link>
           <div className="text-sm whitespace-pre-wrap">{comment.content}</div>
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
