@@ -3,11 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, Trash2, Play, Loader2 } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
+import { Star, Trash2, Play, Loader2, Image as ImageIcon } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
 import { EditBookDialog } from "@/components/EditBookDialog";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { QuotesDialog } from "@/components/QuotesDialog";
+import { ShareProgressDialog } from "@/components/ShareProgressDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -156,9 +157,24 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
             
             {/* O botão de compartilhar agora só aparece para livros sendo lidos ou já lidos */}
             {(book.reading_status === 'reading' || book.reading_status === 'completed') && (
-              <CreatePostDialog bookId={book.id} onPostCreated={onUpdate}>
-                  <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Compartilhar</Button>
-              </CreatePostDialog>
+              <>
+                <CreatePostDialog bookId={book.id} onPostCreated={onUpdate}>
+                    <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">Compartilhar</Button>
+                </CreatePostDialog>
+                <ShareProgressDialog
+                  bookTitle={book.title}
+                  bookAuthor={book.author || ''}
+                  coverUrl={book.cover_url}
+                  currentPage={book.current_page}
+                  totalPages={book.pages}
+                  readingProgress={book.reading_progress}
+                >
+                  <Button variant="outline" size="sm" className="flex-grow sm:flex-grow-0">
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Card de progresso
+                  </Button>
+                </ShareProgressDialog>
+              </>
             )}
             
             <EditBookDialog
