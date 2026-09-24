@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { Image as ImageIcon, Share2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { READING_EMOTIONS } from "@/lib/readingEmotions";
@@ -36,6 +37,7 @@ interface ShareProgressDialogProps {
 type ProgressMode = 'percent' | 'pages';
 
 const DEFAULT_SOLID_COLOR = "#7c3aed";
+const DEFAULT_TEXT_COLOR = "#ffffff";
 
 export function ShareProgressDialog({
   bookTitle,
@@ -50,6 +52,7 @@ export function ShareProgressDialog({
   const [layout, setLayout] = useState<CardLayout>('story');
   const [background, setBackground] = useState<BackgroundMode>('cover');
   const [solidColor, setSolidColor] = useState(DEFAULT_SOLID_COLOR);
+  const [customTextColor, setCustomTextColor] = useState<string | null>(null);
   const [mode, setMode] = useState<ProgressMode>('percent');
   const [percentValue, setPercentValue] = useState(readingProgress || 0);
   const [pageValue, setPageValue] = useState(currentPage || 0);
@@ -80,6 +83,7 @@ export function ShareProgressDialog({
       emotions,
       layout,
       background: { mode: background, color: solidColor },
+      textColor: customTextColor ?? undefined,
     });
   };
 
@@ -99,7 +103,7 @@ export function ShareProgressDialog({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, layout, background, solidColor, mode, percentValue, pageValue, totalPagesValue, selectedEmotions, coverUrl]);
+  }, [open, layout, background, solidColor, customTextColor, mode, percentValue, pageValue, totalPagesValue, selectedEmotions, coverUrl]);
 
   useEffect(() => {
     return () => {
@@ -213,6 +217,38 @@ export function ShareProgressDialog({
               </div>
             </div>
           )}
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="custom-text-color-toggle" className="cursor-pointer">
+                Personalizar cor do texto
+              </Label>
+              <Switch
+                id="custom-text-color-toggle"
+                checked={customTextColor !== null}
+                onCheckedChange={(checked) =>
+                  setCustomTextColor(checked ? DEFAULT_TEXT_COLOR : null)
+                }
+              />
+            </div>
+            {customTextColor !== null && (
+              <div className="flex items-center gap-2">
+                <input
+                  id="text-color"
+                  type="color"
+                  value={customTextColor}
+                  onChange={(e) => setCustomTextColor(e.target.value)}
+                  className="h-10 w-14 rounded-md border cursor-pointer bg-transparent p-0"
+                />
+                <Input
+                  value={customTextColor}
+                  onChange={(e) => setCustomTextColor(e.target.value)}
+                  className="flex-1 uppercase"
+                  maxLength={7}
+                />
+              </div>
+            )}
+          </div>
 
           <div className="space-y-2">
             <Label>Mostrar progresso como</Label>

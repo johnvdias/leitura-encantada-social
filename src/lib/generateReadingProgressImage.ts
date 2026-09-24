@@ -14,6 +14,7 @@ export interface ReadingProgressCardData {
     mode: BackgroundMode;
     color?: string; // hex, só usado quando mode === 'solid'
   };
+  textColor?: string; // hex, quando definido substitui a cor automática (título/autor)
 }
 
 const SIZES: Record<CardLayout, { width: number; height: number }> = {
@@ -146,6 +147,14 @@ const getContrastTextColor = (hex: string): string => {
   return luminance > 0.55 ? '#111111' : '#ffffff';
 };
 
+const hexToRgba = (hex: string, alpha: number): string => {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export const generateReadingProgressImageBlob = async (
   data: ReadingProgressCardData
 ): Promise<Blob | null> => {
@@ -181,6 +190,13 @@ export const generateReadingProgressImageBlob = async (
     }
   }
   // mode === 'transparent': não preenche nada, canvas fica com alpha 0.
+
+  // Cor de texto escolhida manualmente pelo usuário tem prioridade sobre
+  // a automática (seja o branco padrão ou o contraste calculado da cor sólida).
+  if (data.textColor) {
+    textColor = data.textColor;
+    mutedTextColor = hexToRgba(data.textColor, 0.65);
+  }
 
   if (data.layout === 'story') {
     const coverWidth = 620;
