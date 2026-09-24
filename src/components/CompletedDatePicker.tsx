@@ -38,6 +38,13 @@ export function CompletedDatePicker({
               onSelect={(date) => onChange(date ?? null)}
               disabled={(date) => date > new Date()}
               locale={ptBR}
+              captionLayout="dropdown-buttons"
+              fromYear={new Date().getFullYear() - 100}
+              toYear={new Date().getFullYear()}
+              classNames={{
+                caption_dropdowns: "flex gap-1 items-center",
+                dropdown: "rounded-md border border-input bg-background px-2 py-1 text-sm capitalize focus:outline-none focus:ring-1 focus:ring-ring",
+              }}
             />
           </PopoverContent>
         </Popover>
