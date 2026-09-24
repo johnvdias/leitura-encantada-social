@@ -6,6 +6,12 @@
 
 @layer base {
   :root {
+    /* Sem isso, controles nativos do navegador (a lista de opções de um
+       <select>, scrollbars, etc.) sempre renderizavam no estilo claro do
+       sistema, mesmo com o tema escuro ativo - texto claro sobre fundo
+       branco, quase ilegível. */
+    color-scheme: light;
+
     /* Cores base - tons neutros suaves */
     --background: 35 25% 98%;
     --foreground: 330 15% 25%;
@@ -83,6 +89,7 @@
        e textos em gradiente (que usam essas variáveis, ex: .btn-enchanted e
        .text-enchanted) terem uma ponta do gradiente praticamente invisível
        contra o fundo escuro. */
+    color-scheme: dark;
     --background: 335 25% 8%;
     --foreground: 335 20% 95%;
 
