@@ -42,8 +42,12 @@ export function CompletedDatePicker({
               fromYear={new Date().getFullYear() - 100}
               toYear={new Date().getFullYear()}
               classNames={{
-                caption_dropdowns: "flex gap-1 items-center",
-                dropdown: "rounded-md border border-input bg-background px-2 py-1 text-sm capitalize focus:outline-none focus:ring-1 focus:ring-ring",
+                caption_dropdowns: "flex gap-2 items-center",
+                dropdown_month: "relative",
+                dropdown_year: "relative",
+                dropdown: "absolute inset-0 z-10 opacity-0 cursor-pointer",
+                caption_label: "pointer-events-none inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-sm font-medium capitalize",
+                vhidden: "sr-only",
               }}
             />
           </PopoverContent>
