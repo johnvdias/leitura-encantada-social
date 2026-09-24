@@ -52,7 +52,7 @@ const UserProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [recentBooks, setRecentBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,7 +87,7 @@ const UserProfile = () => {
         currentlyReading: booksData.filter(b => b.reading_status === 'reading').length,
       });
 
-      setRecentBooks(booksData.sort((a,b) => b.id > a.id ? 1 : -1).slice(0, 6) as Book[]);
+      setBooks(booksData.sort((a, b) => (b.id > a.id ? 1 : -1)) as Book[]);
 
       const { data: achievementsData, error: achievementsError } = await supabase
         .from('achievements')
@@ -213,9 +213,9 @@ const UserProfile = () => {
         </TabsList>
 
         <TabsContent value="books" className="mt-6">
-            {recentBooks.length > 0 ? (
+            {books.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {recentBooks.map(book => (
+                    {books.map(book => (
                         <Card key={book.id}>
                             <CardContent className="p-4 flex flex-col items-center text-center">
                                 <img src={book.cover_url || '/placeholder.svg'} alt={book.title} className="h-48 w-32 object-cover rounded-md mb-4" />
