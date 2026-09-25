@@ -73,29 +73,35 @@ export function EditProfileDialog() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   
+  // Só recarrega os campos quando o diálogo ABRE, não toda vez que `profile`
+  // muda de referência - o Supabase renova o token de sessão em segundo
+  // plano de tempos em tempos, o que reconsulta o perfil e troca essa
+  // referência; se o efeito dependesse de `profile`, isso apagava
+  // silenciosamente o que a usuária estava editando enquanto o diálogo
+  // ficava aberto (mesmo bug já corrigido em Metas de Leitura).
   useEffect(() => {
-    if (profile) {
-      setFormData({
-        display_name: profile.display_name || "",
-        username: profile.username || "",
-        bio: profile.bio || "",
-        reading_goal: profile.reading_goal || 12,
-      });
-      if (profile.avatar_url) {
-        setAvatarPreview(`${profile.avatar_url}?t=${new Date().getTime()}`);
-      } else {
-        setAvatarPreview(null);
-      }
-      setNotificationPreferences({
-        likes: isCategoryEnabled(profile.notification_preferences, 'likes'),
-        comments: isCategoryEnabled(profile.notification_preferences, 'comments'),
-        friends: isCategoryEnabled(profile.notification_preferences, 'friends'),
-        nudges: isCategoryEnabled(profile.notification_preferences, 'nudges'),
-        achievements: isCategoryEnabled(profile.notification_preferences, 'achievements'),
-        messages: isCategoryEnabled(profile.notification_preferences, 'messages'),
-      });
+    if (!open || !profile) return;
+    setFormData({
+      display_name: profile.display_name || "",
+      username: profile.username || "",
+      bio: profile.bio || "",
+      reading_goal: profile.reading_goal || 12,
+    });
+    if (profile.avatar_url) {
+      setAvatarPreview(`${profile.avatar_url}?t=${new Date().getTime()}`);
+    } else {
+      setAvatarPreview(null);
     }
-  }, [profile, open]);
+    setNotificationPreferences({
+      likes: isCategoryEnabled(profile.notification_preferences, 'likes'),
+      comments: isCategoryEnabled(profile.notification_preferences, 'comments'),
+      friends: isCategoryEnabled(profile.notification_preferences, 'friends'),
+      nudges: isCategoryEnabled(profile.notification_preferences, 'nudges'),
+      achievements: isCategoryEnabled(profile.notification_preferences, 'achievements'),
+      messages: isCategoryEnabled(profile.notification_preferences, 'messages'),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const checkUsernameAvailability = async (username: string) => {
     if (!username || username === profile?.username) {

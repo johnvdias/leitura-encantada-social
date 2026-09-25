@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,31 @@ export function EditBookDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+
+  // O BookCard (e esse diálogo dentro dele) nunca desmonta enquanto o livro
+  // continua na estante, então o useState acima só captura os dados do
+  // livro na primeira vez que ele foi montado. Se o livro mudar por outro
+  // caminho nesse meio tempo (nota por estrelas, "Começar a Ler",
+  // progresso batendo 100% e virando "Lido" sozinho), reabrir "Editar"
+  // mostrava esses campos desatualizados - e salvar sem mexer em nada
+  // revertia a mudança feita por fora silenciosamente. Recarrega os
+  // campos toda vez que o diálogo abre pra sempre refletir o livro atual.
+  useEffect(() => {
+    if (!open) return;
+    setFormData({
+      title,
+      author,
+      pages: pages || 0,
+      genre,
+      format: bookFormat,
+      description: description || "",
+      coverUrl: coverUrl || "",
+      status,
+    });
+    setCompletedDate(completedAt ? new Date(`${completedAt}T00:00:00`) : null);
+    setDateTouched(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleUpdateBook = async () => {
     setIsLoading(true);

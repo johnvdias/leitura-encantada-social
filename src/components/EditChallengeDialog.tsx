@@ -48,6 +48,23 @@ export function EditChallengeDialog({ challenge, onChallengeUpdated }: EditChall
     end_date: parseISO(challenge.end_date),
   });
 
+  // Esse diálogo fica montado junto com o card do desafio o tempo todo, não
+  // só quando aberto - o useState acima só captura os dados na primeira
+  // renderização. Sem recarregar ao abrir, editar e salvar uma vez, fechar
+  // e reabrir mostrava os valores originais de novo (não o que acabou de
+  // ser salvo), e salvar de novo sem mexer revertia a edição silenciosamente.
+  useEffect(() => {
+    if (!open) return;
+    setFormData({
+      name: challenge.name,
+      description: challenge.description || "",
+      goal_value: challenge.goal_value.toString(),
+      start_date: parseISO(challenge.start_date),
+      end_date: parseISO(challenge.end_date),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

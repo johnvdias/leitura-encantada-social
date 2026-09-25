@@ -110,6 +110,25 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
     fetchUserBooks();
   }, [user, open]);
 
+  // Esse diálogo fica montado o tempo todo dentro da página do clube, não só
+  // quando aberto - o useState acima só captura os dados do clube na
+  // primeira renderização. Se o clube mudar por fora nesse meio tempo (ex:
+  // o sorteio de próximo livro atualizando current_book_id), reabrir
+  // "Editar Clube" mostrava dados desatualizados, e salvar sem mexer nesse
+  // campo revertia a mudança silenciosamente. Recarrega os campos toda vez
+  // que o diálogo abre.
+  useEffect(() => {
+    if (!open) return;
+    setName(club.name);
+    setDescription(club.description || "");
+    setIsPrivate(club.is_private);
+    setMaxMembers(club.max_members);
+    setCurrentBookId(club.current_book_id || null);
+    setAvatarPreview(club.avatar_url || null);
+    setAvatarFile(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
