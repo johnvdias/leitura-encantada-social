@@ -49,10 +49,18 @@ export function AdvancedStats() {
 
       if (error) throw error;
 
+      // A data que importa pra "quando o livro foi lido" é completed_at (a
+      // usuária escolhe essa data ao marcar como lido); updated_at só serve
+      // de fallback pros poucos livros antigos sem completed_at salvo -
+      // usar updated_at sempre fazia livros reaparecerem no ano/mês errado
+      // toda vez que a estante era editada ou reimportada.
+      const effectiveDate = (book: { completed_at: string | null; updated_at: string }) =>
+        new Date(book.completed_at ?? book.updated_at);
+
       const currentYear = new Date().getFullYear();
-      const completedThisYear = books?.filter(book => 
-        book.reading_status === 'completed' && 
-        new Date(book.updated_at).getFullYear() === currentYear
+      const completedThisYear = books?.filter(book =>
+        book.reading_status === 'completed' &&
+        effectiveDate(book).getFullYear() === currentYear
       ) || [];
 
       const genreCount: { [key: string]: number } = {};
@@ -64,7 +72,7 @@ export function AdvancedStats() {
         }
 
         if (book.reading_status === 'completed') {
-          const month = new Date(book.updated_at).toLocaleDateString('pt-BR', { month: 'short' });
+          const month = effectiveDate(book).toLocaleDateString('pt-BR', { month: 'short' });
           monthlyData[month] = (monthlyData[month] || 0) + 1;
         }
       });

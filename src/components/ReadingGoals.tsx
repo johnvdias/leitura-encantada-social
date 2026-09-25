@@ -87,15 +87,22 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
       const pagesReadToday = historyData?.reduce((sum, r) => sum + (r.pages_read || 0), 0) || 0;
       const timeReadToday = historyData?.reduce((sum, r) => sum + (r.reading_session_minutes || 0), 0) || 0;
 
-      // Fetch books completed this year
-      const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString();
+      // Fetch books completed this year - usa completed_at (a data que a
+      // usuária escolheu ao marcar como lido), com updated_at só de
+      // fallback pros livros antigos sem completed_at salvo. Filtrar só por
+      // updated_at contava errado toda vez que a estante era editada ou
+      // reimportada, já que isso atualiza updated_at sem mudar quando o
+      // livro foi de fato lido.
+      const currentYear = new Date().getFullYear();
+      const yearStartDate = `${currentYear}-01-01`;
+      const yearStart = new Date(currentYear, 0, 1).toISOString();
       const { count, error: booksError } = await supabase
         .from("books")
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .eq('reading_status', 'completed')
-        .gte('updated_at', yearStart);
-        
+        .or(`completed_at.gte.${yearStartDate},and(completed_at.is.null,updated_at.gte.${yearStart})`);
+
       if (booksError) throw booksError;
 
       setStats({
