@@ -83,14 +83,14 @@ Deno.serve(async (req) => {
     const requestBody = await req.json();
     console.log(`[${VERSION}] 📥 Payload recebido:`, requestBody);
 
-    const { targetUserId, title, body, tag } = requestBody;
+    const { targetUserId, type, relatedId, tag } = requestBody;
 
-    if (!targetUserId || !title || !body) {
+    if (!targetUserId || !type) {
       console.error(`[${VERSION}] ❌ Campos obrigatórios ausentes`);
       return new Response(JSON.stringify({
         error: 'Missing required fields',
-        required: ['targetUserId', 'title', 'body'],
-        received: { targetUserId: !!targetUserId, title: !!title, body: !!body },
+        required: ['targetUserId', 'type'],
+        received: { targetUserId: !!targetUserId, type: !!type },
         version: VERSION
       }), {
         status: 400,
@@ -101,6 +101,64 @@ Deno.serve(async (req) => {
     // 4. Conectar ao Supabase
     console.log(`[${VERSION}] 🔗 Conectando ao Supabase...`);
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+    // 4.1 Verificar quem está chamando - essa função usa a service role
+    // (que ignora RLS) pra poder ler a subscrição push de QUALQUER usuária,
+    // já que o alvo da notificação nunca é quem está autenticado. Sem essa
+    // checagem, qualquer usuária logada podia mandar uma notificação push
+    // com título/texto arbitrário pra qualquer outra pessoa do app, só
+    // chamando essa função diretamente.
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing Authorization header', version: VERSION }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const supabaseAsCaller = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user: caller }, error: callerError } = await supabaseAsCaller.auth.getUser();
+    if (callerError || !caller) {
+      return new Response(JSON.stringify({ error: 'Invalid session', version: VERSION }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 4.2 Em vez de reimplementar aqui as mesmas regras de quem pode
+    // notificar quem pra cada tipo (curtida/comentário em post público não
+    // exige amizade, pedido de amizade é enviado justamente pra quem ainda
+    // NÃO é amiga, etc.), confia na política de RLS que já existe na tabela
+    // `notifications`: todo caminho que chama essa função já insere lá uma
+    // notificação com esse mesmo (targetUserId, type, relatedId) logo antes
+    // - se essa linha existe, é porque o RLS já validou que essa notificação
+    // era legítima. Usa o título/conteúdo salvo nela (não o que veio no
+    // payload), assim nem dá pra falsificar o texto de um evento real.
+    let notificationQuery = supabaseAdmin
+      .from('notifications')
+      .select('title, content')
+      .eq('user_id', targetUserId)
+      .eq('type', type)
+      .gte('created_at', new Date(Date.now() - 2 * 60 * 1000).toISOString());
+    notificationQuery = relatedId
+      ? notificationQuery.eq('related_id', relatedId)
+      : notificationQuery.is('related_id', null);
+    const { data: notification } = await notificationQuery
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!notification) {
+      console.error(`[${VERSION}] 🚫 Nenhuma notificação correspondente encontrada para ${caller.id} -> ${targetUserId} (${type})`);
+      return new Response(JSON.stringify({ error: 'Not authorized to notify this user', version: VERSION }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const title = notification.title;
+    const body = notification.content;
 
     // 5. Buscar subscrições do usuário
     console.log(`[${VERSION}] 🔍 Buscando subscrições para usuário: ${targetUserId}`);

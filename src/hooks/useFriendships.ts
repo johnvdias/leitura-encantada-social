@@ -176,8 +176,8 @@ export const useFriendships = () => {
           .invoke('send-push-notification', {
             body: {
               targetUserId: addresseeId,
-              title: requestTitle,
-              body: requestBody,
+              type: 'friend_request',
+              relatedId: user.id,
               tag: `friend-request-${user.id}-${addresseeId}`,
             },
           })
@@ -230,8 +230,8 @@ export const useFriendships = () => {
           .invoke('send-push-notification', {
             body: {
               targetUserId: requesterId,
-              title: acceptedTitle,
-              body: acceptedBody,
+              type: 'friend_accepted',
+              relatedId: user.id,
               tag: `friend-accepted-${user.id}-${requesterId}`,
             },
           })

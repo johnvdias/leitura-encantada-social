@@ -87,8 +87,8 @@ export const useLikes = (postId: string) => {
             .invoke('send-push-notification', {
               body: {
                 targetUserId: postData.user_id,
-                title: 'Nova curtida!',
-                body: 'Alguém curtiu seu post',
+                type: 'like',
+                relatedId: postId,
                 tag: `like-${postId}`,
               },
             })

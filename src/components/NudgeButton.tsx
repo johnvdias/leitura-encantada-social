@@ -56,8 +56,8 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
         supabase.functions.invoke('send-push-notification', {
           body: {
             targetUserId: friendId,
-            title: notificationTitle,
-            body: message,
+            type: 'nudge',
+            relatedId: user.id,
             tag: `nudge-${user.id}-${friendId}`
           },
         }).then(({ data, error: functionError }) => {

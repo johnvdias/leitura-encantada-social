@@ -226,8 +226,7 @@ export const useAchievements = () => {
               .invoke('send-push-notification', {
                 body: {
                   targetUserId: user.id,
-                  title: achievementTitle,
-                  body: achievementBody,
+                  type: 'achievement',
                   tag: `achievement-${achievement.achievement_type}`,
                 },
               })

@@ -102,8 +102,8 @@ export const useComments = (postId: string) => {
         .invoke('send-push-notification', {
           body: {
             targetUserId: target.user_id,
-            title: mentionTitle,
-            body: mentionBody,
+            type: 'mention',
+            relatedId: postId,
             tag: `mention-${postId}-${target.user_id}`,
           },
         })
@@ -164,8 +164,8 @@ export const useComments = (postId: string) => {
           .invoke('send-push-notification', {
             body: {
               targetUserId: postData.user_id,
-              title: 'Novo comentário!',
-              body: 'Alguém comentou em seu post',
+              type: 'comment',
+              relatedId: postId,
               tag: `comment-${postId}`,
             },
           })

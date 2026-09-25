@@ -103,8 +103,8 @@ export const useDirectMessages = (otherUserId: string | undefined) => {
           .invoke('send-push-notification', {
             body: {
               targetUserId: otherUserId,
-              title: notificationTitle,
-              body: content.trim().slice(0, 120),
+              type: 'message',
+              relatedId: user.id,
               tag: `dm-${user.id}-${otherUserId}`,
             },
           })
