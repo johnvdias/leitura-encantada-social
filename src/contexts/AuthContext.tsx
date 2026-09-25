@@ -100,7 +100,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Por padrão o Supabase desloga TODOS os dispositivos/abas da conta
+    // (scope 'global'), não só o atual - quem tem o app aberto no celular e
+    // no computador ao mesmo tempo, ao sair de um, era deslogada do outro
+    // sozinha (sem ter feito nada lá), na próxima tentativa de renovar a
+    // sessão. Restringe ao dispositivo atual.
+    await supabase.auth.signOut({ scope: 'local' });
   };
 
   const updateProfile = async (updates: TablesUpdate<'profiles'>) => {
