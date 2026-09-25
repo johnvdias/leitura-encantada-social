@@ -35,6 +35,8 @@ interface Book {
   cover_url: string;
   reading_status: string;
   rating: number;
+  completed_at: string | null;
+  created_at: string;
 }
 interface Achievement {
     id: string;
@@ -76,7 +78,7 @@ const UserProfile = () => {
 
       const { data: booksData, error: booksError } = await supabase
         .from('books')
-        .select('id, title, author, cover_url, reading_status, rating')
+        .select('id, title, author, cover_url, reading_status, rating, completed_at, created_at')
         .eq('user_id', userId);
 
       if (booksError) throw new Error("Não foi possível carregar os livros.");
@@ -87,7 +89,15 @@ const UserProfile = () => {
         currentlyReading: booksData.filter(b => b.reading_status === 'reading').length,
       });
 
-      setBooks(booksData.sort((a, b) => (b.id > a.id ? 1 : -1)) as Book[]);
+      // Mais recentes primeiro: usa a data de conclusão (a que a própria
+      // dona da estante escolheu ao marcar como lido) quando existe, senão
+      // cai pra data em que o livro foi adicionado à estante. Antes isso
+      // ordenava por `id`, que não tem relação nenhuma com a ordem de
+      // leitura.
+      const effectiveDate = (b: Book) => b.completed_at ?? b.created_at;
+      setBooks(
+        (booksData as Book[]).sort((a, b) => effectiveDate(b).localeCompare(effectiveDate(a)))
+      );
 
       const { data: achievementsData, error: achievementsError } = await supabase
         .from('achievements')
