@@ -1178,7 +1178,10 @@ export type Database = {
     }
     Functions: {
       ensure_creator_is_approved: { Args: never; Returns: undefined }
-      get_club_rankings: { Args: { p_club_id: string }; Returns: Json }
+      get_club_rankings: {
+        Args: { p_club_id: string; p_start_date?: string; p_end_date?: string }
+        Returns: Json
+      }
       is_approved_club_member: {
         Args: { p_club_id: string; p_user_id: string }
         Returns: boolean

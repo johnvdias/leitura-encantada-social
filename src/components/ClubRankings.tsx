@@ -1,9 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Trophy, User, Star, BookMarked, Hash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+type PeriodMode = 'all' | 'year' | 'month';
+
+const MONTH_NAMES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
+const dateKey = (d: Date) => d.toISOString().slice(0, 10);
 
 interface TopReader {
   user_id: string;
@@ -55,8 +66,21 @@ function RankRow({ position, children }: { position: number; children: React.Rea
 }
 
 export function ClubRankings({ clubId }: { clubId: string }) {
+  const now = new Date();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ClubRankingsData | null>(null);
+  const [periodMode, setPeriodMode] = useState<PeriodMode>('all');
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+
+  const yearOptions = Array.from({ length: 6 }, (_, i) => now.getFullYear() - i);
+
+  const { startDate, endDate } = useMemo(() => {
+    if (periodMode === 'all') return { startDate: null, endDate: null };
+    const start = periodMode === 'year' ? new Date(year, 0, 1) : new Date(year, month - 1, 1);
+    const end = periodMode === 'year' ? new Date(year + 1, 0, 1) : new Date(year, month, 1);
+    return { startDate: dateKey(start), endDate: dateKey(end) };
+  }, [periodMode, year, month]);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,7 +88,11 @@ export function ClubRankings({ clubId }: { clubId: string }) {
     const fetchRankings = async () => {
       setLoading(true);
       try {
-        const { data: result, error } = await supabase.rpc('get_club_rankings', { p_club_id: clubId });
+        const { data: result, error } = await supabase.rpc('get_club_rankings', {
+          p_club_id: clubId,
+          p_start_date: startDate ?? undefined,
+          p_end_date: endDate ?? undefined,
+        });
         if (error) throw error;
         if (!cancelled) setData(result as unknown as ClubRankingsData);
       } catch (error) {
@@ -79,32 +107,79 @@ export function ClubRankings({ clubId }: { clubId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [clubId]);
+  }, [clubId, startDate, endDate]);
+
+  const periodFilter = (
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <Tabs value={periodMode} onValueChange={(v) => setPeriodMode(v as PeriodMode)}>
+        <TabsList className="grid grid-cols-3 w-full sm:w-auto">
+          <TabsTrigger value="all">Tudo</TabsTrigger>
+          <TabsTrigger value="year">Ano</TabsTrigger>
+          <TabsTrigger value="month">Mês</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {periodMode !== 'all' && (
+        <div className="flex gap-2">
+          {periodMode === 'month' && (
+            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTH_NAMES.map((name, i) => (
+                  <SelectItem key={name} value={String(i + 1)}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((y) => (
+                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </div>
+  );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="space-y-6">
+        {periodFilter}
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
       </div>
     );
   }
 
   if (!data || data.total_books === 0) {
     return (
-      <Card className="text-center py-12">
-        <CardContent>
-          <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-          <h3 className="text-lg font-semibold mb-2">Nenhum ranking ainda</h3>
-          <p className="text-muted-foreground">
-            Assim que as integrantes marcarem livros como lidos, os rankings do clube aparecem aqui!
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        {periodFilter}
+        <Card className="text-center py-12">
+          <CardContent>
+            <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum ranking ainda</h3>
+            <p className="text-muted-foreground">
+              {periodMode === 'all'
+                ? 'Assim que as integrantes marcarem livros como lidos, os rankings do clube aparecem aqui!'
+                : 'Nenhum livro lido pelo clube nesse período.'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {periodFilter}
       <div className="rounded-xl bg-gradient-enchanted p-6 flex flex-wrap items-center justify-around gap-4 text-center text-foreground">
         <div>
           <p className="text-3xl font-bold">{data.total_books}</p>
