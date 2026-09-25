@@ -54,8 +54,12 @@ export function AdvancedStats() {
       // de fallback pros poucos livros antigos sem completed_at salvo -
       // usar updated_at sempre fazia livros reaparecerem no ano/mês errado
       // toda vez que a estante era editada ou reimportada.
+      // completed_at é só "YYYY-MM-DD" (sem hora) - new Date() direto nesse
+      // formato interpreta como meia-noite UTC, que em fusos negativos
+      // (Brasil) cai no dia/mês/ano anterior ao formatar no horário local.
+      // Precisa forçar meia-noite local igual o EditBookDialog já faz.
       const effectiveDate = (book: { completed_at: string | null; updated_at: string }) =>
-        new Date(book.completed_at ?? book.updated_at);
+        book.completed_at ? new Date(`${book.completed_at}T00:00:00`) : new Date(book.updated_at);
 
       const currentYear = new Date().getFullYear();
       const completedThisYear = books?.filter(book =>
