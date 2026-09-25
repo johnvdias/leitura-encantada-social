@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -22,14 +23,16 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, Loader2 } from "lucide-react";
-import { TablesInsert } from "@/integrations/supabase/types";
+import { PlusCircle, Loader2, BookCopy } from "lucide-react";
+import { TablesInsert, Tables } from "@/integrations/supabase/types";
 import { normalizeIsbn, isIsbn10, isIsbn13 } from "@/lib/isbn";
 import { GenreSelect } from "@/components/GenreSelect";
 import { CompletedDatePicker } from "@/components/CompletedDatePicker";
 import { BookFormatSelect } from "@/components/BookFormatSelect";
 import { BookFormat } from "@/lib/bookFormats";
 import { format } from "date-fns";
+
+type CatalogMatch = Tables<"book_catalog">;
 
 interface ManualBookDialogProps {
   onBookAdded: () => void;
@@ -61,10 +64,97 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
   const [formData, setFormData] = useState(initialFormData);
   const [completedDate, setCompletedDate] = useState<Date | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [catalogMatch, setCatalogMatch] = useState<CatalogMatch | null>(null);
+  const [checkingCatalog, setCheckingCatalog] = useState(false);
+  const [usingCatalogMatch, setUsingCatalogMatch] = useState(false);
 
   const handleCoverUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, cover_url: e.target.value });
     setCoverPreview(e.target.value);
+  };
+
+  // Antes de deixar cadastrar do zero, checa (com debounce) se esse livro já
+  // está no catálogo compartilhado - por ISBN, ou por título+autora quando
+  // não há ISBN. Sem isso, a usuária não tinha como saber que outra pessoa já
+  // cadastrou o mesmo livro, e acabava criando uma entrada duplicada no
+  // catálogo (com dados possivelmente divergentes) sem necessidade.
+  useEffect(() => {
+    const isbn10 = formData.isbn_10.trim() ? normalizeIsbn(formData.isbn_10) : null;
+    const isbn13 = formData.isbn_13.trim() ? normalizeIsbn(formData.isbn_13) : null;
+    const title = formData.title.trim();
+    const author = formData.author.trim();
+
+    const hasIsbn = (isbn10 && isIsbn10(isbn10)) || (isbn13 && isIsbn13(isbn13));
+    if (!hasIsbn && (!title || !author)) {
+      setCatalogMatch(null);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setCheckingCatalog(true);
+      try {
+        let query = supabase.from("book_catalog").select("*").limit(1);
+        if (isbn13 && isIsbn13(isbn13)) {
+          query = query.eq("isbn_13", isbn13);
+        } else if (isbn10 && isIsbn10(isbn10)) {
+          query = query.eq("isbn_10", isbn10);
+        } else {
+          query = query.ilike("title", title).ilike("authors", author);
+        }
+        const { data } = await query.maybeSingle();
+        setCatalogMatch(data as CatalogMatch | null);
+      } catch (error) {
+        console.error("Error checking book catalog:", error);
+      } finally {
+        setCheckingCatalog(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [formData.isbn_10, formData.isbn_13, formData.title, formData.author]);
+
+  const handleUseCatalogMatch = async () => {
+    if (!user || !catalogMatch) return;
+    setUsingCatalogMatch(true);
+    try {
+      const { error } = await supabase.from("books").insert({
+        user_id: user.id,
+        title: catalogMatch.title,
+        author: catalogMatch.authors || "",
+        pages: catalogMatch.page_count,
+        genre: catalogMatch.genre,
+        format: formData.format,
+        cover_url: catalogMatch.cover_url,
+        description: catalogMatch.description,
+        reading_status: formData.reading_status,
+        completed_at: formData.reading_status === "completed"
+          ? format(completedDate ?? new Date(), "yyyy-MM-dd")
+          : null,
+      } satisfies TablesInsert<"books">);
+
+      if (error) throw error;
+
+      toast({
+        title: "Livro Adicionado! 📚",
+        description: `"${catalogMatch.title}" já estava no catálogo e foi adicionado à sua estante.`,
+      });
+
+      setOpen(false);
+      onBookAdded();
+      setFormData(initialFormData);
+      setCompletedDate(null);
+      setCoverPreview(null);
+      setCatalogMatch(null);
+    } catch (error) {
+      console.error("Error adding catalog book:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o livro.",
+        variant: "destructive",
+      });
+    } finally {
+      setUsingCatalogMatch(false);
+    }
   };
 
   // Só título e autora são obrigatórios - o resto é o que a usuária souber
@@ -143,6 +233,7 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
       setFormData(initialFormData);
       setCompletedDate(null);
       setCoverPreview(null);
+      setCatalogMatch(null);
     } catch (error) {
       console.error("Error adding book manually:", error);
       toast({
@@ -168,6 +259,7 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
           <DialogTitle>Cadastrar Livro no Leitura Encantada</DialogTitle>
           <DialogDescription>
             Não achamos esse livro nas nossas fontes? Cadastre você mesma - só título e autora são obrigatórios.
+            Se alguém já cadastrou o mesmo livro, avisamos assim que você preencher o título e a autora (ou o ISBN).
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
@@ -189,6 +281,48 @@ export function ManualBookDialog({ onBookAdded }: ManualBookDialogProps) {
               required
             />
           </div>
+
+          {checkingCatalog && (
+            <p className="text-xs text-muted-foreground">Checando se esse livro já existe no catálogo...</p>
+          )}
+
+          {catalogMatch && (
+            <Alert>
+              <BookCopy className="h-4 w-4" />
+              <AlertDescription>
+                <div className="flex items-center gap-3">
+                  {catalogMatch.cover_url ? (
+                    <img
+                      src={catalogMatch.cover_url}
+                      alt={catalogMatch.title}
+                      className="h-14 w-10 object-cover rounded shrink-0"
+                    />
+                  ) : (
+                    <div className="h-14 w-10 rounded bg-muted shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">
+                      Esse livro já está no catálogo (alguém já cadastrou):
+                    </p>
+                    <p className="text-sm font-medium truncate">{catalogMatch.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{catalogMatch.authors}</p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="w-full mt-3"
+                  onClick={handleUseCatalogMatch}
+                  disabled={usingCatalogMatch}
+                >
+                  {usingCatalogMatch && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Usar esse livro em vez de cadastrar de novo
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="isbn_13">ISBN-13</Label>
