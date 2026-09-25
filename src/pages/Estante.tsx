@@ -62,7 +62,17 @@ const Estante = () => {
   );
 
   const readingBooks = filteredBooks.filter(book => book.reading_status === "reading");
-  const completedBooks = filteredBooks.filter(book => book.reading_status === "completed");
+  // A lista geral vem ordenada por created_at (data em que o livro foi
+  // adicionado à estante), mas na aba "Lidos" o que importa pra usuária é a
+  // data de conclusão que ela mesma informou - senão livros lidos há muito
+  // tempo mas cadastrados recentemente aparecem misturados com os recentes.
+  const completedBooks = filteredBooks
+    .filter(book => book.reading_status === "completed")
+    .sort((a, b) => {
+      const dateA = a.completed_at ?? a.updated_at ?? a.created_at;
+      const dateB = b.completed_at ?? b.updated_at ?? b.created_at;
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
+    });
   const wantToReadBooks = filteredBooks.filter(book => book.reading_status === "want_to_read");
 
   const handleDrawRandomBook = () => {
