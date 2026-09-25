@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, Trash2, Play, Loader2, Image as ImageIcon, Book as BookIcon, Tablet, Headphones } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
+import { Star, Heart, Trash2, Play, Loader2, Image as ImageIcon, Book as BookIcon, Tablet, Headphones } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
 import { BOOK_FORMAT_LABEL } from "@/lib/bookFormats";
 import { EditBookDialog } from "@/components/EditBookDialog";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
@@ -75,6 +75,20 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
     }
   };
 
+  const handleToggleLoved = async () => {
+    try {
+      const { error } = await supabase
+        .from('books')
+        .update({ loved: !book.loved })
+        .eq('id', book.id);
+
+      if (error) throw error;
+      onUpdate();
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Não foi possível salvar sua avaliação.', variant: 'destructive' });
+    }
+  };
+
   const handleStartReading = async () => {
     setIsUpdatingStatus(true);
     try {
@@ -124,10 +138,20 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
                             <Star className={`h-4 w-4 ${i < (book.rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
                           </button>
                         ))}
+                        <button
+                          type="button"
+                          onClick={handleToggleLoved}
+                          className="p-0.5 -m-0.5 ml-1"
+                          aria-label={book.loved ? "Remover dos amados" : "Amei esse livro"}
+                          title={book.loved ? "Remover dos amados" : "Amei esse livro"}
+                        >
+                          <Heart className={`h-4 w-4 ${book.loved ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
+                        </button>
                     </div>
-                ) : book.rating ? (
+                ) : (book.rating || book.loved) ? (
                     <div className="flex items-center mt-1">
-                        {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < book.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />)}
+                        {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < (book.rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />)}
+                        {book.loved && <Heart className="h-4 w-4 ml-1 text-red-500 fill-red-500" />}
                     </div>
                 ) : null}
             </div>

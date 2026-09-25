@@ -223,6 +223,7 @@ export type Database = {
           genre: string | null
           id: string
           last_read_at: string | null
+          loved: boolean
           pages: number | null
           personal_notes: string | null
           rating: number | null
@@ -244,6 +245,7 @@ export type Database = {
           genre?: string | null
           id?: string
           last_read_at?: string | null
+          loved?: boolean
           pages?: number | null
           personal_notes?: string | null
           rating?: number | null
@@ -265,6 +267,7 @@ export type Database = {
           genre?: string | null
           id?: string
           last_read_at?: string | null
+          loved?: boolean
           pages?: number | null
           personal_notes?: string | null
           rating?: number | null
