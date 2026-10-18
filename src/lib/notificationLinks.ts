@@ -29,7 +29,14 @@ export const getNotificationLink = (notification: Notification): string | null =
     case 'streak_extended':
     case 'streak_frozen':
     case 'streak_broken':
+    case 'friend_schedule_extended':
+    case 'friend_schedule_frozen':
+    case 'friend_schedule_broken':
       return '/estante';
+    case 'club_schedule_extended':
+    case 'club_schedule_frozen':
+    case 'club_schedule_broken':
+      return related_id ? `/clubes/${related_id}` : null;
     default:
       return null;
   }

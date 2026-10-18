@@ -552,8 +552,13 @@ export type Database = {
           club_id: string | null
           created_at: string
           creator_id: string | null
+          current_streak: number
           end_date: string
+          freezes_available: number
           id: string
+          last_evaluated_date: string | null
+          last_extended_date: string | null
+          longest_streak: number
           name: string
           reading_goal: Json | null
           start_date: string
@@ -563,8 +568,13 @@ export type Database = {
           club_id?: string | null
           created_at?: string
           creator_id?: string | null
+          current_streak?: number
           end_date: string
+          freezes_available?: number
           id?: string
+          last_evaluated_date?: string | null
+          last_extended_date?: string | null
+          longest_streak?: number
           name: string
           reading_goal?: Json | null
           start_date: string
@@ -574,8 +584,13 @@ export type Database = {
           club_id?: string | null
           created_at?: string
           creator_id?: string | null
+          current_streak?: number
           end_date?: string
+          freezes_available?: number
           id?: string
+          last_evaluated_date?: string | null
+          last_extended_date?: string | null
+          longest_streak?: number
           name?: string
           reading_goal?: Json | null
           start_date?: string
@@ -764,8 +779,13 @@ export type Database = {
           book_id: string | null
           created_at: string
           creator_id: string | null
+          current_streak: number
           end_date: string
+          freezes_available: number
           id: string
+          last_evaluated_date: string | null
+          last_extended_date: string | null
+          longest_streak: number
           name: string
           reading_goal: Json | null
           start_date: string
@@ -774,8 +794,13 @@ export type Database = {
           book_id?: string | null
           created_at?: string
           creator_id?: string | null
+          current_streak?: number
           end_date: string
+          freezes_available?: number
           id?: string
+          last_evaluated_date?: string | null
+          last_extended_date?: string | null
+          longest_streak?: number
           name: string
           reading_goal?: Json | null
           start_date: string
@@ -784,8 +809,13 @@ export type Database = {
           book_id?: string | null
           created_at?: string
           creator_id?: string | null
+          current_streak?: number
           end_date?: string
+          freezes_available?: number
           id?: string
+          last_evaluated_date?: string | null
+          last_extended_date?: string | null
+          longest_streak?: number
           name?: string
           reading_goal?: Json | null
           start_date?: string

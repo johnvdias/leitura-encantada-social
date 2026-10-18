@@ -36,7 +36,7 @@ const NOTIFICATION_CATEGORY_LABELS: Record<NotificationCategory, string> = {
   messages: 'Mensagens diretas',
   goal_streak: 'Amigas batendo a meta diária',
   daily_reminder: 'Lembretes da sua meta diária',
-  duo_streak: 'Ofensiva em dupla',
+  duo_streak: 'Ofensivas de leitura (dupla e cronogramas)',
 };
 
 // Debounce function

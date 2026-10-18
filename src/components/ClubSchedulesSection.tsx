@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, Trash2 } from 'lucide-react';
+import { CalendarClock, Trash2, Flame, Snowflake } from 'lucide-react';
 import { formatDistanceToNow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,6 +13,8 @@ interface Schedule {
   name: string;
   reading_goal: string;
   end_date: string;
+  current_streak: number;
+  freezes_available: number;
   books: {
     title: string;
   };
@@ -35,7 +37,7 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
       const { data, error } = await supabase
         .from('club_reading_schedules')
         .select(`
-          id, name, reading_goal, end_date,
+          id, name, reading_goal, end_date, current_streak, freezes_available,
           books (title)
         `)
         .eq('club_id', clubId)
@@ -87,10 +89,24 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
                 <p className="text-sm text-muted-foreground">{schedule.reading_goal}</p>
             </CardContent>
             <CardFooter className="flex justify-between items-center text-sm">
-                 <Badge variant={isOverdue ? 'outline' : 'default'}>
-                    <CalendarClock className="h-3 w-3 mr-1" />
-                    {isOverdue ? 'Terminou' : 'Termina'} {formatDistanceToNow(new Date(schedule.end_date), { addSuffix: true, locale: ptBR })}
-                </Badge>
+                 <div className="flex flex-wrap gap-1">
+                   <Badge variant={isOverdue ? 'outline' : 'default'}>
+                      <CalendarClock className="h-3 w-3 mr-1" />
+                      {isOverdue ? 'Terminou' : 'Termina'} {formatDistanceToNow(new Date(schedule.end_date), { addSuffix: true, locale: ptBR })}
+                  </Badge>
+                  {schedule.current_streak > 0 && (
+                    <Badge variant="secondary" className="gap-1">
+                      <Flame className="h-3 w-3 text-orange-500" />
+                      {schedule.current_streak} {schedule.current_streak === 1 ? 'dia' : 'dias'}
+                    </Badge>
+                  )}
+                  {schedule.freezes_available > 0 && (
+                    <Badge variant="outline" className="gap-1">
+                      <Snowflake className="h-3 w-3 text-blue-400" />
+                      {schedule.freezes_available}
+                    </Badge>
+                  )}
+                 </div>
                 {isCreator && (
                   <Button variant="ghost" size="sm" onClick={() => handleDeleteSchedule(schedule.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, CalendarClock, Users, Book } from 'lucide-react';
+import { Check, X, CalendarClock, Users, Book, Flame, Snowflake } from 'lucide-react';
 import { CreateScheduleDialog } from './CreateScheduleDialog';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -16,6 +16,8 @@ interface Schedule {
   name: string;
   reading_goal: string;
   end_date: string;
+  current_streak: number;
+  freezes_available: number;
   books: {
     title: string;
     author: string;
@@ -57,7 +59,7 @@ export function SchedulesSection() {
       const { data: schedulesData, error: schedulesError } = await supabase
         .from('group_reading_schedules')
         .select(`
-          id, name, reading_goal, end_date,
+          id, name, reading_goal, end_date, current_streak, freezes_available,
           books (title, author, cover_url),
           schedule_participants (
             user_id, status,
@@ -112,10 +114,24 @@ export function SchedulesSection() {
                     <div>
                         <CardTitle>{schedule.name}</CardTitle>
                         <CardDescription>Para ler: <span className="font-semibold">{schedule.books.title}</span></CardDescription>
-                        <Badge variant="outline" className="mt-2">
-                            <CalendarClock className="h-3 w-3 mr-1" />
-                            Termina {formatDistanceToNow(new Date(schedule.end_date), { addSuffix: true, locale: ptBR })}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          <Badge variant="outline">
+                              <CalendarClock className="h-3 w-3 mr-1" />
+                              Termina {formatDistanceToNow(new Date(schedule.end_date), { addSuffix: true, locale: ptBR })}
+                          </Badge>
+                          {schedule.current_streak > 0 && (
+                            <Badge variant="secondary" className="gap-1">
+                              <Flame className="h-3 w-3 text-orange-500" />
+                              {schedule.current_streak} {schedule.current_streak === 1 ? 'dia' : 'dias'}
+                            </Badge>
+                          )}
+                          {schedule.freezes_available > 0 && (
+                            <Badge variant="outline" className="gap-1">
+                              <Snowflake className="h-3 w-3 text-blue-400" />
+                              {schedule.freezes_available}
+                            </Badge>
+                          )}
+                        </div>
                     </div>
                 </div>
             </CardHeader>
