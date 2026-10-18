@@ -16,6 +16,7 @@ import { AddBookDialog } from "@/components/AddBookDialog";
 import { ManualBookDialog } from "@/components/ManualBookDialog";
 import { ReadingGoals } from "@/components/ReadingGoals";
 import { SchedulesSection } from "@/components/SchedulesSection";
+import { StreakPartnershipsCard } from "@/components/StreakPartnershipsCard";
 import { FriendRecommendations } from "@/components/FriendRecommendations";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
@@ -143,6 +144,10 @@ const Estante = () => {
       <section className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ReadingGoals />
         <SchedulesSection />
+      </section>
+
+      <section className="mb-8">
+        <StreakPartnershipsCard />
       </section>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">

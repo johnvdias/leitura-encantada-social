@@ -1178,17 +1178,92 @@ export type Database = {
           },
         ]
       }
+      streak_partnerships: {
+        Row: {
+          created_at: string
+          current_streak: number
+          freezes_available: number
+          id: string
+          last_evaluated_date: string | null
+          last_extended_date: string | null
+          longest_streak: number
+          requested_by: string
+          status: string
+          updated_at: string
+          user_a_id: string
+          user_b_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          freezes_available?: number
+          id?: string
+          last_evaluated_date?: string | null
+          last_extended_date?: string | null
+          longest_streak?: number
+          requested_by: string
+          status?: string
+          updated_at?: string
+          user_a_id: string
+          user_b_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          freezes_available?: number
+          id?: string
+          last_evaluated_date?: string | null
+          last_extended_date?: string | null
+          longest_streak?: number
+          requested_by?: string
+          status?: string
+          updated_at?: string
+          user_a_id?: string
+          user_b_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streak_partnerships_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "streak_partnerships_user_a_id_fkey"
+            columns: ["user_a_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "streak_partnerships_user_b_id_fkey"
+            columns: ["user_b_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      end_streak_partnership: {
+        Args: { p_partnership_id: string }
+        Returns: undefined
+      }
       ensure_creator_is_approved: { Args: never; Returns: undefined }
       get_club_rankings: {
         Args: { p_club_id: string; p_end_date?: string; p_start_date?: string }
         Returns: Json
       }
       get_cron_secret: { Args: { secret_name: string }; Returns: string }
+      get_streak_partnership_progress: {
+        Args: { p_partnership_id: string }
+        Returns: Json
+      }
       is_approved_club_member: {
         Args: { p_club_id: string; p_user_id: string }
         Returns: boolean
@@ -1224,6 +1299,14 @@ export type Database = {
       }
       remove_club_member: {
         Args: { p_club_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      request_streak_partnership: {
+        Args: { p_friend_id: string }
+        Returns: string
+      }
+      respond_to_streak_partnership: {
+        Args: { p_accept: boolean; p_partnership_id: string }
         Returns: undefined
       }
       show_limit: { Args: never; Returns: number }

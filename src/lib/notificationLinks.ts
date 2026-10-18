@@ -24,6 +24,11 @@ export const getNotificationLink = (notification: Notification): string | null =
     case 'achievement':
       return '/perfil?tab=conquistas';
     case 'daily_reminder':
+    case 'streak_invite':
+    case 'streak_accepted':
+    case 'streak_extended':
+    case 'streak_frozen':
+    case 'streak_broken':
       return '/estante';
     default:
       return null;

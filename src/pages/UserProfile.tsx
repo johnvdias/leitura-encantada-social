@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Target, Trophy, Calendar, UserPlus, UserCheck, UserX, AlertCircle, MessageCircle, BookmarkPlus, Loader2 } from "lucide-react";
+import { BookOpen, Target, Trophy, Calendar, UserPlus, UserCheck, UserX, AlertCircle, MessageCircle, BookmarkPlus, Loader2, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NudgeButton } from "@/components/NudgeButton";
 import { useFriendships } from "@/hooks/useFriendships";
+import { useStreakPartnerships } from "@/hooks/useStreakPartnerships";
 
 // Interfaces para os dados
 interface Profile {
@@ -52,6 +53,7 @@ const UserProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { sendFriendRequest, removeFriendship, cancelFriendRequest, acceptFriendRequest, friends, friendRequests, sentRequests } = useFriendships();
+  const { partnerships: streakPartnerships, requestPartnership, respondToPartnership } = useStreakPartnerships();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -182,6 +184,33 @@ const UserProfile = () => {
     return <Button onClick={() => sendFriendRequest(userId!)}><UserPlus className="h-4 w-4 mr-2" />Adicionar Amigo</Button>;
   };
 
+  const renderStreakPartnershipButton = () => {
+    const partnership = streakPartnerships.find(p => p.partnerId === userId);
+
+    if (!partnership) {
+      return (
+        <Button variant="outline" onClick={() => requestPartnership(userId!)}>
+          <Flame className="h-4 w-4 mr-2 text-orange-500" />Ofensiva em Dupla
+        </Button>
+      );
+    }
+    if (partnership.status === 'active') {
+      return (
+        <Badge variant="secondary" className="gap-1 h-9 px-3">
+          <Flame className="h-4 w-4 text-orange-500" />Ofensiva ativa: {partnership.currentStreak} dias
+        </Badge>
+      );
+    }
+    if (partnership.isIncomingInvite) {
+      return (
+        <Button onClick={() => respondToPartnership(partnership.id, true)}>
+          <Flame className="h-4 w-4 mr-2" />Aceitar Ofensiva em Dupla
+        </Button>
+      );
+    }
+    return <Button variant="outline" disabled>Convite de ofensiva enviado</Button>;
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -288,6 +317,7 @@ const UserProfile = () => {
                     <Button variant="outline"><MessageCircle className="h-4 w-4 mr-2" />Mensagem</Button>
                   </Link>
                   <NudgeButton friendId={userId!} friendName={profile.display_name} />
+                  {renderStreakPartnershipButton()}
                 </>
               )}
               {renderFriendshipButton()}
