@@ -35,6 +35,7 @@ const NOTIFICATION_CATEGORY_LABELS: Record<NotificationCategory, string> = {
   achievements: 'Conquistas',
   messages: 'Mensagens diretas',
   goal_streak: 'Amigas batendo a meta diária',
+  daily_reminder: 'Lembretes da sua meta diária',
 };
 
 // Debounce function
@@ -101,6 +102,7 @@ export function EditProfileDialog() {
       achievements: isCategoryEnabled(profile.notification_preferences, 'achievements'),
       messages: isCategoryEnabled(profile.notification_preferences, 'messages'),
       goal_streak: isCategoryEnabled(profile.notification_preferences, 'goal_streak'),
+      daily_reminder: isCategoryEnabled(profile.notification_preferences, 'daily_reminder'),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

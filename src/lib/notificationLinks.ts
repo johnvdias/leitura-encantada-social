@@ -23,6 +23,8 @@ export const getNotificationLink = (notification: Notification): string | null =
       return related_id ? `/mensagens/${related_id}` : null;
     case 'achievement':
       return '/perfil?tab=conquistas';
+    case 'daily_reminder':
+      return '/estante';
     default:
       return null;
   }

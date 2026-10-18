@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type NotificationCategory = 'likes' | 'comments' | 'friends' | 'nudges' | 'achievements' | 'messages' | 'goal_streak';
+export type NotificationCategory = 'likes' | 'comments' | 'friends' | 'nudges' | 'achievements' | 'messages' | 'goal_streak' | 'daily_reminder';
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: Record<NotificationCategory, boolean> = {
   likes: true,
@@ -10,6 +10,7 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: Record<NotificationCategory, bool
   achievements: true,
   messages: true,
   goal_streak: true,
+  daily_reminder: true,
 };
 
 // Só bloqueia quando o dono do perfil desativou explicitamente a categoria
