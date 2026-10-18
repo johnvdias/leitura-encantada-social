@@ -175,19 +175,19 @@ export function FriendsSection() {
               <div className="space-y-2">
                 {searchResults.map((profile) => (
                   <div key={profile.user_id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
+                    <Link to={`/perfil/${profile.user_id}`} className="flex items-center gap-3 hover:underline min-w-0">
+                      <Avatar className="w-10 h-10 shrink-0">
                         <AvatarImage src={profile.avatar_url ?? undefined} />
                         <AvatarFallback>
                           {profile.display_name?.[0] || '?'}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{profile.display_name}</span>
-                    </div>
+                      <span className="font-medium truncate">{profile.display_name}</span>
+                    </Link>
                     <Button
                       size="sm"
                       onClick={() => sendFriendRequest(profile.user_id)}
-                      className="flex items-center gap-1"
+                      className="flex items-center gap-1 shrink-0"
                     >
                       <UserPlus className="h-4 w-4" />
                       Adicionar
@@ -213,18 +213,18 @@ export function FriendsSection() {
             <CardContent className="space-y-3">
               {friendRequests.map((request) => (
                 <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
+                  <Link to={`/perfil/${request.requester_id}`} className="flex items-center gap-3 hover:underline min-w-0">
+                    <Avatar className="w-10 h-10 shrink-0">
                       <AvatarImage src={request.requester?.avatar_url ?? undefined} />
                       <AvatarFallback>
                         {request.requester?.display_name?.[0] || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <span className="font-medium">{request.requester?.display_name}</span>
+                    <div className="min-w-0">
+                      <span className="font-medium truncate block">{request.requester?.display_name}</span>
                       <p className="text-sm text-muted-foreground">Quer ser seu amigo</p>
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -260,18 +260,18 @@ export function FriendsSection() {
             <CardContent className="space-y-3">
               {sentRequests.map((request) => (
                 <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
+                  <Link to={`/perfil/${request.addressee_id}`} className="flex items-center gap-3 hover:underline min-w-0">
+                    <Avatar className="w-10 h-10 shrink-0">
                       <AvatarImage src={request.addressee?.avatar_url ?? undefined} />
                       <AvatarFallback>
                         {request.addressee?.display_name?.[0] || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <span className="font-medium">{request.addressee?.display_name}</span>
+                    <div className="min-w-0">
+                      <span className="font-medium truncate block">{request.addressee?.display_name}</span>
                       <p className="text-sm text-muted-foreground">Aguardando resposta</p>
                     </div>
-                  </div>
+                  </Link>
                   <div className="text-right">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>

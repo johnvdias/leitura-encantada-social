@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Target, Award, Calendar, UserPlus, UserCheck, UserX, AlertCircle, MessageCircle } from "lucide-react";
+import { BookOpen, Target, Trophy, Calendar, UserPlus, UserCheck, UserX, AlertCircle, MessageCircle, BookmarkPlus, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NudgeButton } from "@/components/NudgeButton";
 import { useFriendships } from "@/hooks/useFriendships";
@@ -33,6 +33,7 @@ interface Book {
   title: string;
   author: string;
   cover_url: string;
+  genre: string | null;
   reading_status: string;
   rating: number;
   completed_at: string | null;
@@ -43,6 +44,7 @@ interface Achievement {
     achievement_name: string;
     description: string;
     earned_at: string;
+    emoji: string | null;
 }
 
 const UserProfile = () => {
@@ -55,10 +57,13 @@ const UserProfile = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
+  const [ownBookKeys, setOwnBookKeys] = useState<Set<string>>(new Set());
+  const [addingBookId, setAddingBookId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const isOwnProfile = user?.id === userId;
+  const bookKey = (title: string, author: string) => `${title.trim().toLowerCase()}|${author.trim().toLowerCase()}`;
 
   const fetchUserData = useCallback(async () => {
     if (!userId || isOwnProfile) return;
@@ -78,10 +83,18 @@ const UserProfile = () => {
 
       const { data: booksData, error: booksError } = await supabase
         .from('books')
-        .select('id, title, author, cover_url, reading_status, rating, completed_at, created_at')
+        .select('id, title, author, cover_url, genre, reading_status, rating, completed_at, created_at')
         .eq('user_id', userId);
 
       if (booksError) throw new Error("Não foi possível carregar os livros.");
+
+      if (user?.id) {
+        const { data: myBooksData } = await supabase
+          .from('books')
+          .select('title, author')
+          .eq('user_id', user.id);
+        setOwnBookKeys(new Set((myBooksData || []).map(b => bookKey(b.title, b.author))));
+      }
 
       setStats({
         totalBooks: booksData.length,
@@ -101,11 +114,10 @@ const UserProfile = () => {
 
       const { data: achievementsData, error: achievementsError } = await supabase
         .from('achievements')
-        .select('id, achievement_name, description, earned_at')
+        .select('id, achievement_name, description, earned_at, emoji')
         .eq('user_id', userId)
-        .order('earned_at', { ascending: false })
-        .limit(6);
-      
+        .order('earned_at', { ascending: false });
+
       if (achievementsError) console.error("Erro ao buscar conquistas:", achievementsError);
       else setAchievements(achievementsData as Achievement[]);
 
@@ -116,11 +128,33 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
-  }, [userId, toast, isOwnProfile]);
+  }, [userId, toast, isOwnProfile, user?.id]);
 
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  const handleAddToWantToRead = async (book: Book) => {
+    if (!user) return;
+    setAddingBookId(book.id);
+    try {
+      const { error } = await supabase.from('books').insert({
+        user_id: user.id,
+        title: book.title,
+        author: book.author,
+        cover_url: book.cover_url || null,
+        genre: book.genre || null,
+        reading_status: 'want_to_read',
+      });
+      if (error) throw error;
+      setOwnBookKeys(prev => new Set(prev).add(bookKey(book.title, book.author)));
+      toast({ title: "Adicionado! 📚", description: `"${book.title}" foi pra sua lista de Quero Ler.` });
+    } catch (err) {
+      toast({ title: "Erro", description: "Não foi possível adicionar o livro.", variant: "destructive" });
+    } finally {
+      setAddingBookId(null);
+    }
+  };
 
   if (isOwnProfile) {
     return <Navigate to="/perfil" replace />;
@@ -180,7 +214,38 @@ const UserProfile = () => {
       </div>
     );
   }
-  
+
+  const readingBooks = books.filter(b => b.reading_status === 'reading');
+  const completedBooks = books.filter(b => b.reading_status === 'completed');
+
+  const renderBookCard = (book: Book) => {
+    const alreadyOwned = ownBookKeys.has(bookKey(book.title, book.author));
+    return (
+      <Card key={book.id}>
+        <CardContent className="p-4 flex flex-col items-center text-center">
+          <img src={book.cover_url || '/placeholder.svg'} alt={book.title} className="h-48 w-32 object-cover rounded-md mb-4" />
+          <h3 className="font-semibold text-lg">{book.title}</h3>
+          <p className="text-sm text-muted-foreground">{book.author}</p>
+          {book.rating && <p>Nota: {book.rating}/5</p>}
+          <Button
+            variant={alreadyOwned ? "ghost" : "outline"}
+            size="sm"
+            disabled={alreadyOwned || addingBookId === book.id}
+            onClick={() => handleAddToWantToRead(book)}
+            className="mt-3 w-full"
+          >
+            {addingBookId === book.id ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <BookmarkPlus className="h-4 w-4 mr-2" />
+            )}
+            {alreadyOwned ? "Já está na sua estante" : "Quero Ler"}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="mb-8 card-enchanted">
@@ -194,10 +259,26 @@ const UserProfile = () => {
               <div>
                 <h1 className="text-3xl font-bold text-primary mb-2">{profile.display_name}</h1>
                 {profile.bio && <p className="text-muted-foreground mb-3">{profile.bio}</p>}
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
                   <Calendar className="h-4 w-4" />
                   <span>Membro desde {format(new Date(profile.created_at), "MMM yyyy", { locale: ptBR })}</span>
                 </div>
+                {achievements.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Trophy className="h-4 w-4" />
+                      <span>{achievements.length} conquista{achievements.length === 1 ? '' : 's'}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {achievements.map((ach) => (
+                        <Badge key={ach.id} variant="secondary" className="flex items-center gap-1 px-2 py-1" title={ach.description}>
+                          <span className="text-sm">{ach.emoji || '🏆'}</span>
+                          <span className="text-xs">{ach.achievement_name}</span>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center flex-wrap gap-2 self-start sm:self-end">
@@ -215,44 +296,27 @@ const UserProfile = () => {
         </CardHeader>
       </Card>
       
-      <Tabs defaultValue="books">
+      <Tabs defaultValue="lendo">
         <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-3 gap-1">
-          <TabsTrigger value="books" className="shrink-0">Estante ({stats?.totalBooks || 0})</TabsTrigger>
-          <TabsTrigger value="achievements" className="shrink-0">Conquistas ({achievements.length})</TabsTrigger>
+          <TabsTrigger value="lendo" className="shrink-0">Lendo ({readingBooks.length})</TabsTrigger>
+          <TabsTrigger value="lido" className="shrink-0">Lido ({completedBooks.length})</TabsTrigger>
           <TabsTrigger value="stats" className="shrink-0">Estatísticas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="books" className="mt-6">
-            {books.length > 0 ? (
+        <TabsContent value="lendo" className="mt-6">
+            {readingBooks.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {books.map(book => (
-                        <Card key={book.id}>
-                            <CardContent className="p-4 flex flex-col items-center text-center">
-                                <img src={book.cover_url || '/placeholder.svg'} alt={book.title} className="h-48 w-32 object-cover rounded-md mb-4" />
-                                <h3 className="font-semibold text-lg">{book.title}</h3>
-                                <p className="text-sm text-muted-foreground">{book.author}</p>
-                                {book.rating && <p>Nota: {book.rating}/5</p>}
-                            </CardContent>
-                        </Card>
-                    ))}
+                    {readingBooks.map(book => renderBookCard(book))}
                 </div>
-            ) : <p>A estante deste usuário está vazia.</p>}
+            ) : <p>Nenhum livro sendo lido no momento.</p>}
         </TabsContent>
 
-        <TabsContent value="achievements" className="mt-6">
-            {achievements.length > 0 ? (
-                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {achievements.map(ach => (
-                        <Card key={ach.id} className="p-4 flex items-center gap-4">
-                            <Award className="h-8 w-8 text-yellow-500" />
-                            <div>
-                                <h3 className="font-semibold">{ach.achievement_name}</h3>
-                                <p className="text-sm text-muted-foreground">{ach.description}</p>
-                            </div>
-                        </Card>
-                    ))}
+        <TabsContent value="lido" className="mt-6">
+            {completedBooks.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {completedBooks.map(book => renderBookCard(book))}
                 </div>
-            ) : <p>Nenhuma conquista desbloqueada ainda.</p>}
+            ) : <p>Nenhum livro concluído ainda.</p>}
         </TabsContent>
 
         <TabsContent value="stats" className="mt-6">
