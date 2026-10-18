@@ -39,9 +39,19 @@ const SECTIONS: HelpSection[] = [
           'Na aba "Quero Ler", o botão "Sortear meu próximo livro" escolhe aleatoriamente um título da sua lista de desejos - ótimo pra quem tem dificuldade de decidir o próximo livro.',
       },
       {
+        question: "Como funciona a avaliação por estrelas?",
+        answer:
+          'Em livros marcados como "Lido", clique numa estrela: o primeiro clique marca meia estrela, o segundo completa a estrela cheia, e o terceiro clique limpa a nota daquela posição. Assim dá pra dar notas como 3,5 ou 4,5, não só números inteiros.',
+      },
+      {
+        question: "Dá pra filtrar os livros que já li por ano ou mês?",
+        answer:
+          'Sim! Na aba "Lidos" da Estante aparecem seletores de ano e, depois de escolher um ano, de mês - baseados na data em que você marcou cada livro como concluído.',
+      },
+      {
         question: "Como funcionam as Metas de Leitura e os Cronogramas?",
         answer:
-          'As Metas de Leitura deixam você definir quantos livros quer ler no ano e acompanham seu progresso. Os Cronogramas são planos de leitura com data de início/fim pra um livro específico, sozinha ou com amigas.',
+          'As Metas de Leitura deixam você definir quantos livros quer ler no ano e acompanham seu progresso. Os Cronogramas são planos de leitura com data de início/fim pra um livro específico, sozinha ou com amigas. Ao criar um, dá pra escolher (e buscar) qualquer livro da sua estante, mesmo um que já leu ou está lendo - útil pra reler acompanhada.',
       },
       {
         question: "Onde vejo minhas citações favoritas?",
@@ -103,6 +113,46 @@ const SECTIONS: HelpSection[] = [
         answer:
           'São livros que suas amigas avaliaram com 4 ou 5 estrelas e que ainda não estão na sua estante. Clicando num card de recomendação, dá pra adicionar o livro direto, já com gênero e formato preenchidos.',
       },
+      {
+        question: "Posso ver o perfil de alguém que ainda não é minha amiga?",
+        answer:
+          'Sim! Clicando no nome ou na foto da pessoa em qualquer lugar do app (busca, pedidos de amizade, comentários, etc.) você vai pro perfil dela, mesmo antes de serem amigas.',
+      },
+      {
+        question: "O que aparece no perfil de uma amiga?",
+        answer:
+          'As conquistas dela aparecem junto da foto e do nome. As abas separam o que ela está "Lendo" do que já foi "Lido", e em cada livro dá pra clicar em "Quero Ler" pra adicionar direto na sua própria estante.',
+      },
+    ],
+  },
+  {
+    title: "🔥 Ofensivas de Leitura",
+    items: [
+      {
+        question: "O que é a Ofensiva em Dupla?",
+        answer:
+          'É uma sequência de dias compartilhada com uma amiga, no estilo da ofensiva do Duolingo: todo dia em que as DUAS batem a própria meta diária de leitura, o fogo 🔥 avança mais um dia. Pra começar, vá no perfil de uma amiga (vocês já precisam ser amigas) e clique em "Ofensiva em Dupla".',
+      },
+      {
+        question: "O que são os gelinhos ❄️?",
+        answer:
+          'Cada ofensiva em dupla começa com 1 gelinho, que perdoa automaticamente um dia em que só uma das duas leu, sem quebrar a sequência. Vocês ganham mais um gelinho a cada 7 dias de sequência mantida, até o máximo de 3. Se faltar gelinho pra cobrir o dia, a sequência zera.',
+      },
+      {
+        question: "Como sei se minha amiga já leu hoje na nossa ofensiva?",
+        answer:
+          'No card da ofensiva, na aba Estante, aparece um ✅ ou ⏳ do lado do nome de cada uma, mostrando quem já bateu a meta de hoje.',
+      },
+      {
+        question: "Os Cronogramas de leitura também têm fogo e gelinho?",
+        answer:
+          'Sim! Tanto o cronograma entre amigas quanto o cronograma de um clube ganham fogo 🔥 quando TODAS as participantes leem o livro do cronograma no dia, e gelinhos ❄️ cobrem quem não leu (um gelinho por pessoa que faltou). Os badges de fogo e gelinho aparecem direto no card do cronograma.',
+      },
+      {
+        question: "Como desativo as notificações das ofensivas?",
+        answer:
+          'Em Editar Perfil, na seção de preferências de notificação, desative "Ofensivas de leitura (dupla e cronogramas)". As ofensivas continuam valendo, só para de chegar notificação sobre elas.',
+      },
     ],
   },
   {
@@ -123,6 +173,11 @@ const SECTIONS: HelpSection[] = [
         answer:
           'São medalhas desbloqueadas automaticamente conforme você usa o app - ler um certo número de livros, manter sequências de leitura, entre outras.',
       },
+      {
+        question: "Por que preciso adicionar uma foto assim que crio minha conta?",
+        answer:
+          'Contas novas precisam de uma foto de perfil antes de usar o resto do app, pra facilitar que amigas te reconheçam. Quem já tinha conta antes dessa mudança não é afetada.',
+      },
     ],
   },
   {
@@ -137,6 +192,21 @@ const SECTIONS: HelpSection[] = [
         question: "Como ativo notificações no celular?",
         answer:
           'Em Editar Perfil, ative a opção de notificações push. Você recebe avisos de curtidas, comentários, pedidos de amizade e novidades dos clubes mesmo com o app fechado.',
+      },
+      {
+        question: "O que é o lembrete de meta diária?",
+        answer:
+          'Se você ainda não bateu sua meta de páginas do dia, o app manda um lembrete (com frases bem exageradas 😄) no fim da tarde e outro pouco antes da meia-noite, pra você não perder sua sequência.',
+      },
+      {
+        question: "Minhas amigas ficam sabendo quando eu bato minha meta?",
+        answer:
+          'Sim, se você quiser: quando você bate sua meta diária, suas amigas recebem uma notificação de incentivo, no estilo do Duolingo. Dá pra desativar em Editar Perfil, na categoria "Amigas batendo a meta diária".',
+      },
+      {
+        question: "Dá pra escolher quais notificações eu recebo?",
+        answer:
+          'Sim, em Editar Perfil tem uma lista de categorias (curtidas, comentários, cutucões, conquistas, mensagens, lembretes de meta, ofensivas, e mais) com um interruptor pra cada uma.',
       },
     ],
   },
