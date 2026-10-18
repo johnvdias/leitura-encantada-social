@@ -11,6 +11,7 @@ type Post = Tables<'posts'> & {
   books: {
     title: string | null;
     author: string | null;
+    cover_url: string | null;
   } | null;
   clubs: {
     name: string | null;
@@ -47,7 +48,8 @@ export const useFeed = (filter: 'all' | 'friends' | 'clubs' = 'all') => {
           ),
           books (
             title,
-            author
+            author,
+            cover_url
           ),
           clubs (
             name

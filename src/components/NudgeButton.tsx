@@ -16,6 +16,16 @@ const nudgeOptions = [
   { type: 'no_progress', message: 'Sua estante está com saudades de você!' },
   { type: 'inactive_feed', message: 'Que tal compartilhar sua leitura atual no feed?' },
   { type: 'generic', message: 'Lembrei de você! Que tal uma pausa para a leitura?' },
+  { type: 'generic', message: 'Seu livro está esperando ansioso pra você virar a próxima página!' },
+  { type: 'generic', message: 'Larga o celular e vai ler um pouquinho, vai! 📖' },
+  { type: 'no_progress', message: 'Cadê você? Seu livro tá se sentindo abandonado...' },
+  { type: 'no_progress', message: 'Já faz tempo que você não lê nada... tudo bem por aí?' },
+  { type: 'generic', message: 'Que saudade de ver você lendo! Bora voltar pra história?' },
+  { type: 'inactive_feed', message: 'A gente tá curiosa pra saber o que você está lendo agora 👀' },
+  { type: 'generic', message: 'Uma pausa com um bom livro cai bem agora, não acha?' },
+  { type: 'no_progress', message: 'Seu personagem favorito tá esperando você voltar pra história!' },
+  { type: 'generic', message: 'Só passando pra lembrar: ler 10 minutinhos já conta! 💛' },
+  { type: 'generic', message: 'Bati minha meta hoje! Vem ler comigo? 😄' },
 ];
 
 export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
@@ -101,14 +111,14 @@ export function NudgeButton({ friendId, friendName }: NudgeButtonProps) {
           Cutucar
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2">
-        <div className="flex flex-col gap-1">
-          {nudgeOptions.map((option) => (
+      <PopoverContent className="w-72 p-2">
+        <div className="flex flex-col gap-1 max-h-80 overflow-y-auto">
+          {nudgeOptions.map((option, index) => (
             <Button
-              key={option.type}
+              key={index}
               variant="ghost"
               size="sm"
-              className="justify-start"
+              className="justify-start text-left h-auto whitespace-normal"
               onClick={() => handleNudge(option.type, option.message)}
               disabled={loading}
             >

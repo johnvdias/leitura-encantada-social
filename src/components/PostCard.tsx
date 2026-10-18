@@ -22,6 +22,7 @@ interface PostCardProps {
   book?: {
     title: string;
     author: string;
+    cover_url?: string | null;
   };
   club?: {
     name: string;
@@ -125,8 +126,16 @@ const PostCard = ({ id, content, user, book, club, created_at, post_type, visibi
         )}
 
         {book && (
-          <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
-            <BookOpen className="w-4 h-4 text-primary" />
+          <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+            {book.cover_url ? (
+              <img
+                src={book.cover_url}
+                alt={book.title}
+                className="h-16 w-11 object-cover rounded shrink-0"
+              />
+            ) : (
+              <BookOpen className="w-4 h-4 text-primary shrink-0" />
+            )}
             <div>
               <span className="font-medium">{book.title}</span>
               <span className="text-muted-foreground"> por {book.author}</span>

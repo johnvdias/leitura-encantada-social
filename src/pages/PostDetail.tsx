@@ -8,7 +8,7 @@ import { Tables } from "@/integrations/supabase/types";
 
 type PostRow = Tables<'posts'> & {
   profiles: { display_name: string | null; avatar_url: string | null } | null;
-  books: { title: string | null; author: string | null } | null;
+  books: { title: string | null; author: string | null; cover_url: string | null } | null;
   clubs: { name: string | null } | null;
 };
 
@@ -28,7 +28,7 @@ const PostDetail = () => {
         .select(`
           *,
           profiles ( display_name, avatar_url ),
-          books ( title, author ),
+          books ( title, author, cover_url ),
           clubs ( name )
         `)
         .eq('id', postId)
@@ -78,7 +78,7 @@ const PostDetail = () => {
             avatar_url: post.profiles?.avatar_url ?? undefined,
             user_id: post.user_id,
           }}
-          book={post.books ? { title: post.books.title ?? '', author: post.books.author ?? '' } : undefined}
+          book={post.books ? { title: post.books.title ?? '', author: post.books.author ?? '', cover_url: post.books.cover_url } : undefined}
           club={post.clubs?.name ? { name: post.clubs.name } : undefined}
           created_at={post.created_at}
           post_type={post.post_type}

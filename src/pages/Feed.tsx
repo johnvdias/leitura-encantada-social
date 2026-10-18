@@ -79,7 +79,7 @@ const Feed = () => {
                 <PostCard
                   key={post.id}
                   {...post}
-                  book={post.books ? { title: post.books.title ?? '', author: post.books.author ?? '' } : undefined}
+                  book={post.books ? { title: post.books.title ?? '', author: post.books.author ?? '', cover_url: post.books.cover_url } : undefined}
                   club={post.clubs?.name ? { name: post.clubs.name } : undefined}
                   onPostDeleted={refetch}
                 />
