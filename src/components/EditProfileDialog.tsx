@@ -34,6 +34,7 @@ const NOTIFICATION_CATEGORY_LABELS: Record<NotificationCategory, string> = {
   nudges: 'Cutucões',
   achievements: 'Conquistas',
   messages: 'Mensagens diretas',
+  goal_streak: 'Amigas batendo a meta diária',
 };
 
 // Debounce function
@@ -99,6 +100,7 @@ export function EditProfileDialog() {
       nudges: isCategoryEnabled(profile.notification_preferences, 'nudges'),
       achievements: isCategoryEnabled(profile.notification_preferences, 'achievements'),
       messages: isCategoryEnabled(profile.notification_preferences, 'messages'),
+      goal_streak: isCategoryEnabled(profile.notification_preferences, 'goal_streak'),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

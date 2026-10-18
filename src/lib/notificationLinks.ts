@@ -17,6 +17,7 @@ export const getNotificationLink = (notification: Notification): string | null =
     case 'friend_request':
     case 'friend_accepted':
     case 'nudge':
+    case 'goal_reached':
       return related_id ? `/perfil/${related_id}` : null;
     case 'message':
       return related_id ? `/mensagens/${related_id}` : null;

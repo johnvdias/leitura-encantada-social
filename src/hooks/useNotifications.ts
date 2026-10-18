@@ -14,7 +14,7 @@ export type Notification = NotificationRow & {
 // mandou a mensagem etc.) - os únicos pra que faz sentido buscar o
 // perfil e mostrar nome+foto na notificação. Os outros related_id
 // apontam pra outras coisas (post, empréstimo) ou não existem.
-const SENDER_TYPES = new Set(['message', 'nudge', 'friend_request', 'friend_accepted']);
+const SENDER_TYPES = new Set(['message', 'nudge', 'friend_request', 'friend_accepted', 'goal_reached']);
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);

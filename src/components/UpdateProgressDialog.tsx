@@ -11,6 +11,7 @@ import { BookOpen, Clock } from "lucide-react";
 import { ReadingStats } from "@/components/ReadingStats";
 import { CompletedDatePicker } from "@/components/CompletedDatePicker";
 import { format } from "date-fns";
+import { checkAndNotifyDailyGoalReached } from "@/lib/notifyFriendsGoalReached";
 
 interface UpdateProgressDialogProps {
   bookId: string;
@@ -113,6 +114,14 @@ export function UpdateProgressDialog({
         });
 
       if (historyError) throw historyError;
+
+      // Best-effort: avisa as amigas se essa sessão fez a meta diária ser
+      // batida agora. Não bloqueia a UI nem interrompe o fluxo em caso de erro.
+      if (pagesRead > 0) {
+        checkAndNotifyDailyGoalReached(user.id, pagesRead).catch((err) =>
+          console.error('Error checking/notifying daily goal reached:', err)
+        );
+      }
 
       // Show appropriate success message
       let successMessage = `Você leu ${pagesRead} páginas. Continue assim! 📚`;
