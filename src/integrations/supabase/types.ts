@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -1034,6 +1034,7 @@ export type Database = {
           id: string
           notification_preferences: Json
           reading_goal: number | null
+          requires_avatar_setup: boolean
           updated_at: string
           user_id: string
           username: string | null
@@ -1047,6 +1048,7 @@ export type Database = {
           id?: string
           notification_preferences?: Json
           reading_goal?: number | null
+          requires_avatar_setup?: boolean
           updated_at?: string
           user_id: string
           username?: string | null
@@ -1060,6 +1062,7 @@ export type Database = {
           id?: string
           notification_preferences?: Json
           reading_goal?: number | null
+          requires_avatar_setup?: boolean
           updated_at?: string
           user_id?: string
           username?: string | null
@@ -1182,9 +1185,10 @@ export type Database = {
     Functions: {
       ensure_creator_is_approved: { Args: never; Returns: undefined }
       get_club_rankings: {
-        Args: { p_club_id: string; p_start_date?: string; p_end_date?: string }
+        Args: { p_club_id: string; p_end_date?: string; p_start_date?: string }
         Returns: Json
       }
+      get_cron_secret: { Args: { secret_name: string }; Returns: string }
       is_approved_club_member: {
         Args: { p_club_id: string; p_user_id: string }
         Returns: boolean
@@ -1201,6 +1205,7 @@ export type Database = {
         Args: { p_club_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_club_public: { Args: { p_club_id: string }; Returns: boolean }
       is_schedule_creator: {
         Args: { p_schedule_id: string; p_user_id: string }
         Returns: boolean
