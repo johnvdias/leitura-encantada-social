@@ -228,7 +228,7 @@ export function PersonalRankings() {
                       {b.author || 'Autor desconhecido'} · {b.periodLabel}
                     </p>
                   </div>
-                  <span className="text-xs text-yellow-500 shrink-0">{'⭐'.repeat(b.rating)}</span>
+                  <span className="text-xs text-yellow-500 shrink-0">{'⭐'.repeat(Math.round(b.rating))}</span>
                 </div>
               </RankRow>
             ))

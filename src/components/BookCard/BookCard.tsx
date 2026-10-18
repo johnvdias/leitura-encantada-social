@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Star, Heart, Trash2, Play, Loader2, Image as ImageIcon, Book as BookIcon, Tablet, Headphones } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
+import { Star, StarHalf, Heart, Trash2, Play, Loader2, Image as ImageIcon, Book as BookIcon, Tablet, Headphones } from "lucide-react"; // Corrigido: Trocado BookPlay por Play
 import { BOOK_FORMAT_LABEL } from "@/lib/bookFormats";
 import { EditBookDialog } from "@/components/EditBookDialog";
 import { UpdateProgressDialog } from "@/components/UpdateProgressDialog";
@@ -61,11 +61,18 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
     }
   };
 
-  const handleRate = async (rating: number) => {
+  // Ciclo de clique por estrela: 1º clique marca meia estrela, 2º clique
+  // completa a estrela, 3º clique limpa a avaliação daquela posição.
+  const handleRate = async (starIndex: number) => {
+    const current = book.rating ?? 0;
+    const half = starIndex + 0.5;
+    const full = starIndex + 1;
+    const newRating = current === full ? null : current === half ? full : half;
+
     try {
       const { error } = await supabase
         .from('books')
-        .update({ rating: rating === book.rating ? null : rating })
+        .update({ rating: newRating })
         .eq('id', book.id);
 
       if (error) throw error;
@@ -73,6 +80,12 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
     } catch (error) {
       toast({ title: 'Erro', description: 'Não foi possível salvar sua avaliação.', variant: 'destructive' });
     }
+  };
+
+  const renderStar = (i: number, rating: number) => {
+    if (rating >= i + 1) return <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />;
+    if (rating >= i + 0.5) return <StarHalf className="h-4 w-4 text-yellow-400 fill-yellow-400" />;
+    return <Star className="h-4 w-4 text-muted-foreground" />;
   };
 
   const handleToggleLoved = async () => {
@@ -132,10 +145,10 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
                           <button
                             key={i}
                             type="button"
-                            onClick={() => handleRate(i + 1)}
+                            onClick={() => handleRate(i)}
                             className="p-0.5 -m-0.5"
                           >
-                            <Star className={`h-4 w-4 ${i < (book.rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
+                            {renderStar(i, book.rating ?? 0)}
                           </button>
                         ))}
                         <button
@@ -150,7 +163,7 @@ const BookCard = ({ book, onUpdate }: BookCardProps) => {
                     </div>
                 ) : (book.rating || book.loved) ? (
                     <div className="flex items-center mt-1">
-                        {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < (book.rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />)}
+                        {[...Array(5)].map((_, i) => <span key={i}>{renderStar(i, book.rating ?? 0)}</span>)}
                         {book.loved && <Heart className="h-4 w-4 ml-1 text-red-500 fill-red-500" />}
                     </div>
                 ) : null}

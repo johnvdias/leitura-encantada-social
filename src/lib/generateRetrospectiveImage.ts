@@ -307,7 +307,7 @@ export const generateRetrospectiveImageBlob = async (
 
     if (favorite.rating) {
       ctx.font = '26px Inter, sans-serif';
-      ctx.fillText('⭐'.repeat(favorite.rating), textX, cardY + 128);
+      ctx.fillText('⭐'.repeat(Math.round(favorite.rating)), textX, cardY + 128);
     }
 
     ctx.textAlign = 'center';
