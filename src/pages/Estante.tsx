@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Dices, Loader2 } from "lucide-react";
 import BookCard from "@/components/BookCard/BookCard";
 import { AddBookDialog } from "@/components/AddBookDialog";
@@ -22,9 +23,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { Book } from "@/types/book";
 
+const MONTH_NAMES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
 const Estante = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [books, setBooks] = useState<Book[]>([]);
+  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [monthFilter, setMonthFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [pickedBook, setPickedBook] = useState<Book | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -73,6 +81,27 @@ const Estante = () => {
       const dateB = b.completed_at ?? b.updated_at ?? b.created_at;
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
+
+  // Datas puras ("YYYY-MM-DD") não podem passar por new Date() direto -
+  // isso é interpretado como meia-noite UTC e cai no dia/mês anterior em
+  // fusos negativos. Lê ano/mês com fatiamento de string, sem parsing.
+  const effectiveDateStr = (book: Book) => (book.completed_at ?? book.updated_at ?? book.created_at).slice(0, 10);
+  const availableYears = Array.from(
+    new Set(completedBooks.map(book => effectiveDateStr(book).slice(0, 4)))
+  ).sort((a, b) => b.localeCompare(a));
+
+  const yearFilteredBooks = yearFilter === "all"
+    ? completedBooks
+    : completedBooks.filter(book => effectiveDateStr(book).slice(0, 4) === yearFilter);
+
+  const availableMonths = yearFilter === "all"
+    ? []
+    : Array.from(new Set(yearFilteredBooks.map(book => effectiveDateStr(book).slice(5, 7)))).sort();
+
+  const visibleCompletedBooks = monthFilter === "all" || yearFilter === "all"
+    ? yearFilteredBooks
+    : yearFilteredBooks.filter(book => effectiveDateStr(book).slice(5, 7) === monthFilter);
+
   const wantToReadBooks = filteredBooks.filter(book => book.reading_status === "want_to_read");
 
   const handleDrawRandomBook = () => {
@@ -148,11 +177,46 @@ const Estante = () => {
         </TabsContent>
 
         <TabsContent value="lidos">
-         {completedBooks.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {completedBooks.map((book) => <BookCard key={book.id} book={book} onUpdate={fetchBooks} />)}
+          {completedBooks.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+              <Select
+                value={yearFilter}
+                onValueChange={(value) => { setYearFilter(value); setMonthFilter("all"); }}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todo período</SelectItem>
+                  {availableYears.map((year) => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {yearFilter !== "all" && (
+                <Select value={monthFilter} onValueChange={setMonthFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os meses</SelectItem>
+                    {availableMonths.map((month) => (
+                      <SelectItem key={month} value={month}>{MONTH_NAMES[Number(month) - 1]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-          ) : <p className="text-center text-muted-foreground py-10">Nenhum livro concluído ainda.</p>}
+          )}
+          {visibleCompletedBooks.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {visibleCompletedBooks.map((book) => <BookCard key={book.id} book={book} onUpdate={fetchBooks} />)}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-10">
+              {completedBooks.length === 0 ? "Nenhum livro concluído ainda." : "Nenhum livro lido nesse período."}
+            </p>
+          )}
         </TabsContent>
 
         <TabsContent value="quero-ler">
