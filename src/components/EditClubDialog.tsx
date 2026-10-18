@@ -100,7 +100,7 @@ export function EditClubDialog({ club, onUpdate }: EditClubDialogProps) {
         .from('books')
         .select('id, title')
         .eq('user_id', user.id)
-        .in('reading_status', ['reading', 'want_to_read']);
+        .order('title');
       if (error) {
         console.error('Error fetching books:', error);
       } else {

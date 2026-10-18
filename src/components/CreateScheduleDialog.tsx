@@ -27,7 +27,15 @@ import { ptBR } from 'date-fns/locale';
 interface BookOption {
   id: string;
   title: string;
+  author: string;
+  reading_status: string;
 }
+
+const STATUS_LABEL: Record<string, string> = {
+  reading: "Lendo",
+  completed: "Lido",
+  want_to_read: "Quero Ler",
+};
 
 interface CreateScheduleDialogProps {
     onScheduleCreated: () => void;
@@ -40,6 +48,7 @@ export function CreateScheduleDialog({ onScheduleCreated }: CreateScheduleDialog
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userBooks, setUserBooks] = useState<BookOption[]>([]);
+  const [bookSearch, setBookSearch] = useState("");
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -53,9 +62,9 @@ export function CreateScheduleDialog({ onScheduleCreated }: CreateScheduleDialog
       if (!user || !open) return;
       const { data, error } = await supabase
         .from('books')
-        .select('id, title')
+        .select('id, title, author, reading_status')
         .eq('user_id', user.id)
-        .eq('reading_status', 'want_to_read'); // Only books you want to read
+        .order('title');
       if (error) console.error("Error fetching user books:", error);
       else setUserBooks(data || []);
     };
@@ -116,6 +125,7 @@ export function CreateScheduleDialog({ onScheduleCreated }: CreateScheduleDialog
       // Reset form
       setFormData({ name: "", book_id: "", reading_goal: "", end_date: new Date(new Date().setDate(new Date().getDate() + 7)) });
       setSelectedFriends([]);
+      setBookSearch("");
 
     } catch (error) {
       console.error('Error creating schedule:', error);
@@ -148,12 +158,26 @@ export function CreateScheduleDialog({ onScheduleCreated }: CreateScheduleDialog
 
           <div className="space-y-2">
             <Label>Livro</Label>
+            <Input
+              placeholder="Buscar por título ou autora..."
+              value={bookSearch}
+              onChange={(e) => setBookSearch(e.target.value)}
+              className="mb-2"
+            />
             <Select onValueChange={(value) => setFormData({...formData, book_id: value})} required>
               <SelectTrigger><SelectValue placeholder="Selecione um livro da sua estante..." /></SelectTrigger>
               <SelectContent>
-                {userBooks.map(book => (
-                  <SelectItem key={book.id} value={book.id}>{book.title}</SelectItem>
-                ))}
+                {userBooks
+                  .filter(book =>
+                    !bookSearch.trim() ||
+                    book.title.toLowerCase().includes(bookSearch.toLowerCase()) ||
+                    book.author?.toLowerCase().includes(bookSearch.toLowerCase())
+                  )
+                  .map(book => (
+                    <SelectItem key={book.id} value={book.id}>
+                      {book.title} — {book.author} ({STATUS_LABEL[book.reading_status] || book.reading_status})
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
