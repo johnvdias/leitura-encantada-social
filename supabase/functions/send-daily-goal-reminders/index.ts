@@ -6,10 +6,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
 };
 
-// Frases exageradas/carentes pedidas: um lembrete no fim da tarde (ainda dá
-// tempo) e um "última chamada" perto da virada do dia, sempre com tom de
-// urgência e saudade do livro, nunca culpabilizando de verdade.
-const PHRASES: Record<'evening' | 'final', { title: string; messages: string[] }> = {
+// Frases exageradas/carentes pedidas: um lembrete à tarde (tom leve, o dia
+// inteiro ainda pela frente), um no fim da tarde (ainda dá tempo) e um
+// "última chamada" perto da virada do dia, sempre com tom de urgência
+// crescente e saudade do livro, nunca culpabilizando de verdade.
+const PHRASES: Record<'afternoon' | 'evening' | 'final', { title: string; messages: string[] }> = {
+  afternoon: {
+    title: '📖 Já leu um pouquinho hoje?',
+    messages: [
+      'Já pensou em separar uns minutinhos pra ler hoje? 📖',
+      'Boa tarde! Que tal uma pausa com seu livro favorito?',
+      'Sua leitura do dia ainda não começou... bora mudar isso?',
+      'Um cafézinho e um livro - combinação perfeita pra essa tarde ☕📚',
+      'Ei, só passando pra lembrar da sua meta de hoje!',
+      'Tarde é um ótimo momento pra avançar algumas páginas 🌤️',
+      'Seu livro tá na mesa esperando você voltar pra história',
+      'Faltam só umas páginas pra bater a meta - começa agora e já garante!',
+    ],
+  },
   evening: {
     title: '⏰ Sua meta diária está esperando!',
     messages: [
@@ -21,6 +35,10 @@ const PHRASES: Record<'evening' | 'final', { title: string; messages: string[] }
       'Seu personagem favorito tá esperando o próximo capítulo só com você!',
       'Não deixa sua ofensiva de leitura morrer hoje! Bora ler uns minutinhos?',
       'A noite está perfeita pra ler... e pra bater aquela metinha, né? 📖',
+      'Seu livro ligou querendo saber se você ainda lembra dele 📞📚',
+      'Faltam só algumas horas pro dia acabar e a meta ainda te espera!',
+      'Que tal trocar 10 minutinhos de tela por 10 minutinhos de leitura?',
+      'Sua estante tá de olho em você esperando esse capítulo de hoje 👀',
     ],
   },
   final: {
@@ -34,6 +52,10 @@ const PHRASES: Record<'evening' | 'final', { title: string; messages: string[] }
       'Seu personagem favorito tá te esperando ansiosamente antes que o dia vire...',
       'ALERTA MÁXIMO: sua meta diária está prestes a escapar pelas suas mãos!',
       'Não vai deixar sua estante dormir triste hoje, vai? Leia antes da meia-noite! 💔📚',
+      'Corre! O relógio não para e sua meta também não vai se ler sozinha!',
+      'Faltam só alguns minutinhos pra virar o dia - e sua sequência com ele!',
+      'SOS literário: sua meta de hoje precisa de socorro urgente! 🆘📖',
+      'Última chance antes da meia-noite - nem que seja só uma página!',
     ],
   },
 };
@@ -83,7 +105,7 @@ Deno.serve(async (req) => {
     }
 
     const { stage } = await req.json();
-    const pool = stage === 'final' ? PHRASES.final : PHRASES.evening;
+    const pool = stage === 'final' ? PHRASES.final : stage === 'afternoon' ? PHRASES.afternoon : PHRASES.evening;
 
     // O público do app é majoritariamente brasileiro e o dia da meta
     // diária é pensado no fuso de Brasília (fixo em UTC-3, sem horário de

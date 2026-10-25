@@ -196,7 +196,7 @@ const SECTIONS: HelpSection[] = [
       {
         question: "O que é o lembrete de meta diária?",
         answer:
-          'Se você ainda não bateu sua meta de páginas do dia, o app manda um lembrete (com frases bem exageradas 😄) no fim da tarde e outro pouco antes da meia-noite, pra você não perder sua sequência.',
+          'Se você ainda não bateu sua meta de páginas do dia, o app manda até três lembretes: um leve no meio da tarde, outro no fim da tarde e um último (com frases bem exageradas 😄) pouco antes da meia-noite, pra você não perder sua sequência.',
       },
       {
         question: "Minhas amigas ficam sabendo quando eu bato minha meta?",
