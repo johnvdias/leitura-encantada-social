@@ -91,7 +91,7 @@ const SECTIONS: HelpSection[] = [
       {
         question: "Como escolhemos o próximo livro do clube?",
         answer:
-          'Quem administra o clube pode abrir uma votação/sorteio com algumas opções de livro - as integrantes votam e o mais votado vira a leitura atual do clube.',
+          'Quem administra o clube propõe de 2 a 4 opções de livro e escolhe o jeito de decidir: sorteio (escolha aleatória entre as opções) ou votação (as integrantes votam e, ao encerrar, a opção mais votada vira a leitura atual do clube - empate é decidido por sorteio entre as mais votadas).',
       },
       {
         question: "O que são os Rankings do clube?",

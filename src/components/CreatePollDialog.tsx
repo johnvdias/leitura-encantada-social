@@ -10,15 +10,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Dices, Plus, X, Loader2 } from "lucide-react";
+import { Dices, Vote, Plus, X, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Candidate {
   title: string;
   author: string;
 }
 
+type PollMode = "draw" | "vote";
+
 interface CreatePollDialogProps {
-  onCreate: (candidates: Candidate[]) => Promise<void>;
+  onCreate: (candidates: Candidate[], mode: PollMode) => Promise<void>;
 }
 
 const MIN_OPTIONS = 2;
@@ -26,6 +29,7 @@ const MAX_OPTIONS = 4;
 
 export function CreatePollDialog({ onCreate }: CreatePollDialogProps) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<PollMode>("draw");
   const [candidates, setCandidates] = useState<Candidate[]>([{ title: "", author: "" }, { title: "", author: "" }]);
   const [saving, setSaving] = useState(false);
 
@@ -49,8 +53,9 @@ export function CreatePollDialog({ onCreate }: CreatePollDialogProps) {
     if (!isValid) return;
     setSaving(true);
     try {
-      await onCreate(candidates.map((c) => ({ title: c.title.trim(), author: c.author.trim() })));
+      await onCreate(candidates.map((c) => ({ title: c.title.trim(), author: c.author.trim() })), mode);
       setOpen(false);
+      setMode("draw");
       setCandidates([{ title: "", author: "" }, { title: "", author: "" }]);
     } finally {
       setSaving(false);
@@ -62,16 +67,45 @@ export function CreatePollDialog({ onCreate }: CreatePollDialogProps) {
       <DialogTrigger asChild>
         <Button size="sm">
           <Dices className="h-4 w-4 mr-2" />
-          Criar sorteio
+          Escolher próximo livro
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Sorteio do próximo livro</DialogTitle>
-          <DialogDescription>Proponha de 2 a 4 opções pra sortear entre elas.</DialogDescription>
+          <DialogTitle>{mode === "draw" ? "Sorteio do próximo livro" : "Votação do próximo livro"}</DialogTitle>
+          <DialogDescription>
+            {mode === "draw"
+              ? "Proponha de 2 a 4 opções pra sortear entre elas."
+              : "Proponha de 2 a 4 opções pra membras votarem na favorita."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setMode("draw")}
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-lg border p-3 text-sm transition-colors",
+                mode === "draw" ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground"
+              )}
+            >
+              <Dices className="h-5 w-5" />
+              Sorteio
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("vote")}
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-lg border p-3 text-sm transition-colors",
+                mode === "vote" ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground"
+              )}
+            >
+              <Vote className="h-5 w-5" />
+              Votação
+            </button>
+          </div>
+
           {candidates.map((candidate, index) => (
             <div key={index} className="flex items-end gap-2">
               <div className="flex-1 space-y-2">
@@ -105,7 +139,7 @@ export function CreatePollDialog({ onCreate }: CreatePollDialogProps) {
 
           <Button onClick={handleSubmit} disabled={!isValid || saving} className="w-full">
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Criar opções
+            {mode === "draw" ? "Criar sorteio" : "Criar votação"}
           </Button>
         </div>
       </DialogContent>

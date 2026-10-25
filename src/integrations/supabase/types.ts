@@ -416,6 +416,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          mode: string
           status: string
           winning_option_id: string | null
         }
@@ -426,6 +427,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          mode?: string
           status?: string
           winning_option_id?: string | null
         }
@@ -436,6 +438,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          mode?: string
           status?: string
           winning_option_id?: string | null
         }
@@ -460,6 +463,52 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "club_book_poll_options"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_book_poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_book_poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "club_book_poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_book_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "club_book_polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_book_poll_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
