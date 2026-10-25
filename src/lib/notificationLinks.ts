@@ -12,6 +12,7 @@ export const getNotificationLink = (notification: Notification): string | null =
   switch (type) {
     case 'like':
     case 'comment':
+    case 'comment_like':
     case 'mention':
       return related_id ? `/post/${related_id}` : null;
     case 'friend_request':

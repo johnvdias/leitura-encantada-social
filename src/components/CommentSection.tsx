@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MentionTextarea } from "@/components/MentionTextarea";
+import { CommentLikeButton } from "@/components/CommentLikeButton";
 import { Tables } from "@/integrations/supabase/types";
 
 interface CommentSectionProps {
@@ -49,6 +50,7 @@ function CommentRow({ comment, onReply }: { comment: Comment; onReply: (target: 
               locale: ptBR
             })}
           </span>
+          <CommentLikeButton commentId={comment.id} />
           <button
             type="button"
             onClick={() => onReply(
