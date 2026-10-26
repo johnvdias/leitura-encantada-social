@@ -6,15 +6,32 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, CalendarClock, Users, Book, Flame, Snowflake } from 'lucide-react';
+import { Check, X, CalendarClock, Users, Book, Flame, Snowflake, Target } from 'lucide-react';
 import { CreateScheduleDialog } from './CreateScheduleDialog';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+interface StructuredGoal {
+  unit: 'pages' | 'chapters';
+  total: number;
+  daily_target: number;
+}
+
+const UNIT_LABEL: Record<StructuredGoal['unit'], string> = {
+  pages: 'páginas',
+  chapters: 'capítulos',
+};
+
+// Cronogramas criados antes da meta estruturada guardam uma frase livre
+// (ex: "Ler até o capítulo 03") no mesmo campo - mantém os dois formatos
+// legíveis em vez de quebrar a exibição dos cronogramas antigos.
+const isStructuredGoal = (goal: unknown): goal is StructuredGoal =>
+  !!goal && typeof goal === 'object' && 'daily_target' in (goal as Record<string, unknown>);
+
 interface Schedule {
   id: string;
   name: string;
-  reading_goal: string;
+  reading_goal: string | StructuredGoal;
   end_date: string;
   current_streak: number;
   freezes_available: number;
@@ -137,9 +154,19 @@ export function SchedulesSection() {
             </CardHeader>
             <CardContent className="flex-grow">
                 <p className="font-semibold text-sm mb-2">Meta:</p>
-                <blockquote className="border-l-2 pl-4 italic text-muted-foreground">
-                    {schedule.reading_goal}
-                </blockquote>
+                {isStructuredGoal(schedule.reading_goal) ? (
+                  <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Target className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      <span className="font-medium text-foreground">{schedule.reading_goal.daily_target} {UNIT_LABEL[schedule.reading_goal.unit]}/dia</span>
+                      {' '}({schedule.reading_goal.total} {UNIT_LABEL[schedule.reading_goal.unit]} no total)
+                    </span>
+                  </p>
+                ) : (
+                  <blockquote className="border-l-2 pl-4 italic text-muted-foreground">
+                      {schedule.reading_goal}
+                  </blockquote>
+                )}
             </CardContent>
             <CardFooter className="flex justify-between items-center">
                 <div className="flex items-center -space-x-2">

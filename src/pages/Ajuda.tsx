@@ -51,7 +51,7 @@ const SECTIONS: HelpSection[] = [
       {
         question: "Como funcionam as Metas de Leitura e os Cronogramas?",
         answer:
-          'As Metas de Leitura deixam você definir quantos livros quer ler no ano e acompanham seu progresso. Os Cronogramas são planos de leitura com data de início/fim pra um livro específico, sozinha ou com amigas. Ao criar um, dá pra escolher (e buscar) qualquer livro da sua estante, mesmo um que já leu ou está lendo - útil pra reler acompanhada.',
+          'As Metas de Leitura deixam você definir quantos livros quer ler no ano e acompanham seu progresso. Os Cronogramas são planos de leitura pra um livro específico, sozinha ou com amigas: você escolhe (e busca) qualquer livro da sua estante, mesmo um que já leu ou está lendo, se a contagem é em páginas ou capítulos, o total e as datas de início e término - o app calcula sozinho a meta diária (ex: 20 páginas/dia).',
       },
       {
         question: "Onde vejo minhas citações favoritas?",
