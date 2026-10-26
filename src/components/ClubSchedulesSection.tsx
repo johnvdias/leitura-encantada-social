@@ -4,14 +4,31 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, Trash2, Flame, Snowflake } from 'lucide-react';
-import { formatDistanceToNow, isPast } from 'date-fns';
+import { CalendarClock, Trash2, Flame, Snowflake, Target } from 'lucide-react';
+import { formatDistanceToNow, isPast, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+interface StructuredGoal {
+  unit: 'pages' | 'chapters';
+  total: number;
+  daily_target: number;
+}
+
+const UNIT_LABEL: Record<StructuredGoal['unit'], string> = {
+  pages: 'páginas',
+  chapters: 'capítulos',
+};
+
+// Cronogramas criados antes da meta estruturada guardam uma frase livre
+// (ex: "Ler até o capítulo 03") no mesmo campo - mantém os dois formatos
+// legíveis em vez de quebrar a exibição dos cronogramas antigos.
+const isStructuredGoal = (goal: unknown): goal is StructuredGoal =>
+  !!goal && typeof goal === 'object' && 'daily_target' in (goal as Record<string, unknown>);
 
 interface Schedule {
   id: string;
   name: string;
-  reading_goal: string;
+  reading_goal: string | StructuredGoal;
   end_date: string;
   current_streak: number;
   freezes_available: number;
@@ -86,7 +103,17 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <p className="text-sm text-muted-foreground">{schedule.reading_goal}</p>
+                {isStructuredGoal(schedule.reading_goal) ? (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Target className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      <span className="font-medium text-foreground">{schedule.reading_goal.daily_target} {UNIT_LABEL[schedule.reading_goal.unit]}/dia</span>
+                      {' '}({schedule.reading_goal.total} {UNIT_LABEL[schedule.reading_goal.unit]} no total)
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{schedule.reading_goal}</p>
+                )}
             </CardContent>
             <CardFooter className="flex justify-between items-center text-sm">
                  <div className="flex flex-wrap gap-1">

@@ -94,6 +94,11 @@ const SECTIONS: HelpSection[] = [
           'Quem administra o clube propõe de 2 a 4 opções de livro e escolhe o jeito de decidir: sorteio (escolha aleatória entre as opções) ou votação (as integrantes votam e, ao encerrar, a opção mais votada vira a leitura atual do clube - empate é decidido por sorteio entre as mais votadas).',
       },
       {
+        question: "Como funciona o Cronograma do clube?",
+        answer:
+          'Com um livro atual definido, quem administra cria o cronograma escolhendo se a contagem é em páginas ou capítulos, o total e as datas de início e término - o app calcula sozinho a meta diária (ex: 20 páginas/dia) e inscreve automaticamente todas as integrantes.',
+      },
+      {
         question: "O que são os Rankings do clube?",
         answer:
           'Uma aba dentro do clube que mostra as maiores leitoras, autoras mais lidas, gêneros favoritos e livros mais bem avaliados pelas integrantes.',
