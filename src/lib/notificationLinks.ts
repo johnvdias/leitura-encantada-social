@@ -37,7 +37,12 @@ export const getNotificationLink = (notification: Notification): string | null =
     case 'club_schedule_extended':
     case 'club_schedule_frozen':
     case 'club_schedule_broken':
+    case 'club_discussion':
+    case 'club_poll':
+    case 'club_schedule':
       return related_id ? `/clubes/${related_id}` : null;
+    case 'club_post':
+      return related_id ? `/post/${related_id}` : null;
     default:
       return null;
   }

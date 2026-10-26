@@ -21,6 +21,7 @@ import { Sparkles, BookOpen, Heart, Lightbulb } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { notifyClubMembers } from "@/lib/notifyClubMembers";
 import React from "react";
 
 interface CreatePostDialogProps {
@@ -75,16 +76,35 @@ export const CreatePostDialog = ({
 
     setLoading(true);
     try {
-      const { error } = await supabase.from("posts").insert({
-        user_id: user.id,
-        book_id: bookId,
-        club_id: clubId === NO_CLUB_VALUE ? null : clubId,
-        content: content.trim(),
-        post_type: postType,
-        visibility,
-      });
+      const resolvedClubId = clubId === NO_CLUB_VALUE ? null : clubId;
+
+      const { data: newPost, error } = await supabase
+        .from("posts")
+        .insert({
+          user_id: user.id,
+          book_id: bookId,
+          club_id: resolvedClubId,
+          content: content.trim(),
+          post_type: postType,
+          visibility,
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      if (resolvedClubId) {
+        notifyClubMembers({
+          clubId: resolvedClubId,
+          excludeUserId: user.id,
+          type: 'club_post',
+          title: '✨ Novo post no clube!',
+          content: content.trim().slice(0, 140),
+          relatedId: newPost.id,
+        }).catch(() => {
+          // Notificar é best-effort; o post já foi publicado.
+        });
+      }
 
       toast({
         title: "Post compartilhado! ✨",

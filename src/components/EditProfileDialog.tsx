@@ -37,6 +37,7 @@ const NOTIFICATION_CATEGORY_LABELS: Record<NotificationCategory, string> = {
   goal_streak: 'Amigas batendo a meta diária',
   daily_reminder: 'Lembretes da sua meta diária',
   duo_streak: 'Ofensivas de leitura (dupla e cronogramas)',
+  clubs: 'Atividade dos clubes (posts, discussões, sorteios, votações e cronogramas)',
 };
 
 // Debounce function
@@ -105,6 +106,7 @@ export function EditProfileDialog() {
       goal_streak: isCategoryEnabled(profile.notification_preferences, 'goal_streak'),
       daily_reminder: isCategoryEnabled(profile.notification_preferences, 'daily_reminder'),
       duo_streak: isCategoryEnabled(profile.notification_preferences, 'duo_streak'),
+      clubs: isCategoryEnabled(profile.notification_preferences, 'clubs'),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

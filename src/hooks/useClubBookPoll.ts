@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { notifyClubMembers } from "@/lib/notifyClubMembers";
 import { Tables } from "@/integrations/supabase/types";
 
 type Poll = Tables<'club_book_polls'>;
@@ -120,6 +121,20 @@ export const useClubBookPoll = (clubId: string, isCreator: boolean, onResolved?:
           ? { title: 'Sorteio criado!', description: 'Quando quiser, sorteie o próximo livro entre as opções.' }
           : { title: 'Votação criada!', description: 'As membras já podem votar na opção favorita.' }
       );
+
+      notifyClubMembers({
+        clubId,
+        excludeUserId: user.id,
+        type: 'club_poll',
+        title: mode === 'draw' ? '🎲 Novo sorteio no clube!' : '🗳️ Nova votação no clube!',
+        content: mode === 'draw'
+          ? 'Confira as opções propostas pro próximo livro do clube.'
+          : 'Vote na sua opção favorita pro próximo livro do clube.',
+        relatedId: clubId,
+      }).catch(() => {
+        // Notificar é best-effort; o sorteio/votação já foi criado.
+      });
+
       await fetchPoll();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Não foi possível criar o sorteio.';
@@ -172,6 +187,17 @@ export const useClubBookPoll = (clubId: string, isCreator: boolean, onResolved?:
       })
       .eq('id', poll.id);
     if (pollError) throw pollError;
+
+    notifyClubMembers({
+      clubId,
+      excludeUserId: user.id,
+      type: 'club_poll',
+      title: poll.mode === 'draw' ? '🎲 Sorteio feito!' : '🗳️ Votação encerrada!',
+      content: `"${winner.title}" é a nova leitura do clube!`,
+      relatedId: clubId,
+    }).catch(() => {
+      // Notificar é best-effort; o resultado já foi salvo.
+    });
 
     await fetchPoll();
     onResolved?.();

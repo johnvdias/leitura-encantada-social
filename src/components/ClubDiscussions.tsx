@@ -8,6 +8,7 @@ import { MessageSquare, Plus, Pin, Calendar, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { notifyClubMembers } from "@/lib/notifyClubMembers";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -117,6 +118,8 @@ export function ClubDiscussions({ clubId, isCreator }: ClubDiscussionsProps) {
 
     setCreating(true);
     try {
+      const announcement = isAnnouncement && isCreator;
+
       const { error } = await supabase
         .from('club_discussions')
         .insert({
@@ -124,10 +127,21 @@ export function ClubDiscussions({ clubId, isCreator }: ClubDiscussionsProps) {
           user_id: user.id,
           title: title.trim(),
           content: content.trim(),
-          is_announcement: isAnnouncement && isCreator
+          is_announcement: announcement
         });
 
       if (error) throw error;
+
+      notifyClubMembers({
+        clubId,
+        excludeUserId: user.id,
+        type: 'club_discussion',
+        title: announcement ? '📌 Novo anúncio no clube!' : '💬 Nova discussão no clube!',
+        content: title.trim(),
+        relatedId: clubId,
+      }).catch(() => {
+        // Notificar é best-effort; a discussão já foi publicada.
+      });
 
       toast({
         title: "Discussão criada! 💬",

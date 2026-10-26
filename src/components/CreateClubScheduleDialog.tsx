@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { notifyClubMembers } from "@/lib/notifyClubMembers";
 import { Calendar as CalendarIcon, Loader2, FileText, ListOrdered } from "lucide-react";
 import { format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -124,6 +125,17 @@ export function CreateClubScheduleDialog({ clubId, currentBook, onScheduleCreate
         .insert(participants);
 
       if (participantsError) throw participantsError;
+
+      notifyClubMembers({
+        clubId,
+        excludeUserId: user.id,
+        type: 'club_schedule',
+        title: '🗓️ Novo cronograma do clube!',
+        content: `"${currentBook.title}": meta de ${dailyTarget} ${UNIT_LABEL[unit]}/dia até ${format(endDate, "dd/MM", { locale: ptBR })}.`,
+        relatedId: clubId,
+      }).catch(() => {
+        // Notificar é best-effort; o cronograma já foi criado.
+      });
 
       toast({
         title: "Cronograma do Clube Criado! 🗓️",

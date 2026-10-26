@@ -103,6 +103,11 @@ const SECTIONS: HelpSection[] = [
         answer:
           'Uma aba dentro do clube que mostra as maiores leitoras, autoras mais lidas, gêneros favoritos e livros mais bem avaliados pelas integrantes.',
       },
+      {
+        question: "Recebo notificação de tudo que acontece no clube?",
+        answer:
+          'Sim! Toda atividade do clube avisa as outras integrantes: um post marcado pro clube, uma discussão ou anúncio novo, um sorteio ou votação criado (e quando é resolvido) e um cronograma iniciado. Dá pra desativar em Editar Perfil, na categoria "Atividade dos clubes".',
+      },
     ],
   },
   {
