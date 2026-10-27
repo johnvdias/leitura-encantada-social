@@ -96,7 +96,12 @@ const SECTIONS: HelpSection[] = [
       {
         question: "Como funciona o Cronograma do clube?",
         answer:
-          'Com um livro atual definido, quem administra cria o cronograma escolhendo se a contagem é em páginas ou capítulos, o total e as datas de início e término - o app calcula sozinho a meta diária (ex: 20 páginas/dia) e inscreve automaticamente todas as integrantes.',
+          'Com um livro atual definido, quem administra cria o cronograma escolhendo se a contagem é em páginas ou capítulos, o total e as datas de início e término - o app calcula sozinho a meta diária (ex: 20 páginas/dia) e inscreve automaticamente todas as integrantes. O card do cronograma mostra quantas já bateram a meta de hoje (em capítulos, mostra quem já leu algo hoje, já que o app só registra progresso em páginas).',
+      },
+      {
+        question: "O que é o \"X de Y concluíram\" no topo do clube?",
+        answer:
+          'É quantas integrantes já marcaram o livro atual como concluído na própria estante - não tem relação com a meta diária do cronograma. Quem bateu a meta de hoje aparece no card do cronograma, não nesse número do topo.',
       },
       {
         question: "O que são os Rankings do clube?",
