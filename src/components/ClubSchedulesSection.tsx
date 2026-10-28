@@ -78,23 +78,31 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
   // próprio id de livro (não existe um livro compartilhado entre elas) - por
   // isso o casamento por título+autor normalizado, igual o cálculo de
   // "X de Y concluíram" já feito em ClubePage.
+  //
+  // O roster vem de club_members (aprovadas, agora) e não de
+  // club_schedule_participants - essa tabela só é preenchida uma vez, na
+  // criação do cronograma, e não acompanha quem entra ou sai do clube
+  // depois. Usar club_members ao vivo evita esse descompasso dos dois lados
+  // (integrante nova que não aparece, integrante removida que continuava
+  // aparecendo).
   const fetchScheduleProgress = useCallback(async (list: Schedule[]) => {
     const now = new Date();
     const brtNow = new Date(now.getTime() - 3 * 60 * 60 * 1000);
     const todayBrt = brtNow.toISOString().slice(0, 10);
     const todayStartIso = `${todayBrt}T03:00:00.000Z`;
 
+    const { data: approvedMembers } = await supabase
+      .from('club_members')
+      .select('user_id')
+      .eq('club_id', clubId)
+      .eq('status', 'approved');
+    const participantIds = (approvedMembers || []).map((m) => m.user_id);
+
     const entries = await Promise.all(
       list
         .filter((s) => isStructuredGoal(s.reading_goal) && !isPast(new Date(s.end_date)))
         .map(async (schedule): Promise<[string, ScheduleProgress] | null> => {
           const goal = schedule.reading_goal as StructuredGoal;
-
-          const { data: participants } = await supabase
-            .from('club_schedule_participants')
-            .select('user_id')
-            .eq('club_schedule_id', schedule.id);
-          const participantIds = (participants || []).map((p) => p.user_id);
           if (participantIds.length === 0) return null;
 
           const { data: profiles } = await supabase
@@ -161,7 +169,7 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
     );
 
     setScheduleProgress(Object.fromEntries(entries.filter((e): e is [string, ScheduleProgress] => e !== null)));
-  }, []);
+  }, [clubId]);
 
   const fetchSchedules = useCallback(async () => {
     setLoading(true);
