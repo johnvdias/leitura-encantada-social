@@ -76,11 +76,15 @@ export function UpdateProgressDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      // Determine new status based on progress
+      // Determine new status based on the page, não na porcentagem: quando o
+      // livro não tem total de páginas cadastrado (safeTotalPages === 0),
+      // newProgress fica travado em 0% mesmo com páginas lidas de verdade -
+      // usar newProgress aqui jogava o livro de volta pra "quero ler" toda
+      // vez que essas usuárias atualizavam o progresso.
       let newStatus = "reading";
-      if (newProgress >= 100) {
+      if (safeTotalPages > 0 && newPage >= safeTotalPages) {
         newStatus = "completed";
-      } else if (newProgress === 0) {
+      } else if (newPage === 0) {
         newStatus = "want_to_read";
       }
 
