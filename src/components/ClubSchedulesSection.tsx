@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarClock, Trash2, Flame, Snowflake, Target, CheckCircle2, Circle } from 'lucide-react';
-import { formatDistanceToNow, isPast, format } from 'date-fns';
+import { CalendarClock, Trash2, Flame, Snowflake, Target, CheckCircle2, Circle, TrendingUp, TrendingDown } from 'lucide-react';
+import { formatDistanceToNow, isPast, format, differenceInCalendarDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface StructuredGoal {
   unit: 'pages' | 'chapters';
@@ -31,6 +32,7 @@ interface Schedule {
   id: string;
   name: string;
   reading_goal: string | StructuredGoal;
+  start_date: string;
   end_date: string;
   current_streak: number;
   freezes_available: number;
@@ -47,6 +49,11 @@ interface MemberProgress {
   hasStarted: boolean;
   overallProgress: number;
   metToday: boolean;
+  // Diferença entre quantas páginas já leu no total e quantas o ritmo da
+  // meta diária esperava até hoje (dias decorridos x meta/dia). Só calculado
+  // pra cronogramas em páginas - não tem como saber "capítulos lidos" sem
+  // um registro próprio disso.
+  paceDiff: number | null;
 }
 
 interface ScheduleProgress {
@@ -113,21 +120,32 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
 
           const { data: memberBooks } = await supabase
             .from('books')
-            .select('id, user_id, title, author, reading_progress')
+            .select('id, user_id, title, author, reading_progress, current_page')
             .in('user_id', participantIds);
 
           const normalize = (s: string) => s.trim().toLowerCase();
           const targetTitle = normalize(schedule.books.title);
           const targetAuthor = normalize(schedule.books.author || '');
           const bookIdToUser = new Map<string, string>();
-          const bookByUser = new Map<string, { reading_progress: number }>();
+          const bookByUser = new Map<string, { reading_progress: number; current_page: number }>();
           for (const b of memberBooks || []) {
             if (normalize(b.title) === targetTitle && normalize(b.author || '') === targetAuthor) {
               bookIdToUser.set(b.id, b.user_id);
-              bookByUser.set(b.user_id, { reading_progress: b.reading_progress || 0 });
+              bookByUser.set(b.user_id, { reading_progress: b.reading_progress || 0, current_page: b.current_page || 0 });
             }
           }
           const bookIds = Array.from(bookIdToUser.keys());
+
+          // Quantas páginas o ritmo da meta diária já esperava até hoje -
+          // compara com o que cada integrante já leu de verdade pra mostrar
+          // quem está à frente ou atrás, não só se bateu o dia de hoje
+          // isoladamente (quem lê mais que a meta num dia fica à frente do
+          // ritmo nos dias seguintes, mesmo sem ler nada).
+          const daysElapsed = Math.max(1, Math.min(
+            differenceInCalendarDays(new Date(`${todayBrt}T12:00:00.000Z`), new Date(schedule.start_date)) + 1,
+            differenceInCalendarDays(new Date(schedule.end_date), new Date(schedule.start_date)) + 1
+          ));
+          const expectedPages = goal.unit === 'pages' ? Math.min(daysElapsed * goal.daily_target, goal.total) : null;
 
           const pagesByUser = new Map<string, number>();
           const activeToday = new Set<string>();
@@ -160,6 +178,7 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
               hasStarted: !!book,
               overallProgress: book?.reading_progress || 0,
               metToday,
+              paceDiff: book && expectedPages !== null ? book.current_page - expectedPages : null,
             };
           });
 
@@ -177,7 +196,7 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
       const { data, error } = await supabase
         .from('club_reading_schedules')
         .select(`
-          id, name, reading_goal, end_date, current_streak, freezes_available,
+          id, name, reading_goal, start_date, end_date, current_streak, freezes_available,
           books (title, author)
         `)
         .eq('club_id', clubId)
@@ -254,9 +273,12 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
                       <Progress value={(progress.met / progress.total) * 100} className="h-1.5" />
                     </div>
 
-                    <div className="space-y-2 pt-1 border-t">
+                    <div className="space-y-3 pt-1 border-t">
                       {progress.members.map((member) => (
-                        <div key={member.userId} className="flex items-center gap-2 pt-2">
+                        <div key={member.userId} className={cn(
+                          "flex items-center gap-2 pt-2 rounded-md -mx-1 px-1",
+                          member.metToday && "bg-green-500/5"
+                        )}>
                           <Avatar className="h-7 w-7 shrink-0">
                             <AvatarImage src={member.avatarUrl || undefined} />
                             <AvatarFallback className="text-xs">{member.displayName.charAt(0)}</AvatarFallback>
@@ -265,12 +287,36 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
                             <div className="flex items-center justify-between gap-2 text-xs">
                               <span className="truncate font-medium">{member.displayName}</span>
                               {member.metToday ? (
-                                <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                                <Badge className="h-5 gap-1 bg-green-500/15 text-green-600 dark:text-green-400 hover:bg-green-500/15 shrink-0 text-[10px] px-1.5">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Meta batida hoje
+                                </Badge>
                               ) : (
-                                <Circle className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                                <span className="flex items-center gap-1 text-muted-foreground shrink-0">
+                                  <Circle className="h-3 w-3" />
+                                  {progress.mode === 'target' ? 'Ainda não bateu hoje' : 'Ainda não leu hoje'}
+                                </span>
                               )}
                             </div>
                             <Progress value={member.overallProgress} className="h-1" />
+                            {member.paceDiff !== null && member.hasStarted && (
+                              <p className={cn(
+                                "flex items-center gap-1 text-[11px]",
+                                member.paceDiff >= 0 ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"
+                              )}>
+                                {member.paceDiff >= 0 ? (
+                                  <>
+                                    <TrendingUp className="h-3 w-3" />
+                                    {member.paceDiff === 0 ? 'No ritmo da meta' : `${member.paceDiff} páginas à frente do ritmo`}
+                                  </>
+                                ) : (
+                                  <>
+                                    <TrendingDown className="h-3 w-3" />
+                                    {Math.abs(member.paceDiff)} páginas atrás do ritmo
+                                  </>
+                                )}
+                              </p>
+                            )}
                           </div>
                           <span className="text-xs text-muted-foreground w-9 text-right shrink-0">
                             {member.hasStarted ? `${member.overallProgress}%` : '-'}
