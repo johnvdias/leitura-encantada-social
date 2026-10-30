@@ -12,6 +12,7 @@ import { ReadingStats } from "@/components/ReadingStats";
 import { CompletedDatePicker } from "@/components/CompletedDatePicker";
 import { format } from "date-fns";
 import { checkAndNotifyDailyGoalReached } from "@/lib/notifyFriendsGoalReached";
+import { checkClubScheduleGoalHit } from "@/lib/checkClubScheduleGoal";
 
 interface UpdateProgressDialogProps {
   bookId: string;
@@ -125,6 +126,16 @@ export function UpdateProgressDialog({
         checkAndNotifyDailyGoalReached(user.id, pagesRead).catch((err) =>
           console.error('Error checking/notifying daily goal reached:', err)
         );
+
+        checkClubScheduleGoalHit(user.id, bookId, pagesRead)
+          .then((hit) => {
+            if (!hit) return;
+            toast({
+              title: '🎉 Meta do cronograma batida!',
+              description: `Você já leu ${hit.dailyTarget}+ páginas hoje no cronograma do clube "${hit.clubName}".`,
+            });
+          })
+          .catch((err) => console.error('Error checking club schedule goal:', err));
       }
 
       // Show appropriate success message
