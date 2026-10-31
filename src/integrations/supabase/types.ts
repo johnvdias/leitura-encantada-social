@@ -1374,6 +1374,13 @@ export type Database = {
         Args: { p_club_id: string; p_end_date?: string; p_start_date?: string }
         Returns: Json
       }
+      get_club_schedule_progress: {
+        Args: { p_schedule_id: string }
+        Returns: {
+          pages_today: number
+          user_id: string
+        }[]
+      }
       get_cron_secret: { Args: { secret_name: string }; Returns: string }
       get_streak_partnership_progress: {
         Args: { p_partnership_id: string }
@@ -1392,6 +1399,10 @@ export type Database = {
         Returns: boolean
       }
       is_club_creator: {
+        Args: { p_club_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_club_member: {
         Args: { p_club_id: string; p_user_id: string }
         Returns: boolean
       }

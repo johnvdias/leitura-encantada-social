@@ -147,20 +147,25 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
           ));
           const expectedPages = goal.unit === 'pages' ? Math.min(daysElapsed * goal.daily_target, goal.total) : null;
 
+          // reading_history só é visível pra quem é dona da linha (RLS
+          // "Users can view their own reading history") - uma consulta
+          // direta daqui só enxergaria a leitura de hoje da própria
+          // visitante, fazendo o "bateu a meta" das outras integrantes
+          // nunca aparecer pra ninguém além delas mesmas. A RPC
+          // get_club_schedule_progress roda com privilégio elevado e
+          // devolve só o agregado (soma de páginas, sem as anotações
+          // pessoais de cada sessão), depois de confirmar que quem chamou é
+          // integrante aprovada ou criadora do clube do cronograma.
           const pagesByUser = new Map<string, number>();
           const activeToday = new Set<string>();
           if (bookIds.length > 0) {
-            const { data: historyToday } = await supabase
-              .from('reading_history')
-              .select('book_id, pages_read, reading_session_minutes')
-              .in('book_id', bookIds)
-              .gte('created_at', todayStartIso);
+            const { data: progressToday } = await supabase.rpc('get_club_schedule_progress', {
+              p_schedule_id: schedule.id,
+            });
 
-            for (const row of historyToday || []) {
-              const userId = bookIdToUser.get(row.book_id);
-              if (!userId) continue;
-              pagesByUser.set(userId, (pagesByUser.get(userId) || 0) + (row.pages_read || 0));
-              if ((row.pages_read || 0) > 0 || (row.reading_session_minutes || 0) > 0) activeToday.add(userId);
+            for (const row of progressToday || []) {
+              pagesByUser.set(row.user_id, row.pages_today || 0);
+              if ((row.pages_today || 0) > 0) activeToday.add(row.user_id);
             }
           }
 
