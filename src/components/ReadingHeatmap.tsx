@@ -5,8 +5,19 @@ import { supabase } from "@/integrations/supabase/client";
 
 const WEEKS = 20;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const BRT_OFFSET_MS = 3 * 60 * 60 * 1000;
 
-const dateKey = (d: Date) => d.toISOString().slice(0, 10);
+// Mesma convenção de fuso usada no resto do app (lembretes diários, metas de
+// clube): o público é majoritariamente brasileiro, então "hoje" é sempre o
+// dia civil em BRT (fixo em UTC-3), não o fuso do aparelho de quem acessa.
+// Uma leitura registrada às 23h de BRT já é madrugada do dia seguinte em
+// UTC - sem esse ajuste, ela cai no quadradinho do dia errado no calendário.
+const brtDateKey = (d: Date) => new Date(d.getTime() - BRT_OFFSET_MS).toISOString().slice(0, 10);
+
+const formatKeyAsBr = (key: string) => {
+  const [year, month, day] = key.split('-');
+  return `${day}/${month}/${year}`;
+};
 
 const levelForCount = (count: number) => {
   if (count <= 0) return 0;
@@ -45,7 +56,7 @@ export function ReadingHeatmap() {
 
       const counts = new Map<string, number>();
       (data || []).forEach((row) => {
-        const key = dateKey(new Date(row.created_at));
+        const key = brtDateKey(new Date(row.created_at));
         counts.set(key, (counts.get(key) || 0) + 1);
       });
       setCountsByDay(counts);
@@ -73,13 +84,15 @@ export function ReadingHeatmap() {
     );
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // "Hoje" como meia-noite UTC do dia civil em BRT - só serve de âncora pra
+  // gerar a sequência de dias em passos de 24h; a data civil que cada célula
+  // representa é a mesma usada pra chavear os dados (brtDateKey).
+  const todayAnchor = new Date(`${brtDateKey(new Date())}T00:00:00.000Z`);
   // Começa no domingo da semana mais antiga exibida, pra alinhar as colunas por semana.
-  const start = new Date(today.getTime() - (WEEKS * 7 - 1) * DAY_MS);
-  start.setDate(start.getDate() - start.getDay());
+  const start = new Date(todayAnchor.getTime() - (WEEKS * 7 - 1) * DAY_MS);
+  start.setUTCDate(start.getUTCDate() - start.getUTCDay());
 
-  const totalDays = Math.round((today.getTime() - start.getTime()) / DAY_MS) + 1;
+  const totalDays = Math.round((todayAnchor.getTime() - start.getTime()) / DAY_MS) + 1;
   const days: Date[] = Array.from({ length: totalDays }, (_, i) => new Date(start.getTime() + i * DAY_MS));
 
   const activeDays = Array.from(countsByDay.values()).filter((c) => c > 0).length;
@@ -101,13 +114,13 @@ export function ReadingHeatmap() {
             style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))' }}
           >
             {days.map((day) => {
-              const key = dateKey(day);
+              const key = day.toISOString().slice(0, 10);
               const count = countsByDay.get(key) || 0;
-              const isFuture = day.getTime() > today.getTime();
+              const isFuture = day.getTime() > todayAnchor.getTime();
               return (
                 <div
                   key={key}
-                  title={`${day.toLocaleDateString('pt-BR')}: ${count} atualização${count === 1 ? '' : 'ões'}`}
+                  title={`${formatKeyAsBr(key)}: ${count} atualização${count === 1 ? '' : 'ões'}`}
                   className={`h-3 w-3 rounded-sm ${isFuture ? 'bg-transparent' : LEVEL_CLASSES[levelForCount(count)]}`}
                 />
               );
