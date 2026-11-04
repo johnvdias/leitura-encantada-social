@@ -10,6 +10,9 @@ const MAX_FREEZES = 3;
 
 type NotificationRow = { user_id: string; type: string; title: string; content: string; related_id: string | null };
 type PushTarget = { userId: string; title: string; body: string };
+type StructuredGoal = { unit?: string; total?: number; daily_target?: number };
+
+const normalize = (s: string | null | undefined) => (s || '').trim().toLowerCase();
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -65,16 +68,18 @@ Deno.serve(async (req) => {
     let broken = 0;
 
     // Avalia cronogramas de amigas (group_reading_schedules) ou de clube
-    // (club_reading_schedules) - fogo quando TODAS as participantes leem o
-    // livro do cronograma hoje; um gelinho cobre cada uma que não leu.
+    // (club_reading_schedules) - fogo quando TODAS as participantes batem a
+    // meta diária do cronograma hoje (ou leem algo, pros cronogramas antigos
+    // sem meta estruturada / em capítulos); um gelinho cobre cada uma que
+    // não bateu.
     const processSchedules = async (kind: 'friend' | 'club') => {
       const table = kind === 'friend' ? 'group_reading_schedules' : 'club_reading_schedules';
       const participantsTable = kind === 'friend' ? 'schedule_participants' : 'club_schedule_participants';
       const scheduleIdCol = kind === 'friend' ? 'schedule_id' : 'club_schedule_id';
 
       const scheduleColumns = kind === 'club'
-        ? 'id, name, book_id, club_id, start_date, end_date, current_streak, longest_streak, freezes_available, last_evaluated_date'
-        : 'id, name, book_id, start_date, end_date, current_streak, longest_streak, freezes_available, last_evaluated_date';
+        ? 'id, name, book_id, club_id, reading_goal, start_date, end_date, current_streak, longest_streak, freezes_available, last_evaluated_date'
+        : 'id, name, book_id, reading_goal, start_date, end_date, current_streak, longest_streak, freezes_available, last_evaluated_date';
 
       const { data: schedules, error: schedulesError } = await supabaseAdmin
         .from(table)
@@ -120,27 +125,71 @@ Deno.serve(async (req) => {
         return (prefs as Record<string, unknown>).duo_streak !== false;
       };
 
-      const bookIds = Array.from(new Set(schedules.map((s) => s.book_id).filter(Boolean)));
-      const { data: historyToday, error: historyError } = await supabaseAdmin
-        .from('reading_history')
-        .select('user_id, book_id, pages_read, reading_session_minutes')
-        .in('user_id', allUserIds)
-        .in('book_id', bookIds)
-        .gte('created_at', todayStartIso);
-      if (historyError) throw historyError;
+      // O livro de cada cronograma é só um book_id (de quem criou ou de
+      // quem ganhou o sorteio) - cada participante tem seu PRÓPRIO livro na
+      // estante pro mesmo título, nunca esse mesmo id. Casa por
+      // título+autor normalizados, igual já é feito na exibição do
+      // cronograma e no toast de meta batida, em vez de comparar
+      // reading_history.book_id direto com schedule.book_id (isso fazia a
+      // sequência só considerar a leitura de quem criou o cronograma,
+      // ignorando todo mundo mais).
+      const scheduleBookIds = Array.from(new Set(schedules.map((s) => s.book_id).filter(Boolean)));
+      const { data: scheduleBooksData } = await supabaseAdmin
+        .from('books')
+        .select('id, title, author')
+        .in('id', scheduleBookIds);
+      const scheduleBookById = new Map((scheduleBooksData || []).map((b) => [b.id, b]));
 
-      const readTodaySet = new Set<string>();
-      for (const row of historyToday || []) {
-        if ((row.pages_read || 0) > 0 || (row.reading_session_minutes || 0) > 0) {
-          readTodaySet.add(`${row.user_id}|${row.book_id}`);
-        }
-      }
+      const { data: allMemberBooks } = await supabaseAdmin
+        .from('books')
+        .select('id, user_id, title, author')
+        .in('user_id', allUserIds);
 
       for (const schedule of schedules) {
         const participantIds = participantsBySchedule.get(schedule.id) || [];
         if (participantIds.length === 0) continue;
 
-        const missing = participantIds.filter((uid) => !readTodaySet.has(`${uid}|${schedule.book_id}`));
+        const scheduleBook = scheduleBookById.get(schedule.book_id);
+        const targetTitle = normalize(scheduleBook?.title);
+        const targetAuthor = normalize(scheduleBook?.author);
+
+        const bookIdToUser = new Map<string, string>();
+        for (const b of allMemberBooks || []) {
+          if (normalize(b.title) === targetTitle && normalize(b.author) === targetAuthor) {
+            bookIdToUser.set(b.id, b.user_id);
+          }
+        }
+        const matchedBookIds = Array.from(bookIdToUser.keys());
+
+        const pagesByUser = new Map<string, number>();
+        const activeToday = new Set<string>();
+        if (matchedBookIds.length > 0) {
+          const { data: historyToday } = await supabaseAdmin
+            .from('reading_history')
+            .select('book_id, pages_read, reading_session_minutes')
+            .in('book_id', matchedBookIds)
+            .gte('created_at', todayStartIso);
+
+          for (const row of historyToday || []) {
+            const uid = bookIdToUser.get(row.book_id);
+            if (!uid) continue;
+            pagesByUser.set(uid, (pagesByUser.get(uid) || 0) + (row.pages_read || 0));
+            if ((row.pages_read || 0) > 0 || (row.reading_session_minutes || 0) > 0) activeToday.add(uid);
+          }
+        }
+
+        // Cronograma com meta estruturada em páginas (ver reading_goal:
+        // {unit, total, daily_target}) exige bater a meta de verdade pra
+        // contar o dia. Cronogramas antigos (texto livre) ou em capítulos
+        // (sem dado pra medir exato, já que reading_history só registra
+        // páginas) continuam só exigindo ter lido alguma coisa.
+        const goal = schedule.reading_goal as StructuredGoal | null;
+        const requiresTarget = !!goal && goal.unit === 'pages' && !!goal.daily_target;
+
+        const metToday = (uid: string) =>
+          requiresTarget ? (pagesByUser.get(uid) || 0) >= (goal!.daily_target as number) : activeToday.has(uid);
+
+        const missing = participantIds.filter((uid) => !metToday(uid));
         const update: Record<string, unknown> = { last_evaluated_date: todayBrt };
 
         let type: string | null = null;
@@ -161,7 +210,9 @@ Deno.serve(async (req) => {
 
           type = kind === 'friend' ? 'friend_schedule_extended' : 'club_schedule_extended';
           title = `🔥 ${schedule.name}: dia ${newStreak}!`;
-          content = `Todo mundo leu hoje! A sequência do cronograma "${schedule.name}" continua.`;
+          content = requiresTarget
+            ? `Todas bateram a meta de hoje! A sequência do cronograma "${schedule.name}" continua.`
+            : `Todo mundo leu hoje! A sequência do cronograma "${schedule.name}" continua.`;
           sendPush = true;
         } else if (schedule.freezes_available >= missing.length) {
           const newStreak = schedule.current_streak + 1;
@@ -176,7 +227,9 @@ Deno.serve(async (req) => {
           const missingNames = missing.map((id) => profileById.get(id)?.display_name || 'alguém').join(', ');
           type = kind === 'friend' ? 'friend_schedule_frozen' : 'club_schedule_frozen';
           title = `❄️ Gelinho salvou "${schedule.name}"!`;
-          content = `${missingNames} não leu hoje, mas um gelinho cobriu. Sequência de ${newStreak} dias continua! Restam ${freezes} gelinho(s).`;
+          content = requiresTarget
+            ? `${missingNames} não bateu a meta hoje, mas um gelinho cobriu. Sequência de ${newStreak} dias continua! Restam ${freezes} gelinho(s).`
+            : `${missingNames} não leu hoje, mas um gelinho cobriu. Sequência de ${newStreak} dias continua! Restam ${freezes} gelinho(s).`;
           sendPush = true;
         } else if (schedule.current_streak > 0) {
           const brokenStreak = schedule.current_streak;

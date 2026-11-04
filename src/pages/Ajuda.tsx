@@ -161,7 +161,7 @@ const SECTIONS: HelpSection[] = [
       {
         question: "Os Cronogramas de leitura também têm fogo e gelinho?",
         answer:
-          'Sim! Tanto o cronograma entre amigas quanto o cronograma de um clube ganham fogo 🔥 quando TODAS as participantes leem o livro do cronograma no dia, e gelinhos ❄️ cobrem quem não leu (um gelinho por pessoa que faltou). Os badges de fogo e gelinho aparecem direto no card do cronograma.',
+          'Sim! Tanto o cronograma entre amigas quanto o cronograma de um clube ganham fogo 🔥 quando TODAS as participantes batem a meta diária do cronograma (ex: 20 páginas/dia) - não basta só ler alguma coisa. Gelinhos ❄️ cobrem quem não bateu (um gelinho por pessoa que faltou). Cronogramas em capítulos ou criados no formato antigo (sem meta diária calculada) continuam exigindo só ter lido algo no dia. Os badges de fogo e gelinho aparecem direto no card do cronograma.',
       },
       {
         question: "Como desativo as notificações das ofensivas?",
