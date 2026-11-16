@@ -107,7 +107,7 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
 
     const entries = await Promise.all(
       list
-        .filter((s) => isStructuredGoal(s.reading_goal) && !isPast(new Date(s.end_date)))
+        .filter((s) => isStructuredGoal(s.reading_goal) && !isPast(new Date(s.end_date)) && new Date(s.start_date) <= now)
         .map(async (schedule): Promise<[string, ScheduleProgress] | null> => {
           const goal = schedule.reading_goal as StructuredGoal;
           if (participantIds.length === 0) return null;
@@ -242,6 +242,7 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
 
   const renderScheduleCard = (schedule: Schedule) => {
     const isOverdue = isPast(new Date(schedule.end_date));
+    const isUpcoming = new Date(schedule.start_date) > new Date();
     const progress = scheduleProgress[schedule.id];
 
     return (
@@ -265,7 +266,14 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
                   <p className="text-sm text-muted-foreground">{schedule.reading_goal}</p>
                 )}
 
-                {progress && progress.total > 0 && (
+                {isUpcoming && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                    Começa {formatDistanceToNow(new Date(schedule.start_date), { addSuffix: true, locale: ptBR })}
+                  </p>
+                )}
+
+                {!isUpcoming && progress && progress.total > 0 && (
                   <>
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
