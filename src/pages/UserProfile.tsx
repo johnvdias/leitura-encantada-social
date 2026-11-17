@@ -15,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 import { NudgeButton } from "@/components/NudgeButton";
 import { useFriendships } from "@/hooks/useFriendships";
 import { useStreakPartnerships } from "@/hooks/useStreakPartnerships";
+import { LiteraryCompatibilityCard } from "@/components/LiteraryCompatibilityCard";
 
 // Interfaces para os dados
 interface Profile {
@@ -246,6 +247,7 @@ const UserProfile = () => {
 
   const readingBooks = books.filter(b => b.reading_status === 'reading');
   const completedBooks = books.filter(b => b.reading_status === 'completed');
+  const isFriend = friends.some(f => f.friend.user_id === userId);
 
   const renderBookCard = (book: Book) => {
     const alreadyOwned = ownBookKeys.has(bookKey(book.title, book.author));
@@ -311,7 +313,7 @@ const UserProfile = () => {
               </div>
             </div>
             <div className="flex items-center flex-wrap gap-2 self-start sm:self-end">
-              {!isOwnProfile && friends.some(f => f.friend.user_id === userId) && (
+              {!isOwnProfile && isFriend && (
                 <>
                   <Link to={`/mensagens/${userId}`}>
                     <Button variant="outline"><MessageCircle className="h-4 w-4 mr-2" />Mensagem</Button>
@@ -325,7 +327,17 @@ const UserProfile = () => {
           </div>
         </CardHeader>
       </Card>
-      
+
+      {isFriend && (
+        <div className="mb-8">
+          <LiteraryCompatibilityCard
+            otherUserId={userId!}
+            otherDisplayName={profile.display_name}
+            otherAvatarUrl={profile.avatar_url}
+          />
+        </div>
+      )}
+
       <Tabs defaultValue="lendo">
         <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-3 gap-1">
           <TabsTrigger value="lendo" className="shrink-0">Lendo ({readingBooks.length})</TabsTrigger>
