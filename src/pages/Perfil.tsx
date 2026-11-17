@@ -2,7 +2,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BookOpen, Trophy, Calendar } from "lucide-react";
@@ -13,6 +12,7 @@ import { FriendsSection } from "@/components/FriendsSection";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { AdvancedStats } from "@/components/AdvancedStats";
 import { AchievementBadges } from "@/components/AchievementBadges";
+import { AchievementsShowcase } from "@/components/AchievementsShowcase";
 import { ReadingHeatmap } from "@/components/ReadingHeatmap";
 import { QuotesGallery } from "@/components/QuotesGallery";
 import { RetrospectiveDialog } from "@/components/RetrospectiveDialog";
@@ -172,39 +172,7 @@ const Perfil = () => {
         </TabsContent>
 
         <TabsContent value="conquistas" className="space-y-6">
-          {achievements.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma conquista ainda</h3>
-                <p className="text-muted-foreground">
-                  Continue lendo para desbloquear suas primeiras conquistas!
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {achievements.map((achievement) => (
-                <Card key={achievement.id} className="card-enchanted">
-                  <CardContent className="pt-6">
-                    <div className="text-center space-y-2">
-                      <div className="text-4xl">🏆</div>
-                      <h3 className="font-semibold">{achievement.achievement_name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {achievement.description}
-                      </p>
-                      <Badge variant="secondary" className="text-xs">
-                        {formatDistanceToNow(new Date(achievement.earned_at), {
-                          addSuffix: true,
-                          locale: ptBR
-                        })}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <AchievementsShowcase achievements={achievements} />
         </TabsContent>
 
         <TabsContent value="amigos">

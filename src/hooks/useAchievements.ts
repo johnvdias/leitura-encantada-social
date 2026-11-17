@@ -5,6 +5,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { shouldNotify } from "@/lib/notificationPreferences";
+import { ACHIEVEMENT_BY_TYPE } from "@/lib/achievementCatalog";
+
+const buildUnlock = (userId: string, type: string): TablesInsert<'achievements'> => {
+  const def = ACHIEVEMENT_BY_TYPE[type];
+  return { user_id: userId, achievement_type: type, achievement_name: def.name, description: def.description, emoji: def.emoji };
+};
 
 type Achievement = Tables<'achievements'>;
 
@@ -61,46 +67,22 @@ export const useAchievements = () => {
 
       // First book achievement
       if (completedCount >= 1 && !existingTypes.has('first_book')) {
-        achievementsToUnlock.push({
-          user_id: user.id,
-          achievement_type: 'first_book',
-          achievement_name: 'Primeiro Livro',
-          description: 'Parabéns! Você leu seu primeiro livro',
-          emoji: '📚'
-        });
+        achievementsToUnlock.push(buildUnlock(user.id, 'first_book'));
       }
 
       // 5 books achievement
       if (completedCount >= 5 && !existingTypes.has('five_books')) {
-        achievementsToUnlock.push({
-          user_id: user.id,
-          achievement_type: 'five_books',
-          achievement_name: 'Leitor Dedicado',
-          description: 'Incrível! Você já leu 5 livros',
-          emoji: '📖'
-        });
+        achievementsToUnlock.push(buildUnlock(user.id, 'five_books'));
       }
 
       // 10 books achievement
       if (completedCount >= 10 && !existingTypes.has('ten_books')) {
-        achievementsToUnlock.push({
-          user_id: user.id,
-          achievement_type: 'ten_books',
-          achievement_name: 'Bibliófilo',
-          description: 'Fantástico! Você já leu 10 livros',
-          emoji: '📚✨'
-        });
+        achievementsToUnlock.push(buildUnlock(user.id, 'ten_books'));
       }
 
       // 25 books achievement
       if (completedCount >= 25 && !existingTypes.has('bookworm')) {
-        achievementsToUnlock.push({
-          user_id: user.id,
-          achievement_type: 'bookworm',
-          achievement_name: 'Rato de Biblioteca',
-          description: 'Impressionante! 25 livros lidos',
-          emoji: '🐛'
-        });
+        achievementsToUnlock.push(buildUnlock(user.id, 'bookworm'));
       }
 
       // Reading streak achievement
@@ -112,13 +94,7 @@ export const useAchievements = () => {
         .limit(7);
 
       if (streakData && streakData.length >= 7 && !existingTypes.has('reading_streak')) {
-        achievementsToUnlock.push({
-          user_id: user.id,
-          achievement_type: 'reading_streak',
-          achievement_name: 'Sequência de Fogo',
-          description: 'Leu por 7 dias consecutivos',
-          emoji: '🔥'
-        });
+        achievementsToUnlock.push(buildUnlock(user.id, 'reading_streak'));
       }
 
       // First club achievement
@@ -130,13 +106,7 @@ export const useAchievements = () => {
           .eq('status', 'approved');
 
         if ((clubCount || 0) >= 1) {
-          achievementsToUnlock.push({
-            user_id: user.id,
-            achievement_type: 'first_club',
-            achievement_name: 'Clube da Leitura',
-            description: 'Você entrou no seu primeiro clube',
-            emoji: '👯'
-          });
+          achievementsToUnlock.push(buildUnlock(user.id, 'first_club'));
         }
       }
 
@@ -149,13 +119,7 @@ export const useAchievements = () => {
           .eq('post_type', 'review');
 
         if ((reviewCount || 0) >= 1) {
-          achievementsToUnlock.push({
-            user_id: user.id,
-            achievement_type: 'first_review',
-            achievement_name: 'Crítica Literária',
-            description: 'Você escreveu sua primeira resenha',
-            emoji: '✍️'
-          });
+          achievementsToUnlock.push(buildUnlock(user.id, 'first_review'));
         }
       }
 
@@ -167,13 +131,7 @@ export const useAchievements = () => {
           .eq('user_id', user.id);
 
         if ((commentCount || 0) >= 10) {
-          achievementsToUnlock.push({
-            user_id: user.id,
-            achievement_type: 'ten_comments',
-            achievement_name: 'Voz Ativa',
-            description: 'Fez 10 comentários na comunidade',
-            emoji: '💬'
-          });
+          achievementsToUnlock.push(buildUnlock(user.id, 'ten_comments'));
         }
       }
 
@@ -188,13 +146,7 @@ export const useAchievements = () => {
 
         const distinctGenres = new Set((genreBooks || []).map(b => b.genre));
         if (distinctGenres.size >= 3) {
-          achievementsToUnlock.push({
-            user_id: user.id,
-            achievement_type: 'genre_explorer',
-            achievement_name: 'Exploradora de Gêneros',
-            description: 'Leu livros de 3 gêneros diferentes',
-            emoji: '🧭'
-          });
+          achievementsToUnlock.push(buildUnlock(user.id, 'genre_explorer'));
         }
       }
 
