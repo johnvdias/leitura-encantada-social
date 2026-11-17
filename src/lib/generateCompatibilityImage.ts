@@ -1,3 +1,7 @@
+import { roundRect, fitText, loadImage, getContrastTextColor, hexToRgba } from "./canvasImageUtils";
+
+export type CompatibilityBackgroundMode = 'gradient' | 'solid' | 'transparent';
+
 export interface CompatibilityImageData {
   percentage: number;
   commonBooks: number;
@@ -5,28 +9,15 @@ export interface CompatibilityImageData {
   myAvatarUrl: string | null;
   otherName: string;
   otherAvatarUrl: string | null;
+  background: {
+    mode: CompatibilityBackgroundMode;
+    color?: string;
+  };
+  textColor?: string;
 }
 
 const WIDTH = 1080;
 const HEIGHT = 1080;
-
-const loadImage = (url: string): Promise<HTMLImageElement | null> =>
-  new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = url;
-  });
-
-const fitText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number) => {
-  if (ctx.measureText(text).width <= maxWidth) return text;
-  let truncated = text;
-  while (truncated.length > 1 && ctx.measureText(`${truncated}…`).width > maxWidth) {
-    truncated = truncated.slice(0, -1);
-  }
-  return `${truncated}…`;
-};
 
 const drawGradientBackground = (ctx: CanvasRenderingContext2D) => {
   const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
@@ -53,7 +44,8 @@ const drawAvatar = async (
   name: string,
   centerX: number,
   centerY: number,
-  radius: number
+  radius: number,
+  ringColor: string
 ) => {
   const img = url ? await loadImage(url) : null;
 
@@ -82,7 +74,7 @@ const drawAvatar = async (
   }
   ctx.restore();
 
-  ctx.strokeStyle = '#ffffff';
+  ctx.strokeStyle = ringColor;
   ctx.lineWidth = 8;
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -98,64 +90,79 @@ export const generateCompatibilityImageBlob = async (
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
-  drawGradientBackground(ctx);
+  const { mode, color } = data.background;
 
-  const textColor = '#2a1a22';
-  const mutedTextColor = 'rgba(42, 26, 34, 0.7)';
+  let textColor = 'hsl(340, 15%, 15%)';
+  let mutedTextColor = 'hsl(340, 15%, 35%)';
+  let ringColor = '#ffffff';
+  let pillBg = 'rgba(255,255,255,0.85)';
+
+  if (mode === 'solid' && color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    textColor = getContrastTextColor(color);
+    mutedTextColor = textColor === '#ffffff' ? 'rgba(255,255,255,0.75)' : 'rgba(17,17,17,0.7)';
+    ringColor = textColor === '#ffffff' ? 'rgba(255,255,255,0.9)' : 'rgba(17,17,17,0.15)';
+    pillBg = textColor === '#ffffff' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)';
+  } else if (mode === 'gradient') {
+    drawGradientBackground(ctx);
+  }
+  // mode === 'transparent': canvas fica com alpha 0 onde nada for desenhado.
+
+  if (data.textColor) {
+    textColor = data.textColor;
+    mutedTextColor = hexToRgba(data.textColor, 0.75);
+    ringColor = hexToRgba(data.textColor, 0.6);
+  }
 
   ctx.textAlign = 'center';
 
-  let cursorY = 150;
-  ctx.font = '600 36px Georgia, serif';
+  // Ritmo vertical pensado pra caber tudo em 1080px sem sobrepor: o número
+  // gigante de porcentagem usa um corpo de fonte grande o bastante pra ter
+  // presença, mas o espaço reservado pra ele (ascent + descent reais do
+  // Georgia nesse tamanho) é levado em conta explicitamente - foi o que
+  // causava a sobreposição com os nomes na versão anterior.
+  let cursorY = 140;
+  ctx.font = '600 38px Georgia, serif';
   ctx.fillStyle = mutedTextColor;
   ctx.fillText('✨ Conexão Literária ✨', WIDTH / 2, cursorY);
 
-  cursorY += 170;
-  const avatarRadius = 110;
-  const avatarGap = 260;
+  cursorY += 190;
+  const avatarRadius = 100;
+  const avatarGap = 250;
   const leftX = WIDTH / 2 - avatarGap / 2;
   const rightX = WIDTH / 2 + avatarGap / 2;
 
   await Promise.all([
-    drawAvatar(ctx, data.myAvatarUrl, data.myName, leftX, cursorY, avatarRadius),
-    drawAvatar(ctx, data.otherAvatarUrl, data.otherName, rightX, cursorY, avatarRadius),
+    drawAvatar(ctx, data.myAvatarUrl, data.myName, leftX, cursorY, avatarRadius, ringColor),
+    drawAvatar(ctx, data.otherAvatarUrl, data.otherName, rightX, cursorY, avatarRadius, ringColor),
   ]);
 
-  // "+" entre os dois avatares.
-  ctx.font = '600 48px Inter, sans-serif';
+  ctx.font = '600 44px Inter, sans-serif';
   ctx.fillStyle = textColor;
   ctx.fillText('+', WIDTH / 2, cursorY + 16);
 
-  cursorY += avatarRadius + 60;
+  cursorY += avatarRadius + 55;
   ctx.font = '600 32px Inter, sans-serif';
   ctx.fillStyle = textColor;
-  ctx.fillText(fitText(ctx, data.myName, 280), leftX, cursorY);
-  ctx.fillText(fitText(ctx, data.otherName, 280), rightX, cursorY);
+  ctx.fillText(fitText(ctx, data.myName, 260), leftX, cursorY);
+  ctx.fillText(fitText(ctx, data.otherName, 260), rightX, cursorY);
 
-  cursorY += 140;
-  ctx.font = '700 260px Georgia, serif';
+  cursorY += 230;
+  ctx.font = '700 200px Georgia, serif';
   ctx.fillStyle = textColor;
   ctx.fillText(`${data.percentage}%`, WIDTH / 2, cursorY);
 
-  cursorY += 60;
-  ctx.font = '600 38px Inter, sans-serif';
+  cursorY += 100;
+  ctx.font = '600 36px Inter, sans-serif';
   ctx.fillStyle = mutedTextColor;
   ctx.fillText('DE AFINIDADE LITERÁRIA', WIDTH / 2, cursorY);
 
   cursorY += 110;
   const pillWidth = 560;
   const pillHeight = 90;
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.beginPath();
-  const r = pillHeight / 2;
-  const x = WIDTH / 2 - pillWidth / 2;
-  const y = cursorY;
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + pillWidth, y, x + pillWidth, y + pillHeight, r);
-  ctx.arcTo(x + pillWidth, y + pillHeight, x, y + pillHeight, r);
-  ctx.arcTo(x, y + pillHeight, x, y, r);
-  ctx.arcTo(x, y, x + pillWidth, y, r);
-  ctx.closePath();
+  ctx.fillStyle = pillBg;
+  roundRect(ctx, WIDTH / 2 - pillWidth / 2, cursorY, pillWidth, pillHeight, pillHeight / 2);
   ctx.fill();
 
   ctx.font = '600 34px Inter, sans-serif';
@@ -163,7 +170,7 @@ export const generateCompatibilityImageBlob = async (
   ctx.fillText(
     `📚 ${data.commonBooks} livro${data.commonBooks === 1 ? '' : 's'} em comum`,
     WIDTH / 2,
-    y + pillHeight / 2 + 12
+    cursorY + pillHeight / 2 + 12
   );
 
   return new Promise((resolve) => {
