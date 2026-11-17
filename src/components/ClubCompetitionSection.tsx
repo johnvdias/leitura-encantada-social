@@ -103,9 +103,9 @@ export function ClubCompetitionSection({ clubId }: { clubId: string }) {
       ) : (
         <>
           <div className="flex items-end justify-center gap-3 sm:gap-6">
-            {PODIUM_ORDER.map((visualIndex) => {
-              const member = top3[visualIndex];
-              if (!member) return <div key={visualIndex} className="flex-1 max-w-[110px]" />;
+            {PODIUM_ORDER.map((rankIndex, position) => {
+              const member = top3[rankIndex];
+              if (!member) return <div key={rankIndex} className="flex-1 max-w-[110px]" />;
               const isMe = member.user_id === user?.id;
               return (
                 <Link
@@ -113,14 +113,14 @@ export function ClubCompetitionSection({ clubId }: { clubId: string }) {
                   to={`/perfil/${member.user_id}`}
                   className="flex-1 max-w-[110px] flex flex-col items-center gap-1 text-center"
                 >
-                  <span className="text-2xl">{PODIUM_MEDAL[visualIndex]}</span>
+                  <span className="text-2xl">{PODIUM_MEDAL[position]}</span>
                   <Avatar className={cn("h-12 w-12 border-2", isMe ? "border-primary" : "border-transparent")}>
                     <AvatarImage src={member.avatar_url ?? undefined} />
                     <AvatarFallback>{member.display_name?.[0] || '?'}</AvatarFallback>
                   </Avatar>
                   <span className="text-xs font-medium truncate w-full">{member.display_name || 'Leitora'}</span>
                   <span className="text-xs text-muted-foreground">{member.points} pts</span>
-                  <div className={cn("w-full rounded-t-md bg-primary/15", PODIUM_HEIGHT[visualIndex])} />
+                  <div className={cn("w-full rounded-t-md bg-primary/15", PODIUM_HEIGHT[position])} />
                 </Link>
               );
             })}
