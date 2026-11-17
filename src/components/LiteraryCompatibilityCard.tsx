@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Share2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { generateCompatibilityImageBlob } from "@/lib/generateCompatibilityImage";
+import { shareImageBlob } from "@/lib/share";
 
 interface Compatibility {
   common_books: number;
@@ -23,8 +27,10 @@ interface LiteraryCompatibilityCardProps {
 // se chegar a ser chamada fora desse caso, só não devolve dado nenhum.
 export function LiteraryCompatibilityCard({ otherUserId, otherDisplayName, otherAvatarUrl }: LiteraryCompatibilityCardProps) {
   const { user, profile } = useAuth();
+  const { toast } = useToast();
   const [data, setData] = useState<Compatibility | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,6 +63,35 @@ export function LiteraryCompatibilityCard({ otherUserId, otherDisplayName, other
   // mostrar um "0% de afinidade" sem contexto nenhum.
   if (data.my_total === 0 || data.their_total === 0) return null;
 
+  const handleShare = async () => {
+    setSharing(true);
+    try {
+      const blob = await generateCompatibilityImageBlob({
+        percentage: data.percentage,
+        commonBooks: data.common_books,
+        myName: profile?.display_name || 'Você',
+        myAvatarUrl: profile?.avatar_url ?? null,
+        otherName: otherDisplayName,
+        otherAvatarUrl,
+      });
+      if (!blob) {
+        toast({ title: 'Não foi possível gerar a imagem', variant: 'destructive' });
+        return;
+      }
+      const result = await shareImageBlob(
+        blob,
+        'compatibilidade-literaria.png',
+        'Compatibilidade Literária',
+        `${data.percentage}% de afinidade com ${otherDisplayName}!`
+      );
+      if (result === 'downloaded') {
+        toast({ title: 'Imagem baixada!', description: 'Agora é só compartilhar onde quiser.' });
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return (
     <Card className="overflow-hidden">
       <CardContent className="bg-gradient-enchanted p-6">
@@ -81,6 +116,12 @@ export function LiteraryCompatibilityCard({ otherUserId, otherDisplayName, other
         <p className="text-center text-sm text-muted-foreground mt-4">
           Você e {otherDisplayName} têm <span className="font-semibold text-foreground">{data.common_books} livro{data.common_books === 1 ? '' : 's'}</span> concluído{data.common_books === 1 ? '' : 's'} em comum.
         </p>
+        <div className="flex justify-center mt-4">
+          <Button variant="outline" size="sm" onClick={handleShare} disabled={sharing} className="gap-2">
+            {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+            Criar card
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
