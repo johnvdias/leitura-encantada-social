@@ -19,6 +19,7 @@ import { ClubSchedulesSection } from "@/components/ClubSchedulesSection";
 import { ClubInviteDialog } from "@/components/ClubInviteDialog";
 import { ClubBookPollSection } from "@/components/ClubBookPollSection";
 import { ClubRankings } from "@/components/ClubRankings";
+import { ClubCompetitionSection } from "@/components/ClubCompetitionSection";
 
 // Interfaces
 interface Club {
@@ -292,10 +293,11 @@ const ClubePage = () => {
 
       {isMember ? (
         <Tabs defaultValue="discussions">
-          <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-5 gap-1">
+          <TabsList className="flex w-full items-center justify-start overflow-x-auto sm:grid sm:grid-cols-6 gap-1">
             <TabsTrigger value="discussions" className="shrink-0">Discussões</TabsTrigger>
             <TabsTrigger value="schedules" className="shrink-0">Cronogramas</TabsTrigger>
             <TabsTrigger value="votacao" className="shrink-0">Sorteio</TabsTrigger>
+            <TabsTrigger value="rinha" className="shrink-0">Rinha</TabsTrigger>
             <TabsTrigger value="rankings" className="shrink-0">Rankings</TabsTrigger>
             <TabsTrigger value="members" className="shrink-0">Membros ({approvedMembers.length})</TabsTrigger>
           </TabsList>
@@ -315,6 +317,10 @@ const ClubePage = () => {
 
           <TabsContent value="votacao" className="mt-6">
             <ClubBookPollSection clubId={club.id} isCreator={isCreator} onResolved={fetchClubData} />
+          </TabsContent>
+
+          <TabsContent value="rinha" className="mt-6">
+            <ClubCompetitionSection clubId={club.id} />
           </TabsContent>
 
           <TabsContent value="rankings" className="mt-6">
