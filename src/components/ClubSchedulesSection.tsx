@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarClock, Trash2, Flame, Snowflake, Target, CheckCircle2, Circle, TrendingUp, TrendingDown } from 'lucide-react';
+import { CalendarClock, Trash2, Pencil, Flame, Snowflake, Target, CheckCircle2, Circle, TrendingUp, TrendingDown } from 'lucide-react';
 import { formatDistanceToNow, isPast, format, differenceInCalendarDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { EditClubScheduleDialog } from '@/components/EditClubScheduleDialog';
 
 interface StructuredGoal {
   unit: 'pages' | 'chapters';
@@ -79,6 +80,7 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [scheduleProgress, setScheduleProgress] = useState<Record<string, ScheduleProgress>>({});
   const [loading, setLoading] = useState(true);
+  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const { toast } = useToast();
 
   // Progresso de cada integrante no cronograma, calculado na hora (não
@@ -404,9 +406,14 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
                   )}
                  </div>
                 {isCreator && (
-                  <Button variant="ghost" size="sm" onClick={() => handleDeleteSchedule(schedule.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => setEditingSchedule(schedule)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteSchedule(schedule.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 )}
             </CardFooter>
         </Card>
@@ -426,6 +433,18 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
           {schedules.map(renderScheduleCard)}
         </div>
       )}
+      <EditClubScheduleDialog
+        schedule={editingSchedule && {
+          id: editingSchedule.id,
+          clubId,
+          bookTitle: editingSchedule.books.title,
+          readingGoal: editingSchedule.reading_goal,
+          startDate: editingSchedule.start_date,
+          endDate: editingSchedule.end_date,
+        }}
+        onOpenChange={(open) => !open && setEditingSchedule(null)}
+        onScheduleUpdated={fetchSchedules}
+      />
     </div>
   );
 }
