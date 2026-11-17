@@ -136,6 +136,72 @@
   }
 }
 
+/* Temas de cor da estante: personalização visual opcional por perfil
+   (profiles.shelf_theme). Sobrescrevem só as variáveis de cor principal,
+   mantendo --*-foreground padrão (a faixa de luminosidade é parecida com a
+   do rosa original, então o contraste continua bom sem precisar duplicar
+   também os tons de texto). A classe é aplicada num wrapper em volta da
+   página da Estante - fora dele, o app continua no tema padrão. */
+.shelf-theme-lavanda {
+  --primary: 265 55% 78%;
+  --ring: 265 55% 78%;
+  --accent: 265 45% 85%;
+  --secondary: 230 40% 88%;
+  --gradient-enchanted: linear-gradient(135deg, hsl(265, 55%, 78%), hsl(230, 40%, 88%), hsl(200, 45%, 85%));
+}
+.dark .shelf-theme-lavanda {
+  --primary: 265 50% 60%;
+  --ring: 265 50% 60%;
+  --accent: 265 40% 35%;
+  --secondary: 230 35% 32%;
+  --gradient-enchanted: linear-gradient(135deg, hsl(265, 50%, 35%), hsl(230, 35%, 28%), hsl(200, 45%, 28%));
+}
+
+.shelf-theme-ceu {
+  --primary: 200 70% 70%;
+  --ring: 200 70% 70%;
+  --accent: 200 55% 85%;
+  --secondary: 190 40% 85%;
+  --gradient-enchanted: linear-gradient(135deg, hsl(200, 70%, 70%), hsl(190, 40%, 85%), hsl(170, 45%, 82%));
+}
+.dark .shelf-theme-ceu {
+  --primary: 200 60% 50%;
+  --ring: 200 60% 50%;
+  --accent: 200 45% 32%;
+  --secondary: 190 35% 30%;
+  --gradient-enchanted: linear-gradient(135deg, hsl(200, 60%, 32%), hsl(190, 35%, 26%), hsl(170, 40%, 26%));
+}
+
+.shelf-theme-jade {
+  --primary: 150 45% 55%;
+  --ring: 150 45% 55%;
+  --accent: 150 40% 82%;
+  --secondary: 170 35% 82%;
+  --gradient-enchanted: linear-gradient(135deg, hsl(150, 45%, 55%), hsl(170, 35%, 82%), hsl(190, 40%, 85%));
+}
+.dark .shelf-theme-jade {
+  --primary: 150 40% 42%;
+  --ring: 150 40% 42%;
+  --accent: 150 35% 28%;
+  --secondary: 170 30% 28%;
+  --gradient-enchanted: linear-gradient(135deg, hsl(150, 40%, 28%), hsl(170, 30%, 24%), hsl(190, 35%, 26%));
+}
+
+.shelf-theme-ambar {
+  --primary: 35 85% 65%;
+  --ring: 35 85% 65%;
+  --accent: 35 60% 85%;
+  --secondary: 25 45% 85%;
+  --gradient-enchanted: linear-gradient(135deg, hsl(35, 85%, 65%), hsl(25, 45%, 85%), hsl(15, 50%, 82%));
+}
+.dark .shelf-theme-ambar {
+  --primary: 35 70% 50%;
+  --ring: 35 70% 50%;
+  --accent: 35 55% 30%;
+  --secondary: 25 40% 28%;
+  --gradient-enchanted: linear-gradient(135deg, hsl(35, 70%, 30%), hsl(25, 40%, 26%), hsl(15, 45%, 24%));
+}
+
 @layer base {
   * {
     @apply border-border;

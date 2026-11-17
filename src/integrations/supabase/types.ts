@@ -1176,6 +1176,7 @@ export type Database = {
           notification_preferences: Json
           reading_goal: number | null
           requires_avatar_setup: boolean
+          shelf_theme: string
           updated_at: string
           user_id: string
           username: string | null
@@ -1190,6 +1191,7 @@ export type Database = {
           notification_preferences?: Json
           reading_goal?: number | null
           requires_avatar_setup?: boolean
+          shelf_theme?: string
           updated_at?: string
           user_id: string
           username?: string | null
@@ -1204,6 +1206,7 @@ export type Database = {
           notification_preferences?: Json
           reading_goal?: number | null
           requires_avatar_setup?: boolean
+          shelf_theme?: string
           updated_at?: string
           user_id?: string
           username?: string | null

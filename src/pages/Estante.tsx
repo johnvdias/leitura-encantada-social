@@ -18,10 +18,13 @@ import { ReadingGoals } from "@/components/ReadingGoals";
 import { SchedulesSection } from "@/components/SchedulesSection";
 import { StreakPartnershipsCard } from "@/components/StreakPartnershipsCard";
 import { FriendRecommendations } from "@/components/FriendRecommendations";
+import { ShelfThemePicker } from "@/components/ShelfThemePicker";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getShelfThemeClassName } from "@/lib/shelfThemes";
+import { cn } from "@/lib/utils";
 import type { Book } from "@/types/book";
 
 const MONTH_NAMES = [
@@ -38,8 +41,9 @@ const Estante = () => {
   const [pickedBook, setPickedBook] = useState<Book | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [startingPicked, setStartingPicked] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
+  const shelfThemeClassName = getShelfThemeClassName(profile?.shelf_theme);
 
   const fetchBooks = useCallback(async () => {
     if (!user) return;
@@ -135,8 +139,11 @@ const Estante = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <header className="text-center mb-8">
+    <div className={cn("container mx-auto px-4 py-8", shelfThemeClassName)}>
+      <header className="text-center mb-8 relative">
+        <div className="absolute right-0 top-0">
+          <ShelfThemePicker />
+        </div>
         <h1 className="text-4xl font-bold text-primary mb-2">Minha Estante</h1>
         <p className="text-muted-foreground">Organize seus livros e acompanhe seu progresso.</p>
       </header>
