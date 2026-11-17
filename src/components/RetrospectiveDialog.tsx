@@ -18,6 +18,7 @@ import {
   RetrospectiveStats,
 } from "@/lib/generateRetrospectiveImage";
 import { READING_EMOTIONS } from "@/lib/readingEmotions";
+import { computeLongestStreak } from "@/lib/readingStreak";
 import { useToast } from "@/hooks/use-toast";
 
 type PeriodMode = 'year' | 'month';
@@ -31,22 +32,6 @@ const DEFAULT_SOLID_COLOR = "#7c3aed";
 const DEFAULT_TEXT_COLOR = "#ffffff";
 
 const dateKey = (d: Date) => d.toISOString().slice(0, 10);
-
-const computeLongestStreak = (isoDates: string[]): number => {
-  const days = Array.from(new Set(isoDates)).sort();
-  if (days.length === 0) return 0;
-
-  let longest = 1;
-  let current = 1;
-  for (let i = 1; i < days.length; i++) {
-    const prev = new Date(days[i - 1]);
-    const curr = new Date(days[i]);
-    const diffDays = Math.round((curr.getTime() - prev.getTime()) / (24 * 60 * 60 * 1000));
-    current = diffDays === 1 ? current + 1 : 1;
-    longest = Math.max(longest, current);
-  }
-  return longest;
-};
 
 export function RetrospectiveDialog() {
   const { user, profile } = useAuth();

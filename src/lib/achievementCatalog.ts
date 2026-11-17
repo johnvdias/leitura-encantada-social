@@ -19,6 +19,16 @@ export const ACHIEVEMENT_CATALOG: AchievementDef[] = [
   { type: 'first_review', name: 'Crítica Literária', description: 'Escreva sua primeira resenha', emoji: '✍️' },
   { type: 'ten_comments', name: 'Voz Ativa', description: 'Faça 10 comentários na comunidade', emoji: '💬' },
   { type: 'genre_explorer', name: 'Exploradora de Gêneros', description: 'Leia livros de 3 gêneros diferentes', emoji: '🧭' },
+  { type: 'fifty_books', name: 'Lenda da Leitura', description: 'Leia 50 livros', emoji: '📜' },
+  { type: 'hundred_books', name: 'Mestra dos Livros', description: 'Leia 100 livros', emoji: '👑' },
+  { type: 'streak_30', name: 'Chama Eterna', description: 'Leia por 30 dias consecutivos', emoji: '🔥🔥' },
+  { type: 'first_club_created', name: 'Fundadora', description: 'Crie seu primeiro clube de leitura', emoji: '🏛️' },
+  { type: 'five_friends', name: 'Borboleta Social', description: 'Tenha 5 amizades no app', emoji: '🦋' },
+  { type: 'five_reviews', name: 'Pena Afiada', description: 'Escreva 5 resenhas', emoji: '✒️' },
+  { type: 'first_quote', name: 'Colecionadora de Frases', description: 'Salve sua primeira citação de um livro', emoji: '📝' },
+  { type: 'ten_quotes', name: 'Guardiã das Palavras', description: 'Salve 10 citações de livros', emoji: '📖' },
+  { type: 'five_loved_books', name: 'Apaixonada', description: 'Marque 5 livros como amados', emoji: '💕' },
+  { type: 'genre_master', name: 'Mestra dos Gêneros', description: 'Leia livros de 6 gêneros diferentes', emoji: '🌈' },
 ];
 
 export const ACHIEVEMENT_BY_TYPE: Record<string, AchievementDef> = Object.fromEntries(

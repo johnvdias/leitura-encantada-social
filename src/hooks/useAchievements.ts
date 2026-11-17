@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { shouldNotify } from "@/lib/notificationPreferences";
 import { ACHIEVEMENT_BY_TYPE } from "@/lib/achievementCatalog";
+import { computeLongestStreak } from "@/lib/readingStreak";
 
 const buildUnlock = (userId: string, type: string): TablesInsert<'achievements'> => {
   const def = ACHIEVEMENT_BY_TYPE[type];
@@ -85,16 +86,37 @@ export const useAchievements = () => {
         achievementsToUnlock.push(buildUnlock(user.id, 'bookworm'));
       }
 
-      // Reading streak achievement
-      const { data: streakData } = await supabase
-        .from('reading_history')
-        .select('created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(7);
+      // 50 books achievement
+      if (completedCount >= 50 && !existingTypes.has('fifty_books')) {
+        achievementsToUnlock.push(buildUnlock(user.id, 'fifty_books'));
+      }
 
-      if (streakData && streakData.length >= 7 && !existingTypes.has('reading_streak')) {
-        achievementsToUnlock.push(buildUnlock(user.id, 'reading_streak'));
+      // 100 books achievement
+      if (completedCount >= 100 && !existingTypes.has('hundred_books')) {
+        achievementsToUnlock.push(buildUnlock(user.id, 'hundred_books'));
+      }
+
+      // Reading streak achievements (7 e 30 dias consecutivos de verdade,
+      // não só "teve pelo menos N registros" - um histórico de 400 leituras
+      // recentes é o bastante pra cobrir mais de um ano de uso diário).
+      if (!existingTypes.has('reading_streak') || !existingTypes.has('streak_30')) {
+        const { data: streakHistory } = await supabase
+          .from('reading_history')
+          .select('created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(400);
+
+        const longestStreak = computeLongestStreak(
+          (streakHistory || []).map((h) => new Date(h.created_at).toISOString().slice(0, 10))
+        );
+
+        if (longestStreak >= 7 && !existingTypes.has('reading_streak')) {
+          achievementsToUnlock.push(buildUnlock(user.id, 'reading_streak'));
+        }
+        if (longestStreak >= 30 && !existingTypes.has('streak_30')) {
+          achievementsToUnlock.push(buildUnlock(user.id, 'streak_30'));
+        }
       }
 
       // First club achievement
@@ -110,16 +132,72 @@ export const useAchievements = () => {
         }
       }
 
-      // First review achievement
-      if (!existingTypes.has('first_review')) {
+      // First club CREATED achievement (diferente de "entrou em um clube")
+      if (!existingTypes.has('first_club_created')) {
+        const { count: createdClubCount } = await supabase
+          .from('clubs')
+          .select('id', { count: 'exact', head: true })
+          .eq('creator_id', user.id);
+
+        if ((createdClubCount || 0) >= 1) {
+          achievementsToUnlock.push(buildUnlock(user.id, 'first_club_created'));
+        }
+      }
+
+      // 5 friends achievement
+      if (!existingTypes.has('five_friends')) {
+        const { count: friendCount } = await supabase
+          .from('friendships')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'accepted')
+          .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
+
+        if ((friendCount || 0) >= 5) {
+          achievementsToUnlock.push(buildUnlock(user.id, 'five_friends'));
+        }
+      }
+
+      // Review achievements (1 e 5 resenhas)
+      if (!existingTypes.has('first_review') || !existingTypes.has('five_reviews')) {
         const { count: reviewCount } = await supabase
           .from('posts')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .eq('post_type', 'review');
 
-        if ((reviewCount || 0) >= 1) {
+        if ((reviewCount || 0) >= 1 && !existingTypes.has('first_review')) {
           achievementsToUnlock.push(buildUnlock(user.id, 'first_review'));
+        }
+        if ((reviewCount || 0) >= 5 && !existingTypes.has('five_reviews')) {
+          achievementsToUnlock.push(buildUnlock(user.id, 'five_reviews'));
+        }
+      }
+
+      // Quote achievements (1 e 10 citações salvas)
+      if (!existingTypes.has('first_quote') || !existingTypes.has('ten_quotes')) {
+        const { count: quoteCount } = await supabase
+          .from('book_quotes')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if ((quoteCount || 0) >= 1 && !existingTypes.has('first_quote')) {
+          achievementsToUnlock.push(buildUnlock(user.id, 'first_quote'));
+        }
+        if ((quoteCount || 0) >= 10 && !existingTypes.has('ten_quotes')) {
+          achievementsToUnlock.push(buildUnlock(user.id, 'ten_quotes'));
+        }
+      }
+
+      // 5 loved books achievement
+      if (!existingTypes.has('five_loved_books')) {
+        const { count: lovedCount } = await supabase
+          .from('books')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('loved', true);
+
+        if ((lovedCount || 0) >= 5) {
+          achievementsToUnlock.push(buildUnlock(user.id, 'five_loved_books'));
         }
       }
 
@@ -135,8 +213,8 @@ export const useAchievements = () => {
         }
       }
 
-      // Genre explorer achievement (3+ different genres among completed books)
-      if (!existingTypes.has('genre_explorer')) {
+      // Genre achievements (3 e 6 gêneros diferentes entre os livros concluídos)
+      if (!existingTypes.has('genre_explorer') || !existingTypes.has('genre_master')) {
         const { data: genreBooks } = await supabase
           .from('books')
           .select('genre')
@@ -145,8 +223,11 @@ export const useAchievements = () => {
           .not('genre', 'is', null);
 
         const distinctGenres = new Set((genreBooks || []).map(b => b.genre));
-        if (distinctGenres.size >= 3) {
+        if (distinctGenres.size >= 3 && !existingTypes.has('genre_explorer')) {
           achievementsToUnlock.push(buildUnlock(user.id, 'genre_explorer'));
+        }
+        if (distinctGenres.size >= 6 && !existingTypes.has('genre_master')) {
+          achievementsToUnlock.push(buildUnlock(user.id, 'genre_master'));
         }
       }
 
