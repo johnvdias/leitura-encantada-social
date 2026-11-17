@@ -145,6 +145,32 @@ export type Database = {
           },
         ]
       }
+      book_recommendation_dismissals: {
+        Row: {
+          book_key: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          book_key: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          book_key?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_recommendation_dismissals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       book_search_cache: {
         Row: {
           created_at: string
@@ -408,6 +434,52 @@ export type Database = {
           },
         ]
       }
+      club_book_poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_book_poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "club_book_poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_book_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "club_book_polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_book_poll_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       club_book_polls: {
         Row: {
           claimed_by_current_book_id: string | null
@@ -463,52 +535,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "club_book_poll_options"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      club_book_poll_votes: {
-        Row: {
-          created_at: string
-          id: string
-          option_id: string
-          poll_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          option_id: string
-          poll_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          option_id?: string
-          poll_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "club_book_poll_votes_option_id_fkey"
-            columns: ["option_id"]
-            isOneToOne: false
-            referencedRelation: "club_book_poll_options"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "club_book_poll_votes_poll_id_fkey"
-            columns: ["poll_id"]
-            isOneToOne: false
-            referencedRelation: "club_book_polls"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "club_book_poll_votes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1381,7 +1407,12 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_club_weekly_ranking: { Args: { p_club_id: string }; Returns: Json }
       get_cron_secret: { Args: { secret_name: string }; Returns: string }
+      get_literary_compatibility: {
+        Args: { p_other_user_id: string }
+        Returns: Json
+      }
       get_streak_partnership_progress: {
         Args: { p_partnership_id: string }
         Returns: Json
