@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import { useToast } from "@/hooks/use-toast";
 import { brtTodayBounds } from "@/lib/brtDate";
-import { Target, TrendingUp, Clock, Flame, Book, Loader2 } from "lucide-react";
+import { Target, TrendingUp, Clock, Flame, Book, Loader2, Snowflake } from "lucide-react";
 
 interface ReadingGoalsProps {
   className?: string;
@@ -34,7 +34,7 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
-  const { streak } = useStreak();
+  const { streak, freezes } = useStreak();
   const { toast } = useToast();
 
   // Lido dentro do fetch via ref (em vez de dependência do useCallback) pra
@@ -254,6 +254,15 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
                 </div>
               </div>
             </div>
+
+            {freezes > 0 && (
+              <div className="flex items-center justify-center">
+                <Badge variant="outline" className="gap-1">
+                  <Snowflake className="h-3 w-3 text-blue-400" />
+                  {freezes} {freezes === 1 ? 'gelinho disponível' : 'gelinhos disponíveis'}
+                </Badge>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

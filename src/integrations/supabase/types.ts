@@ -1175,6 +1175,10 @@ export type Database = {
           id: string
           notification_preferences: Json
           reading_goal: number | null
+          reading_streak_current: number
+          reading_streak_freezes: number
+          reading_streak_last_evaluated: string | null
+          reading_streak_longest: number
           requires_avatar_setup: boolean
           shelf_theme: string
           updated_at: string
@@ -1190,6 +1194,10 @@ export type Database = {
           id?: string
           notification_preferences?: Json
           reading_goal?: number | null
+          reading_streak_current?: number
+          reading_streak_freezes?: number
+          reading_streak_last_evaluated?: string | null
+          reading_streak_longest?: number
           requires_avatar_setup?: boolean
           shelf_theme?: string
           updated_at?: string
@@ -1205,6 +1213,10 @@ export type Database = {
           id?: string
           notification_preferences?: Json
           reading_goal?: number | null
+          reading_streak_current?: number
+          reading_streak_freezes?: number
+          reading_streak_last_evaluated?: string | null
+          reading_streak_longest?: number
           requires_avatar_setup?: boolean
           shelf_theme?: string
           updated_at?: string
