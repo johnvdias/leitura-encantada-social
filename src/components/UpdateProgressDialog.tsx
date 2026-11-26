@@ -35,8 +35,14 @@ export function UpdateProgressDialog({
 }: UpdateProgressDialogProps) {
   const safeCurrentPage = currentPage || 0;
   const safeTotalPages = totalPages || 0;
-  
+
   const [newPage, setNewPage] = useState(safeCurrentPage);
+  // Livro sem total de páginas cadastrado (comum em livros adicionados
+  // manualmente ou sem resultado de busca com essa informação) trava a
+  // porcentagem em 0% pra sempre, por mais páginas que a usuária registre -
+  // isso aparecia como "a porcentagem não computa". Deixa informar o total
+  // aqui mesmo quando falta, e salva no livro pra próxima vez já vir certo.
+  const [bookTotalPages, setBookTotalPages] = useState(safeTotalPages);
   const [readingMinutes, setReadingMinutes] = useState<number>(0);
   const [notes, setNotes] = useState("");
   const [completedDate, setCompletedDate] = useState<Date | null>(null);
@@ -47,14 +53,15 @@ export function UpdateProgressDialog({
   // Reset newPage when dialog opens or when currentPage changes
   useEffect(() => {
     setNewPage(safeCurrentPage);
-  }, [safeCurrentPage, open]);
+    setBookTotalPages(safeTotalPages);
+  }, [safeCurrentPage, safeTotalPages, open]);
 
-  const newProgress = safeTotalPages > 0 ? Math.round((newPage / safeTotalPages) * 100) : 0;
+  const newProgress = bookTotalPages > 0 ? Math.round((newPage / bookTotalPages) * 100) : 0;
   const pagesRead = newPage - safeCurrentPage;
   const isCompleting = newProgress >= 100 && currentProgress < 100;
 
   const handleUpdateProgress = async () => {
-    if (safeTotalPages > 0 && newPage > safeTotalPages) {
+    if (bookTotalPages > 0 && newPage > bookTotalPages) {
       toast({
         title: "Erro",
         description: "A página não pode ser maior que o total de páginas do livro.",
@@ -78,12 +85,12 @@ export function UpdateProgressDialog({
       if (!user) throw new Error("Usuário não autenticado");
 
       // Determine new status based on the page, não na porcentagem: quando o
-      // livro não tem total de páginas cadastrado (safeTotalPages === 0),
+      // livro não tem total de páginas cadastrado (bookTotalPages === 0),
       // newProgress fica travado em 0% mesmo com páginas lidas de verdade -
       // usar newProgress aqui jogava o livro de volta pra "quero ler" toda
       // vez que essas usuárias atualizavam o progresso.
       let newStatus = "reading";
-      if (safeTotalPages > 0 && newPage >= safeTotalPages) {
+      if (bookTotalPages > 0 && newPage >= bookTotalPages) {
         newStatus = "completed";
       } else if (newPage === 0) {
         newStatus = "want_to_read";
@@ -97,6 +104,7 @@ export function UpdateProgressDialog({
           reading_progress: newProgress,
           last_read_at: new Date().toISOString(),
           reading_status: newStatus,
+          ...(bookTotalPages !== safeTotalPages && { pages: bookTotalPages || null }),
           ...(isCompleting && {
             completed_at: format(completedDate ?? new Date(), "yyyy-MM-dd"),
           }),
@@ -203,17 +211,34 @@ export function UpdateProgressDialog({
                 id="page"
                 type="number"
                 min={0}
-                max={safeTotalPages > 0 ? safeTotalPages : undefined}
+                max={bookTotalPages > 0 ? bookTotalPages : undefined}
                 value={newPage === 0 ? "" : newPage}
                 onChange={(e) => setNewPage(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="flex-1"
                 placeholder="0"
               />
               <span className="text-sm text-muted-foreground">
-                / {safeTotalPages > 0 ? safeTotalPages : '---'}
+                / {bookTotalPages > 0 ? bookTotalPages : '---'}
               </span>
             </div>
           </div>
+
+          {safeTotalPages === 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="total-pages">Total de páginas do livro</Label>
+              <Input
+                id="total-pages"
+                type="number"
+                min={1}
+                value={bookTotalPages === 0 ? "" : bookTotalPages}
+                onChange={(e) => setBookTotalPages(e.target.value === "" ? 0 : Number(e.target.value))}
+                placeholder="Ex: 320"
+              />
+              <p className="text-xs text-muted-foreground">
+                Esse livro não tem total de páginas cadastrado, por isso a porcentagem fica em 0%. Informe pra calcular certo.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Progresso</Label>
@@ -271,7 +296,7 @@ export function UpdateProgressDialog({
             </Button>
             <Button
               onClick={handleUpdateProgress}
-              disabled={isLoading || newPage < 0 || (safeTotalPages > 0 && newPage > safeTotalPages)}
+              disabled={isLoading || newPage < 0 || (bookTotalPages > 0 && newPage > bookTotalPages)}
               className="flex-1"
             >
               {isLoading ? "Salvando..." : (isCompleting ? "Concluir Livro!" : "Salvar Progresso")}
