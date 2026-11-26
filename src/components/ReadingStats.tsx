@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Clock, TrendingUp, Target } from "lucide-react";
 import { useStreak } from "@/hooks/useStreak";
+import { brtDateKey } from "@/lib/brtDate";
 
 interface ReadingStatsProps {
   bookId: string;
@@ -105,23 +106,24 @@ export function ReadingStats({ bookId }: ReadingStatsProps) {
   const calculateStreak = (historyData: ReadingHistory[]): number => {
     if (historyData.length === 0) return 0;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
+    // Dia civil em BRT (não o fuso do aparelho) - mesma convenção do resto
+    // do app, pra uma leitura feita à noite não cair no dia seguinte.
+    const shiftDateKey = (key: string, days: number) => {
+      const d = new Date(`${key}T00:00:00.000Z`);
+      d.setUTCDate(d.getUTCDate() + days);
+      return d.toISOString().slice(0, 10);
+    };
+
     let streak = 0;
-    const currentDate = new Date(today);
-    
+    let cursor = brtDateKey(new Date());
+
     const readingDates = new Set(
-      historyData.map(session => {
-        const date = new Date(session.created_at);
-        date.setHours(0, 0, 0, 0);
-        return date.getTime();
-      })
+      historyData.map(session => brtDateKey(new Date(session.created_at)))
     );
 
-    while (readingDates.has(currentDate.getTime())) {
+    while (readingDates.has(cursor)) {
       streak++;
-      currentDate.setDate(currentDate.getDate() - 1);
+      cursor = shiftDateKey(cursor, -1);
     }
 
     return streak;

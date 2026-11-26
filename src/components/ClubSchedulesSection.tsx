@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarClock, Trash2, Pencil, Flame, Snowflake, Target, CheckCircle2, Circle, TrendingUp, TrendingDown } from 'lucide-react';
-import { formatDistanceToNow, isPast, format, differenceInCalendarDays } from 'date-fns';
+import { formatDistanceToNow, isPast, format, differenceInCalendarDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { EditClubScheduleDialog } from '@/components/EditClubScheduleDialog';
@@ -28,6 +28,14 @@ const UNIT_LABEL: Record<StructuredGoal['unit'], string> = {
 // legíveis em vez de quebrar a exibição dos cronogramas antigos.
 const isStructuredGoal = (goal: unknown): goal is StructuredGoal =>
   !!goal && typeof goal === 'object' && 'daily_target' in (goal as Record<string, unknown>);
+
+// end_date guarda a meia-noite BRT do ÚLTIMO dia do cronograma (mesma
+// convenção de "início do dia" usada em start_date) - esse dia inteiro
+// ainda conta pra meta diária (ver dailyTarget = total/totalDays, que
+// inclui o dia final). Comparar isPast direto contra end_date marcava o
+// cronograma como terminado já na primeira hora do próprio último dia,
+// escondendo a meta/ritmo de hoje bem no dia em que ela ainda vale.
+const isScheduleOver = (endDateIso: string) => isPast(addDays(new Date(endDateIso), 1));
 
 interface Schedule {
   id: string;
@@ -115,7 +123,7 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
         .map(async (schedule): Promise<[string, ScheduleProgress] | null> => {
           const goal = schedule.reading_goal as StructuredGoal;
           if (participantIds.length === 0) return null;
-          const isFinished = isPast(new Date(schedule.end_date));
+          const isFinished = isScheduleOver(schedule.end_date);
 
           const { data: profiles } = await supabase
             .from('profiles')
@@ -272,9 +280,14 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
   }
 
   const renderScheduleCard = (schedule: Schedule) => {
-    const isOverdue = isPast(new Date(schedule.end_date));
+    const isOverdue = isScheduleOver(schedule.end_date);
     const isUpcoming = new Date(schedule.start_date) > new Date();
     const progress = scheduleProgress[schedule.id];
+    // Dentro do próprio último dia o cronograma ainda não terminou
+    // (isOverdue só vira true no dia seguinte), mas o instante guardado em
+    // end_date (meia-noite BRT desse dia) já ficou no passado - mostrar a
+    // distância normal diria algo como "Termina há 3 horas", confuso.
+    const isOnLastDay = !isOverdue && isPast(new Date(schedule.end_date));
 
     return (
         <Card key={schedule.id} className={isOverdue ? 'border-dashed' : ''}>
@@ -390,7 +403,11 @@ export function ClubSchedulesSection({ clubId, isCreator }: ClubSchedulesSection
                  <div className="flex flex-wrap gap-1">
                    <Badge variant={isOverdue ? 'outline' : 'default'}>
                       <CalendarClock className="h-3 w-3 mr-1" />
-                      {isOverdue ? 'Terminou' : 'Termina'} {formatDistanceToNow(new Date(schedule.end_date), { addSuffix: true, locale: ptBR })}
+                      {isOverdue
+                        ? `Terminou ${formatDistanceToNow(new Date(schedule.end_date), { addSuffix: true, locale: ptBR })}`
+                        : isOnLastDay
+                          ? 'Termina hoje'
+                          : `Termina ${formatDistanceToNow(new Date(schedule.end_date), { addSuffix: true, locale: ptBR })}`}
                   </Badge>
                   {schedule.current_streak > 0 && (
                     <Badge variant="secondary" className="gap-1">

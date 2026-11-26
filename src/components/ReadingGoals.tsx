@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import { useToast } from "@/hooks/use-toast";
+import { brtTodayBounds } from "@/lib/brtDate";
 import { Target, TrendingUp, Clock, Flame, Book, Loader2 } from "lucide-react";
 
 interface ReadingGoalsProps {
@@ -70,17 +71,14 @@ export function ReadingGoals({ className }: ReadingGoalsProps) {
       }
 
       // Fetch today's reading history
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const { startIso: todayStartIso, endIso: todayEndIso } = brtTodayBounds();
 
       const { data: historyData, error: historyError } = await supabase
         .from("reading_history")
         .select("pages_read, reading_session_minutes")
         .eq("user_id", user.id)
-        .gte("created_at", today.toISOString())
-        .lt("created_at", tomorrow.toISOString());
+        .gte("created_at", todayStartIso)
+        .lt("created_at", todayEndIso);
 
       if (historyError) throw historyError;
       

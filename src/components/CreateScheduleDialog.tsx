@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useFriendships } from "@/hooks/useFriendships";
+import { toBrtMidnightIso } from "@/lib/brtDate";
 import { format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
@@ -134,8 +135,8 @@ export function CreateScheduleDialog({ onScheduleCreated }: CreateScheduleDialog
           name: `Cronograma: ${selectedBook?.title ?? ''}`,
           book_id: bookId,
           reading_goal: { unit, total: totalQuantity, daily_target: dailyTarget },
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
+          start_date: toBrtMidnightIso(startDate),
+          end_date: toBrtMidnightIso(endDate),
           creator_id: user.id,
         })
         .select()

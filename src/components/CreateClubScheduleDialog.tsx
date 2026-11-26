@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { notifyClubMembers } from "@/lib/notifyClubMembers";
+import { toBrtMidnightIso } from "@/lib/brtDate";
 import { Calendar as CalendarIcon, Loader2, FileText, ListOrdered } from "lucide-react";
 import { format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -97,8 +98,8 @@ export function CreateClubScheduleDialog({ clubId, currentBook, onScheduleCreate
           club_id: clubId,
           book_id: currentBook.id,
           reading_goal: { unit, total: totalQuantity, daily_target: dailyTarget },
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
+          start_date: toBrtMidnightIso(startDate),
+          end_date: toBrtMidnightIso(endDate),
           creator_id: user.id,
         })
         .select()

@@ -2,17 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { brtDateKey } from "@/lib/brtDate";
 
 const WEEKS = 20;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const BRT_OFFSET_MS = 3 * 60 * 60 * 1000;
-
-// Mesma convenção de fuso usada no resto do app (lembretes diários, metas de
-// clube): o público é majoritariamente brasileiro, então "hoje" é sempre o
-// dia civil em BRT (fixo em UTC-3), não o fuso do aparelho de quem acessa.
-// Uma leitura registrada às 23h de BRT já é madrugada do dia seguinte em
-// UTC - sem esse ajuste, ela cai no quadradinho do dia errado no calendário.
-const brtDateKey = (d: Date) => new Date(d.getTime() - BRT_OFFSET_MS).toISOString().slice(0, 10);
 
 const formatKeyAsBr = (key: string) => {
   const [year, month, day] = key.split('-');

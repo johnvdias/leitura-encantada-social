@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { shouldNotify } from "@/lib/notificationPreferences";
+import { brtTodayBounds } from "@/lib/brtDate";
 
 // Mesmo padrão de NudgeButton/useAchievements: insere a notificação in-app
 // (que também autoriza o push via RLS, ver send-push-notification) e dispara
@@ -59,14 +60,13 @@ export const checkAndNotifyDailyGoalReached = async (userId: string, pagesReadNo
 
   const dailyGoal = profileData?.reading_goal || 10;
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  const { startIso: todayStartIso } = brtTodayBounds();
 
   const { data: historyToday } = await supabase
     .from('reading_history')
     .select('pages_read')
     .eq('user_id', userId)
-    .gte('created_at', todayStart.toISOString());
+    .gte('created_at', todayStartIso);
 
   const totalToday = historyToday?.reduce((sum, r) => sum + (r.pages_read || 0), 0) || 0;
   const totalBefore = totalToday - pagesReadNow;

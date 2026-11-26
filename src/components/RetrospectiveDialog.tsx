@@ -19,6 +19,7 @@ import {
 } from "@/lib/generateRetrospectiveImage";
 import { READING_EMOTIONS } from "@/lib/readingEmotions";
 import { computeLongestStreak } from "@/lib/readingStreak";
+import { brtDateKey } from "@/lib/brtDate";
 import { useToast } from "@/hooks/use-toast";
 
 type PeriodMode = 'year' | 'month';
@@ -115,7 +116,10 @@ export function RetrospectiveDialog() {
           .gte('created_at', startISO)
           .lt('created_at', endISO);
 
-        const longestStreak = computeLongestStreak((history || []).map((h) => dateKey(new Date(h.created_at))));
+        // Dia civil em BRT, não UTC (dateKey local é só pra limites de
+        // período) - uma leitura feita de noite em BRT não pode cair no dia
+        // seguinte na contagem da sequência.
+        const longestStreak = computeLongestStreak((history || []).map((h) => brtDateKey(new Date(h.created_at))));
 
         if (!cancelled) {
           setStats({

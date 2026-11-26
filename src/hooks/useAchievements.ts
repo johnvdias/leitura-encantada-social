@@ -7,6 +7,7 @@ import { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { shouldNotify } from "@/lib/notificationPreferences";
 import { ACHIEVEMENT_BY_TYPE } from "@/lib/achievementCatalog";
 import { computeLongestStreak } from "@/lib/readingStreak";
+import { brtDateKey } from "@/lib/brtDate";
 
 const buildUnlock = (userId: string, type: string): TablesInsert<'achievements'> => {
   const def = ACHIEVEMENT_BY_TYPE[type];
@@ -108,7 +109,7 @@ export const useAchievements = () => {
           .limit(400);
 
         const longestStreak = computeLongestStreak(
-          (streakHistory || []).map((h) => new Date(h.created_at).toISOString().slice(0, 10))
+          (streakHistory || []).map((h) => brtDateKey(new Date(h.created_at)))
         );
 
         if (longestStreak >= 7 && !existingTypes.has('reading_streak')) {
